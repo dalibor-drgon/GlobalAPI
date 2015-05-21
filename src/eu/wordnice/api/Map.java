@@ -1,0 +1,389 @@
+/*
+ The MIT License (MIT)
+
+ Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+ */
+
+package eu.wordnice.api;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import eu.wordnice.sql.wndb.WNDBDecoder;
+import eu.wordnice.sql.wndb.WNDBEncoder;
+import eu.wordnice.sql.wndb.WNDBVarTypes;
+
+public class Map<X, Y> {
+	
+	public static final long FILE_PREFIX = 13945948982L;
+
+	public Object[] names;
+	public Object[] values;
+	public Handler.OneHandler<Boolean, Val.FourVal<X, Y, X, Y>> set_handler;
+	protected int size = 0;
+
+	public Map() {
+		this.names = new Object[0];
+		this.values = new Object[0];
+		this.size = 0;
+	}
+
+	public boolean set(int i, X name, Y value) {
+		if (i < 0 || i > this.size) {
+			return false;
+		}
+		if (i == this.size) {
+			return this.add(name, value);
+		}
+		if(this.set_handler != null) {
+			Val.FourVal<X, Y, X, Y> vals = new Val.FourVal<X, Y, X, Y>(name, value, this.getNameI(i), this.getI(i));
+			if(this.set_handler.handle(vals) == true) {
+				name = vals.one;
+				value = vals.two;
+			}
+		}
+		this.names[i] = name;
+		this.values[i] = value;
+		return true;
+	}
+
+	public boolean addWC(X name, Y value) {
+		int ns = this.size + 1;
+		Object[] lnames = new Object[ns];
+		Object[] lvalues = new Object[ns];
+		System.arraycopy(this.names, 0, lnames, 0, this.size);
+		System.arraycopy(this.values, 0, lvalues, 0, this.size);
+		this.names = lnames;
+		this.values = lvalues;
+		this.names[this.size] = name;
+		this.values[this.size] = value;
+		this.size++;
+		return true;
+	}
+
+	public boolean add(X name, Y value) {
+		int i = this.indexOfName(name);
+		if (i > -1) {
+			return this.set(i, name, value);
+		}
+		return this.addWC(name, value);
+	}
+	
+	public boolean addAllWC(java.util.Map<? extends X, ? extends Y> map) {
+		if (map == null || map.size() < 1) {
+			return false;
+		}
+		int msz = map.size();
+		int si = this.size;
+		int ns = si + msz;
+		Object[] lnames = new Object[ns];
+		Object[] lvalues = new Object[ns];
+		System.arraycopy(this.names, 0, lnames, 0, this.size);
+		System.arraycopy(this.values, 0, lvalues, 0, this.size);
+		//System.arraycopy(names, 0, lnames, si, size);
+		//System.arraycopy(values, 0, lvalues, si, size);
+		java.util.Set<? extends X> set = map.keySet();
+		int ci = si;
+		for(X x : set) {
+			lnames[ci] = (X) x;
+			lvalues[ci] = (Y) map.get(x);
+			ci++;
+		}
+		this.names = lnames;
+		this.values = lvalues;
+		this.size = ns;
+		return true;
+	}
+
+	public boolean addAllWC(Map<? extends X, ? extends Y> map) {
+		return this.addAllWC(map.names, map.values, map.size);
+	}
+	
+	public boolean addAllWC(Object[] names, Object[] values, int size) {
+		if (names == null || values == null || size < 1) {
+			return false;
+		}
+		int si = this.size;
+		int ns = si + size;
+		Object[] lnames = new Object[ns];
+		Object[] lvalues = new Object[ns];
+		System.arraycopy(this.names, 0, lnames, 0, this.size);
+		System.arraycopy(this.values, 0, lvalues, 0, this.size);
+		System.arraycopy(names, 0, lnames, si, size);
+		System.arraycopy(values, 0, lvalues, si, size);
+		this.names = lnames;
+		this.values = lvalues;
+		this.size = ns;
+		return true;
+	}
+	
+	public boolean addAllXYWC(X[] names, Y[] values, int size) {
+		if (names == null || values == null || size < 1) {
+			return false;
+		}
+		int si = this.size;
+		int ns = si + size;
+		Object[] lnames = new Object[ns];
+		Object[] lvalues = new Object[ns];
+		System.arraycopy(this.names, 0, lnames, 0, this.size);
+		System.arraycopy(this.values, 0, lvalues, 0, this.size);
+		System.arraycopy(names, 0, lnames, si, size);
+		System.arraycopy(values, 0, lvalues, si, size);
+		this.names = lnames;
+		this.values = lvalues;
+		this.size = ns;
+		return true;
+	}
+	
+	public boolean addAll(java.util.Map<? extends X, ? extends Y> map) {
+		if (map == null || map.size() < 1) {
+			return false;
+		}
+		java.util.Set<? extends X> vals = map.keySet();
+		for (X x : vals) {
+			this.add((X) x, (Y) map.get(x));
+		}
+		return true;
+	}
+	
+	public boolean addAll(Map<? extends X, ? extends Y> map) {
+		return this.addAll(map.names, map.values, map.size);
+	}
+
+	@SuppressWarnings("unchecked")
+	public boolean addAll(Object[] names, Object[] values, int len) {
+		if (names == null || values == null || names.length < len || values.length < len) {
+			return false;
+		}
+		for (int i = 0; i < len; i++) {
+			this.add((X) names[i], (Y) values[i]);
+		}
+		return true;
+	}
+	
+	public boolean addAllXY(X[] names, Y[] values, int len) {
+		if (names == null || values == null || names.length < len || values.length < len) {
+			return false;
+		}
+		for (int i = 0; i < len; i++) {
+			this.add((X) names[i], (Y) values[i]);
+		}
+		return true;
+	}
+	
+	public boolean remove(X name) {
+		return this.removeByIndex(this.indexOfName(name));
+	}
+	
+	public boolean removeByValue(Y value) {
+		return this.removeByIndex(this.indexOfValue(value));
+	}
+	
+	public boolean removeByIndex(int i) {
+		if(i < 0 || i >= this.size) {
+			return false;
+		}
+		int nsz = this.size - 1;
+		int sz1 = i;
+		int sz2 = this.size - i - 1;
+		Object[] vals = new Object[nsz];
+		Object[] names = new Object[nsz];
+		System.arraycopy(this.values, 0, vals, 0, sz1);
+		System.arraycopy(this.values, (sz1 + 1), vals, 0, sz2);
+		System.arraycopy(this.names, 0, names, 0, sz1);
+		System.arraycopy(this.names, (sz1 + 1), names, 0, sz2);
+		this.values = vals;
+		this.names = names;
+		this.size--;
+		return true;
+	}
+
+	public int size() {
+		return this.size;
+	}
+
+	public boolean clear() {
+		this.size = 0;
+		this.values = new Object[0];
+		this.names = new Object[0];
+		return true;
+	}
+
+	@SuppressWarnings("unchecked")
+	public Y getI(int i) {
+		if (this.size <= i) {
+			return null;
+		}
+		return (Y) this.values[i];
+	}
+
+	@SuppressWarnings("unchecked")
+	public X getNameI(int i) {
+		if (this.size <= i) {
+			return null;
+		}
+		return (X) this.names[i];
+	}
+
+	@SuppressWarnings("unchecked")
+	public Y get(X name) {
+		Object na;
+		for (int i = 0; i < this.size; i++) {
+			na = this.names[i];
+			if (na.equals(name)) {
+				return (Y) this.values[i];
+			}
+		}
+		return null;
+	}
+
+	@SuppressWarnings("unchecked")
+	public X getName(Y val) {
+		Object na;
+		for (int i = 0; i < this.size; i++) {
+			na = this.values[i];
+			if (na.equals(val)) {
+				return (X) this.names[i];
+			}
+		}
+		return null;
+	}
+
+	public int indexOfName(X name) {
+		Object na;
+		for (int i = 0; i < this.size; i++) {
+			na = this.names[i];
+			if (na.equals(name)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	public int indexOfValue(Y val) {
+		Object na;
+		for (int i = 0; i < this.size; i++) {
+			na = this.values[i];
+			if (na.equals(val)) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder s = new StringBuilder("{");
+		for (int i = 0; i < this.size; i++) {
+			s.append(this.names[i]);
+			s.append(":");
+			s.append(this.values[i]);
+			s.append(", ");
+		}
+		s.append("}");
+		return s.toString();
+	}
+	
+	
+/*** Static FILE ***/
+	
+	public static boolean writeToFile(File f, Map<?,?> set) {
+		try {
+			OutputStream out = new FileOutputStream(f);
+			boolean ret = Map.writeToStream(new OStream(out), set);
+			out.close();
+			return ret;
+		} catch(Throwable t) {}
+		return false;
+	}
+	
+	public static boolean writeToStream(OStream o, Map<?,?> set) throws IOException {
+		o.writeLong(Map.FILE_PREFIX);
+		Object obj1;
+		Object obj2;
+		WNDBVarTypes t1;
+		WNDBVarTypes t2;
+		for(int i = 0; i < set.size(); i++) {
+			obj1 = set.getNameI(i);
+			obj2 = set.getI(i);
+			if(obj1 != null && obj2 != null) {
+				t1 = WNDBVarTypes.getByObject(obj1);
+				t2 = WNDBVarTypes.getByObject(obj2);
+				if(t1 == null || t2 == null) {
+					return false;
+				}
+				o.writeByte(t1.b);
+				o.writeByte(t2.b);
+				WNDBEncoder.writeObject(o, obj1, t1);
+				WNDBEncoder.writeObject(o, obj2, t2);
+			}
+		}
+		o.writeBoolean(false);
+		return true;
+	}
+	
+	public static <X,Y> Map<X,Y> loadFromFile(File f) {
+		return Map.loadFromFile(new Map<X,Y>(), f);
+	}
+	
+	public static <X,Y> Map<X,Y> loadFromFile(Map<X,Y> map, File f) {
+		if(map == null || f == null || f.isFile() == false) {
+			return null;
+		}
+		try {
+			InputStream in = new FileInputStream(f);
+			Map.loadFromStream(map, new IStream(in));
+			in.close();
+		} catch(Throwable t) {}
+		return map;
+	}
+	
+	public static <X,Y> Map<X,Y> loadFromStream(IStream s) throws IOException {
+		return Map.loadFromStream(new Map<X,Y>(), s);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <X,Y> Map<X,Y> loadFromStream(Map<X,Y> map, IStream s) throws IOException {
+		if(map == null || s == null) {
+			return null;
+		}
+		long l = s.readLong();
+		if(l != Map.FILE_PREFIX) {
+			throw new IOException("Not Map<?,?> file!");
+		}
+		byte b;
+		byte b2;
+		Object o1, o2;
+		while((b = s.readByte()) > 0) {
+			b2 = s.readByte();
+			o1 = WNDBDecoder.readObject(s, b);
+			o2 = WNDBDecoder.readObject(s, b2);
+			map.addWC((X) o1, (Y) o2);
+		}
+		
+		return map;
+	}
+
+}
