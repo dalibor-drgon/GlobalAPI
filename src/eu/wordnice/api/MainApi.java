@@ -36,17 +36,17 @@ public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 	
 	@Override
 	public void onEnable() {
-		out(":] MainApi is loading!");
-		out("For some reason, JDBC drivers will be loaded on every connection create, so, its debug time!");
-		out("Instrumentation: " + Api.getInstrumentation());
-		out("System class loaded has " + Api.getLoadedClasses(Api.getClassLoader()).length + " classes!");
-		out("Totaly loaded " + Api.getAllLoadedClasses().length + " classes!");
-		out(":] MainApi is online!");
+		try {
+			out("Instrumentation: " + Api.getInstrumentation());
+			out("System class loaded has " + Api.getLoadedClasses(Api.getClassLoader()).length + " classes!");
+			out("Totaly loaded " + Api.getAllLoadedClasses().length + " classes!");
+		} catch(Throwable t) {}
+		out("Main<WordNice>Api is enabled! Hello!");
 	}
 	
 	@Override
 	public void onDisable() {
-		out(":[ Main<WordNice>Api is going down! Bye...");
+		out("Main<WordNice>Api is disabled! Bye!");
 	}
 	
 }

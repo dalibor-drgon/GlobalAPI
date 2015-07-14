@@ -1,4 +1,0 @@
-name: ChatAPI
-version: 1.0
-author: WordNice
-main: eu.wordnice.api.MainApi

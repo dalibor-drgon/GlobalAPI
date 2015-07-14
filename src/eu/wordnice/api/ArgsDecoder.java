@@ -26,8 +26,6 @@ package eu.wordnice.api;
 
 public class ArgsDecoder {
 
-	// xD Handler.OneVoidHandler<Val.TwoVal<String, String>>
-
 	public static Map<String, String> decodeString(String s, String valname,
 			String row) {
 		return ArgsDecoder.decodeString(new Map<String, String>(), s, valname,
@@ -49,7 +47,7 @@ public class ArgsDecoder {
 	public static Map<String, String> decodeString(Map<String, String> map,
 			String s, String valname, String row,
 			Handler.OneVoidHandler<Val.TwoVal<String, String>> handler) {
-		// ap<String,String> map = new Map<String,String>();
+
 		Val.TwoVal<String, String> twoval = null;
 		if (handler != null) {
 			twoval = new Val.TwoVal<String, String>();
@@ -58,8 +56,6 @@ public class ArgsDecoder {
 		String val, name;
 		boolean can = true;
 		while (can) {
-			// s = s.substring(i1 + 1);
-			// i2 = s.indexOf(row);
 			i2 = s.indexOf(row);
 			if (i2 < 0) {
 				if (s.length() < 1) {

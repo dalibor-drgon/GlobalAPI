@@ -35,13 +35,19 @@ import java.lang.reflect.Field;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.text.Normalizer;
+import java.util.Random;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javaagent.JavaAgent;
+import org.bukkit.ChatColor;
+
+//import javaagent.JavaAgent;
 
 public class Api {
+	
+	protected static Random rand = new Random();
+	protected static Instrumentation instr;
 	
 	public static String join(String w, String... data) {
 		StringBuilder ret = new StringBuilder();
@@ -53,31 +59,31 @@ public class Api {
 	}
 	
 	public static int getParsedIPv4(String address) {
-	    int result = 0;
-	    for(String part : address.split("\\.")) {
-	        result = result << 8;
-	        result |= Integer.parseInt(part);
-	    }
-	    return result;
+		int result = 0;
+		for(String part : address.split("\\.")) {
+			result = result << 8;
+			result |= Integer.parseInt(part);
+		}
+		return result;
 	}
 	
 	static public byte[] getIPv4Array(int addr){
-        /*return new byte[]{ (byte) addr, 
-        		(byte)(addr >>> 8),
-        		(byte)(addr >>> 16),
-        		(byte)(addr >>> 24) };*/
+		/*return new byte[]{ (byte) addr, 
+				(byte)(addr >>> 8),
+				(byte)(addr >>> 16),
+				(byte)(addr >>> 24) };*/
 		return new byte[]{ (byte) (addr >>> 24), 
-        		(byte)(addr >>> 16),
-        		(byte)(addr >>> 8),
-        		(byte)(addr) };
-    }
+				(byte)(addr >>> 16),
+				(byte)(addr >>> 8),
+				(byte)(addr) };
+	}
 	
 	public static String getIPv4(int ip) {
 		return String.format("%d.%d.%d.%d",
-		         (ip >> 24 & 0xff),   
-		         (ip >> 16 & 0xff),             
-		         (ip >> 8 & 0xff),    
-		         (ip & 0xff));
+				 (ip >> 24 & 0xff),   
+				 (ip >> 16 & 0xff),			 
+				 (ip >> 8 & 0xff),	
+				 (ip & 0xff));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -273,8 +279,6 @@ public class Api {
 		return sb.toString();
 	}
 	
-	/*
-	@Deprecated
 	public static String getColoredString(String text) {
 		text = text.replaceAll("&0", (""+ChatColor.BLACK));
 		text = text.replaceAll("&1", (""+ChatColor.DARK_BLUE));
@@ -300,7 +304,6 @@ public class Api {
 		return text;
 	}
 	
-	@Deprecated
 	public static String getDecoloredString(String text) {
 		text = text.replaceAll((""+ChatColor.BLACK), "&0");
 		text = text.replaceAll((""+ChatColor.DARK_BLUE), "&1");
@@ -325,7 +328,6 @@ public class Api {
 		text = text.replaceAll((""+ChatColor.UNDERLINE), "&n");
 		return text;
 	}
-	*/
 	
 	public static java.util.ArrayList<Object> toListO(Set<?> set) {
 		if(set == null) {
@@ -414,7 +416,7 @@ public class Api {
 	}
 	
 	
-	/*** Files ***/
+	/*** URL ***/
 	
 	public static String getURLDecoded(String str) {
 		try {
@@ -429,6 +431,9 @@ public class Api {
 		} catch(Throwable t) {}
 		return str;
 	}
+	
+	
+	/*** Files ***/
 	
 	public static String getRealPath(String file) {
 		if(file == null) {
@@ -487,7 +492,6 @@ public class Api {
 	
 	
 	public static ClassLoader getClassLoader() {
-		//return Thread.currentThread().getContextClassLoader();
 		return ClassLoader.getSystemClassLoader();
 	}
 	
@@ -534,49 +538,11 @@ public class Api {
 		return Api.getClasses(new Set<Class<?>>(), Api.getClassLoader(), pref);
 	}
 	
-	/*public static Set<Class<?>> getClasses(Set<Package> pkgs) {
-		return Api.getClasses(new Set<Class<?>>(), Api.getClassLoader(), pkgs);
-	}
-	
-	public static Set<Class<?>> getClasses(ClassLoader cl, Set<Package> pkgs) {
-		return Api.getClasses(new Set<Class<?>>(), cl, pkgs);
-	}
-	
-	public static Set<Class<?>> getClasses(Set<Class<?>> set, Set<Package> pkgs) {
-		return Api.getClasses(set, Api.getClassLoader(), pkgs);
-	} */
-	
 	public static Set<Class<?>> getClasses(Set<Class<?>> set, ClassLoader cl, String pref) {
 		if(set == null) {
 			return null;
 		}
-		/*if(pkgs == null || pkgs.size() < 1) {
-			return set;
-		}*/
-		/*
-		Package cur;
-		String name;
-		Class<?> curc;
-		Set<Class<?>> temp = new Set<Class<?>>();
-		for(int i = 0; i < pkgs.size(); i++) {
-			cur = pkgs.get(i);
-			name = cur.getName();
-			try {
-				temp.clear();
-				//System.out.println("Got " + temp.size() + " for " + name);
-				Api.find(temp, cl, name);
-				//Api._getClasses(temp, cl, name);
-				//ClassEnumerator.getClassesForPackage(temp, cl, cur);
-				System.out.println("Got " + temp.size() + " for " + cur.getName());
-			} catch(Throwable t) {}
-			for(int i2 = 0; i2 < temp.size(); i2++) {
-				curc = temp.get(i2);
-				name = curc.getCanonicalName();
-				if(name != null) {
-					set.add(curc);
-				}
-			}
-		}*/
+
 		Class<?>[] cls = null;
 		if(cl != null) {
 			cls = Api.getLoadedClasses(cl);
@@ -604,7 +570,11 @@ public class Api {
 	}
 	
 	public static Instrumentation getInstrumentation() {
-		return JavaAgent.getInstrumentation();
+		//return JavaAgent.getInstrumentation();
+		if(instr == null) {
+			instr = Api.createEmptyInstance(Instrumentation.class);
+		}
+		return instr;
 	}
 	
 	public static Set<Package> getPackages(String pref) {
@@ -665,7 +635,6 @@ public class Api {
 			rep = han.handle(m);
 			sb.append(in.substring(laste, m.start()));
 			sb.append(rep);
-			//in = in.substring(0, m.start()) + rep + in.substring(m.end(), in.length());
 			laste = m.end();
 		}
 		if(laste != 0) {
@@ -721,6 +690,40 @@ public class Api {
 			}
 		}
 		return out.toByteArray();
+	}
+	
+	
+	/*** RANDOM ***/
+	
+	public static String genString(int length) {
+		return genString(length, ("abcdefghijklmnopqrstuvwxyz1234567890QWERTZUIOPASDFGHJKLYXCVBNM").toCharArray());
+	}
+	
+	public static String genString(int length, char[] chars) {
+		String sb = new String("");
+		for (int i = 0; i < length; i++) {
+			char c = chars[rand.nextInt(chars.length)];
+			sb += c;
+		}
+		return sb;
+	}
+	
+	public static int genInt(int length) {
+		int nevi = 0;
+		for (int i = 0; i < length; i++) {
+			nevi *= 10;
+			nevi += rand.nextInt(9);
+		}
+		return nevi;
+	}
+	
+	public static long genLong(int length) {
+		long nevi = 0;
+		for (int i = 0; i < length; i++) {
+			nevi *= 10;
+			nevi += rand.nextInt(9);
+		}
+		return nevi;
 	}
 	
 }
