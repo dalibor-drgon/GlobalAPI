@@ -26,6 +26,18 @@ package eu.wordnice.api;
 
 public class Val {
 	
+	public static class OneVal<X> {
+		
+		public X one;
+		
+		public OneVal() {}
+		
+		public OneVal(X x) {
+			this.one = x;
+		}
+		
+	}
+	
 	public static class TwoVal<X, Y> {
 		
 		public X one;

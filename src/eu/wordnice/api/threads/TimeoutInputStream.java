@@ -36,6 +36,11 @@ public class TimeoutInputStream extends InputStream {
 		this.in = in;
 		this.thread = new TimeoutThread<Object>(null, maxtime_read);
 	}
+	
+	public void setTimeout(long to) {
+		this.thread.timeout = to;
+	}
+	
 
 	@Override
 	public int read() throws IOException {
@@ -140,6 +145,79 @@ public class TimeoutInputStream extends InputStream {
 	@Override
 	public void reset() throws IOException {
 		this.in.reset();
+	}
+	
+	
+	
+	/*** STATIC ***/
+	
+	public static int read(final InputStream in, long timeout) throws IOException {
+		TimeoutThread<Object> thread = new TimeoutThread<Object>(new Runa<Object>() {
+			
+			@Override
+			public Object call() throws Exception {
+				try {
+					return in.read();
+				} catch(IOException t) {
+					return t;
+				}
+			};
+			
+		}, timeout);
+		Object out = thread.run(-1);
+		if(out instanceof Integer) {
+			return (Integer) out;
+		}
+		if(out instanceof IOException) {
+			throw (IOException) out;
+		}
+		return -1;
+	}
+
+	public static int read(final InputStream in, long timeout ,final byte[] bytes) throws IOException {
+		TimeoutThread<Object> thread = new TimeoutThread<Object>(new Runa<Object>() {
+			
+			@Override
+			public Object call() throws Exception {
+				try {
+					return in.read(bytes);
+				} catch(IOException t) {
+					return t;
+				}
+			};
+			
+		}, timeout);
+		Object out = thread.run(null);
+		if(out instanceof Integer) {
+			return (Integer) out;
+		}
+		if(out instanceof IOException) {
+			throw (IOException) out;
+		}
+		return 0;
+	}
+
+	public static int read(final InputStream in, long timeout, final byte[] bytes, final int of, final int l) throws IOException {
+		TimeoutThread<Object> thread = new TimeoutThread<Object>(new Runa<Object>() {
+			
+			@Override
+			public Object call() throws Exception {
+				try {
+					return in.read(bytes, of, l);
+				} catch(IOException t) {
+					return t;
+				}
+			};
+			
+		}, timeout);
+		Object out = thread.run(null);
+		if(out instanceof Integer) {
+			return (Integer) out;
+		}
+		if(out instanceof IOException) {
+			throw (IOException) out;
+		}
+		return 0;
 	}
 	
 }

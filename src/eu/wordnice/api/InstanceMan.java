@@ -25,7 +25,7 @@
 package eu.wordnice.api;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
+import java.lang.reflect.Method;
 
 public class InstanceMan {
 	
@@ -43,22 +43,92 @@ public class InstanceMan {
 	}
 	
 	
+	public void reinit(Object o) {
+		this.c = o.getClass();
+		this.o = o;
+	}
+	
+	public void reinit(Class<?> c, Object o) {
+		this.c = c;
+		this.o = o;
+	}
+	
+	
 	public Object getValue(String name) {
-		/*
-		Class<?> c = this.c;
+		return InstanceMan.getValue(this.o, this.c, name);
+	}
+	
+	public Object getValue(Class<?> c, String name) {
+		return InstanceMan.getValue(this.o, c, name);
+	}
+	
+	
+	public boolean setValue(String name, Object newval) {
+		return InstanceMan.setValue(this.o, this.c, name, newval);
+	}
+	
+	public boolean setValue(Class<?> c, String name, Object newval) {
+		return InstanceMan.setValue(this.o, c, name, newval);
+	}
+	
+	
+
+	public Val.OneVal<Object> callMethod(String name, Object... args) {
+		return InstanceMan.callMethod(this.o, this.c, name, args);
+	}
+	
+	public Val.OneVal<Object> callMethod(Class<?> c, String name, Object... args) {
+		return InstanceMan.callMethod(this.o, c, name, args);
+	}
+	
+	public Val.OneVal<Object> callMethod(String name, Object[] args, Class<?>[] clzs) {
+		return InstanceMan.callMethod(this.o, this.c, name, args, clzs);
+	}
+	
+	public Val.OneVal<Object> callMethod(Class<?> c, String name, Object[] args, Class<?>[] clzs) {
+		return InstanceMan.callMethod(this.o, c, name, args, clzs);
+	}
+	
+	
+	
+	public Set<Field> getFields() {
+		return InstanceMan.getFields(this.c);
+	}
+	
+	public Set<Method> getMethods() {
+		return InstanceMan.getMethods(this.c);
+	}
+	
+	
+	
+	/*** Static methods ***/
+	
+	public static Val.OneVal<Object> callMethod(Object o, String name, Object... args) {
+		return InstanceMan.callMethod(o, o.getClass(), name, args);
+	}
+	
+	public static Val.OneVal<Object> callMethod(Object o, Class<?> c, String name, Object... args) {
+		Set<Class<?>> clzs_list = InstanceMan.getArgClasses(args);
+		return InstanceMan.callMethod(o, c, name, args, clzs_list.toArray(new Class<?>[clzs_list.size()]));
+	}
+	
+	public static Val.OneVal<Object> callMethod(Object o, String name, Object[] args, Class<?>[] clzs) {
+		return InstanceMan.callMethod(o, o.getClass(), name, args, clzs);
+	}
+	
+	public static Val.OneVal<Object> callMethod(Object o, Class<?> c, String name, Object[] args, Class<?>[] clzs) {
+		Method m = null;
 		while(c != null) {
 			try {
-				return c.getDeclaredField(name).get(this.o);
+				m = c.getDeclaredMethod(name, clzs);
+				try {
+					m.setAccessible(true);
+				} catch(Throwable t) {}
+				return new Val.OneVal<Object>(m.invoke(o, args));
 			} catch(Throwable t) {}
 			c = c.getSuperclass();
 		}
 		return null;
-		*/
-		return InstanceMan.getValue(this.o, this.c, name);
-	}
-	
-	public String[] getFields() {
-		return InstanceMan.getFields(this.c);
 	}
 	
 	
@@ -71,7 +141,9 @@ public class InstanceMan {
 		while(c != null) {
 			try {
 				f = c.getDeclaredField(name);
-				f.setAccessible(true);
+				try {
+					f.setAccessible(true);
+				} catch(Throwable t) {}
 				return f.get(o);
 			} catch(Throwable t) {}
 			c = c.getSuperclass();
@@ -88,7 +160,9 @@ public class InstanceMan {
 		while(c != null) {
 			try {
 				f = c.getDeclaredField(name);
-				f.setAccessible(true);
+				try {
+					f.setAccessible(true);
+				} catch(Throwable t) {}
 				f.set(o, newval);
 				return true;
 			} catch(Throwable t) {}
@@ -97,8 +171,10 @@ public class InstanceMan {
 		return false;
 	}
 	
-	public static String[] getFields(Class<?> c) {
-		ArrayList<String> ret = new ArrayList<String>();
+	
+	
+	public static Set<Field> getFields(Class<?> c) {
+		Set<Field> ret = new Set<Field>();
 		
 		Field[] f = null;
 		while(c != null) {
@@ -108,13 +184,86 @@ public class InstanceMan {
 					try {
 						fi.setAccessible(true);
 					} catch(Throwable t) {}
-					ret.add(fi.getName());
+					ret.addWC(fi);
 				}
 			} catch(Throwable t) {}
 			c = c.getSuperclass();
 		}
+		return ret;
+	}
+	
+	public static Set<Method> getMethods(Class<?> c) {
+		Set<Method> ret = new Set<Method>();
 		
-		return ret.toArray(new String[ret.size()]);
+		Method[] m = null;
+		while(c != null) {
+			try {
+				m = c.getDeclaredMethods();
+				for(Method mc : m) {
+					try {
+						mc.setAccessible(true);
+					} catch(Throwable t) {}
+					ret.addWC(mc);
+				}
+			} catch(Throwable t) {}
+			c = c.getSuperclass();
+		}
+		return ret;
+	}
+	
+	
+	
+	/*** API ***/
+	
+	public static Set<Class<?>> getArgClasses(Object... args) {
+		Set<Class<?>> set = new Set<Class<?>>();
+		int i = 0;
+		Object cur;
+		for(; i < args.length; i++) {
+			cur = args[i];
+			if(cur != null) {
+				set.addWC(InstanceMan.getOriginalClass(cur.getClass()));
+			} else {
+				set.addWC(null);
+			}
+		}
+		return set;
+	}
+	
+	public static Class<?> getOriginalClass(Class<?> clz) {
+		if(clz == null) {
+			return null;
+		}
+		if(!clz.isArray() && !clz.isPrimitive()) {
+			if(clz.equals(Boolean.class)) {
+				return boolean.class;
+			}
+			if(clz.equals(Byte.class)) {
+				return byte.class;
+			}
+			if(clz.equals(Short.class)) {
+				return short.class;
+			}
+			if(clz.equals(Character.class)) {
+				return char.class;
+			}
+			if(clz.equals(Integer.class)) {
+				return int.class;
+			}
+			if(clz.equals(Long.class)) {
+				return long.class;
+			}
+			if(clz.equals(Float.class)) {
+				return float.class;
+			}
+			if(clz.equals(Double.class)) {
+				return double.class;
+			}
+			if(clz.equals(Void.class)) {
+				return void.class;
+			}
+		}
+		return clz;
 	}
 	
 }

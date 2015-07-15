@@ -48,6 +48,7 @@ public class Api {
 	
 	protected static Random rand = new Random();
 	protected static Instrumentation instr;
+	protected static InstanceMan unsafe;
 	
 	public static String join(String w, String... data) {
 		StringBuilder ret = new StringBuilder();
@@ -84,14 +85,6 @@ public class Api {
 				 (ip >> 16 & 0xff),			 
 				 (ip >> 8 & 0xff),	
 				 (ip & 0xff));
-	}
-	
-	@SuppressWarnings("unchecked")
-	public static <X> X createEmptyInstance(Class<X> cls) {
-		try {
-			return (X) sun.misc.Unsafe.getUnsafe().allocateInstance(cls);
-		} catch(Throwable t) {}
-		return null;
 	}
 	
 	public static <X, Y> Map<String, String> toStringMap(Map<X, Y> map) {
@@ -526,6 +519,13 @@ public class Api {
 		return c.isAssignableFrom(o.getClass());
 	}
 	
+	public static Class<?> getClass(String name) {
+		try {
+			return (Class<?>) Class.forName(name);
+		} catch(Throwable t) {}
+		return null;
+	}
+	
 	public static Set<Class<?>> getClasses(ClassLoader cl, String pref) {
 		return Api.getClasses(new Set<Class<?>>(), cl, pref);
 	}
@@ -724,6 +724,114 @@ public class Api {
 			nevi += rand.nextInt(9);
 		}
 		return nevi;
+	}
+	
+	
+	/*** C & UNSAFE ***/
+	
+	public static InstanceMan getUnsafe() {
+		if(unsafe == null) {
+			InstanceMan im = new InstanceMan(Api.getClass("sun.misc.Unsafe"), null);
+			Object val = im.getValue("theUnsafe");
+			Api.unsafe = im;
+			if(val != null) {
+				im.reinit(val);
+			}
+		}
+		return Api.unsafe;
+	}
+	
+	public static boolean is64() {
+		Object retv = Api.getUnsafe().getValue("ADDRESS_SIZE");
+		if(retv == null) {
+			return false;
+		}
+		return ((int) ((Integer) retv) == 8);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <X> X createEmptyInstance(Class<X> cls) {
+		try {
+			return (X) getUnsafe().callMethod("allocateInstance", cls);
+		} catch(Throwable t) {}
+		return null;
+	}
+	
+	
+	/*** MEMORY ***/
+	
+	public static boolean memcpy(Object to, int posto, Object from, int posfrom, int size) {
+		try {
+			System.arraycopy(from, posfrom, to, posto, size);
+			return true;
+		} catch(Throwable t) {}
+		return false;
+	}
+	
+	public static boolean memcpy(long to, long from, long sz) {
+		return Api.getUnsafe().callMethod("copyMemory", from, to, sz) != null;
+	}
+	
+	public static boolean memset(long to, byte val, long sz) {
+		return Api.getUnsafe().callMethod("setMemory", to, sz, val) != null;
+	}
+	
+	
+	public static long malloc(long sz) {
+		Val.OneVal<Object> valr = Api.getUnsafe().callMethod("allocateMemory", sz);
+		if(valr == null) {
+			return 0;
+		}
+		return (long) ((Long) valr.one);
+	}
+	
+	public static long zalloc(long sz) {
+		Val.OneVal<Object> valr = Api.getUnsafe().callMethod("allocateMemory", sz);
+		if(valr == null) {
+			return 0;
+		}
+		long ptr = (long) ((Long) valr.one);
+		Memory.memset(ptr, Byte.MIN_VALUE, sz);
+		return ptr;
+	}
+	
+	public static long realloc(long ptr, long nevsz) {
+		Val.OneVal<Object> valr = Api.getUnsafe().callMethod("reallocateMemory", ptr, nevsz);
+		if(valr == null) {
+			return 0;
+		}
+		return (long) ((Long) valr.one);
+	}
+	
+	public static void free(long ptr) {
+		try {
+			Api.getUnsafe().callMethod("freeMemory", ptr);
+		} catch(Throwable t) {}
+	}
+	
+	
+	
+	public static long getPointer(Object obj) {
+		Object arr[] = new Object[] { obj };
+
+		Val.OneVal<Object> valr = Api.getUnsafe().callMethod("arrayBaseOffset", Object[].class);
+		if(valr == null) {
+			return 0;
+		}
+		long base_offset = (long) ((Long) valr.one);
+		
+		if(Api.is64()) {
+			valr = Api.getUnsafe().callMethod("getLong", arr, base_offset);
+			if(valr != null) {
+				return (long) ((Long) valr.one);
+			}
+		} else {
+			valr = Api.getUnsafe().callMethod("getInt", arr, base_offset);
+			if(valr != null) {
+				return (int) ((Integer) valr.one);
+			}
+		}
+		return 0;
 	}
 	
 }

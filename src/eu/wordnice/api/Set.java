@@ -76,7 +76,7 @@ public class Set<X> {
 	public boolean addWC(X val) {
 		int ns = this.size + 1;
 		Object[] lvalues = new Object[ns];
-		System.arraycopy(this.values, 0, lvalues, 0, this.size);
+		Api.memcpy(lvalues, 0, this.values, 0, this.size);
 		this.values = lvalues;
 		this.values[this.size] = val;
 		this.size++;
@@ -106,30 +106,28 @@ public class Set<X> {
 	}
 	
 	public boolean addAllWC(Object[] arr, int sz) {
-		//System.out.println("Add all: " + sz + " - " + Arrays.toString(arr));
 		if (arr == null || sz < 1) {
 			return false;
 		}
 		int si = this.size;
 		int ns = si + sz;
 		Object[] lvalues = new Object[ns];
-		System.arraycopy(this.values, 0, lvalues, 0, this.size);
-		System.arraycopy(arr, 0, lvalues, si, sz);
+		Api.memcpy(lvalues, 0, this.values, 0, this.size);
+		Api.memcpy(lvalues, si, arr, 0,  sz);
 		this.values = lvalues;
 		this.size = ns;
 		return true;
 	}
 	
 	public boolean addAllXWC(X[] arr, int sz) {
-		//System.out.println("Add all: " + sz + " - " + Arrays.toString(arr));
 		if (arr == null || sz < 1) {
 			return false;
 		}
 		int si = this.size;
 		int ns = si + sz;
 		Object[] lvalues = new Object[ns];
-		System.arraycopy(this.values, 0, lvalues, 0, this.size);
-		System.arraycopy(arr, 0, lvalues, si, sz);
+		Api.memcpy(lvalues, 0, this.values, 0, this.size);
+		Api.memcpy(lvalues, si,arr, 0,  sz);
 		this.values = lvalues;
 		this.size = ns;
 		return true;
@@ -175,8 +173,8 @@ public class Set<X> {
 		int sz1 = i;
 		int sz2 = this.size - i - 1;
 		Object[] vals = new Object[this.size - 1];
-		System.arraycopy(this.values, 0, vals, 0, sz1);
-		System.arraycopy(this.values, (sz1 + 1), vals, 0, sz2);
+		Api.memcpy(vals, 0, this.values, 0, sz1);
+		Api.memcpy(vals, 0, this.values, (sz1 + 1), sz2);
 		this.values = vals;
 		this.size--;
 		return true;
@@ -220,6 +218,31 @@ public class Set<X> {
 		}
 		s.append("}");
 		return s.toString();
+	}
+	
+	public Object[] toArray() {
+		return this.values;
+	}
+	
+	public X[] toArray(X[] arr) {
+		int size = this.size();
+		if(size > arr.length) {
+			size = arr.length;
+		}
+		return Api.memcpy(arr, 0, this.values, 0, size)
+				? arr : null;
+	}
+	
+	public X[] toArray(X[] arr, int pos, int len) {
+		int size = this.size();
+		if(size + pos > len) {
+			size = len - pos;
+			if(size < 0) {
+				return null;
+			}
+		}
+		return Api.memcpy(arr, pos, this.values, 0, size)
+				? arr : null;
 	}
 	
 	
@@ -266,25 +289,23 @@ public class Set<X> {
 			InputStream in = new FileInputStream(f);
 			Set.loadFromStream(set, new IStream(in));
 			in.close();
-		} catch(Throwable t) {
-			t.printStackTrace();
-		}
-		return set;
+			return set;
+		} catch(Throwable t) { }
+		return null;
 	}
 	
-	public static <X> Set<X> loadFromStream(IStream s) throws IOException {
+	public static <X> Set<X> loadFromStream(IStream s) throws Exception {
 		return Set.loadFromStream(new Set<X>(), s);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <X> Set<X> loadFromStream(Set<X> set, IStream s) throws IOException {
+	public static <X> Set<X> loadFromStream(Set<X> set, IStream s) throws Exception {
 		if(set == null || s == null) {
 			return null;
 		}
 		long l = s.readLong();
-		//System.out.println("LONG: " + l + " / " + Set.FILE_PREFIX);
 		if(l != Set.FILE_PREFIX) {
-			throw new IOException("Not Set<?> file!");
+			throw new Exception("Not Set file!");
 		}
 		byte b;
 		while((b = s.readByte()) > 0) {
