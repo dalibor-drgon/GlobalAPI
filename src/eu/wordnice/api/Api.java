@@ -757,6 +757,16 @@ public class Api {
 		return null;
 	}
 	
+	public static void throv(Throwable t) {
+		try {
+			if(Api.getUnsafe().callMethod("throwException", new Object[] { t }, 
+					new Class<?>[] { Throwable.class }) != null) {
+				return; //unreach
+			}
+		} catch(Throwable ign) {}
+		throw new RuntimeException(t);
+	}
+	
 	
 	/*** MEMORY ***/
 	
@@ -791,7 +801,7 @@ public class Api {
 			return 0;
 		}
 		long ptr = (long) ((Long) valr.one);
-		Memory.memset(ptr, Byte.MIN_VALUE, sz);
+		Api.memset(ptr, Byte.MIN_VALUE, sz);
 		return ptr;
 	}
 	

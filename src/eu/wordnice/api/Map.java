@@ -35,7 +35,7 @@ import eu.wordnice.sql.wndb.WNDBDecoder;
 import eu.wordnice.sql.wndb.WNDBEncoder;
 import eu.wordnice.sql.wndb.WNDBVarTypes;
 
-public class Map<X, Y> {
+public class Map<X, Y> implements Jsonizable {
 	
 	public static final long FILE_PREFIX = 13945948982L;
 
@@ -139,6 +139,13 @@ public class Map<X, Y> {
 		return true;
 	}
 	
+	public boolean addAllXYWC(X[] names, Y[] values) {
+		if(names.length != values.length) {
+			return false;
+		}
+		return this.addAllXYWC(names, values, names.length);
+	}
+	
 	public boolean addAllXYWC(X[] names, Y[] values, int size) {
 		if (names == null || values == null || size < 1) {
 			return false;
@@ -178,6 +185,16 @@ public class Map<X, Y> {
 			return false;
 		}
 		for (int i = 0; i < len; i++) {
+			this.add((X) names[i], (Y) values[i]);
+		}
+		return true;
+	}
+	
+	public boolean addAllXY(X[] names, Y[] values) {
+		if(names.length != values.length) {
+			return false;
+		}
+		for (int i = 0; i < names.length; i++) {
 			this.add((X) names[i], (Y) values[i]);
 		}
 		return true;
@@ -306,8 +323,22 @@ public class Map<X, Y> {
 		return s.toString();
 	}
 	
+	@Override
+	public void toJsonString(OutputStream out) throws IOException {
+		out.write('{');
+		for (int i = 0; i < this.size; i++) {
+			JSONEncoder.writeValue(out, this.names[i]);
+			out.write(':');
+			JSONEncoder.writeValue(out, this.values[i]);
+			if(i != (this.size - 1)) {
+				out.write(',');
+			}
+		}
+		out.write('}');
+	}
 	
-/*** Static FILE ***/
+	
+	/*** Static FILE ***/
 	
 	public static boolean writeToFile(File f, Map<?,?> set) {
 		try {

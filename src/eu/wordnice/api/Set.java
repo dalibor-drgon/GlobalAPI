@@ -36,7 +36,7 @@ import eu.wordnice.sql.wndb.WNDBDecoder;
 import eu.wordnice.sql.wndb.WNDBEncoder;
 import eu.wordnice.sql.wndb.WNDBVarTypes;
 
-public class Set<X> {
+public class Set<X> implements Jsonizable {
 	
 	public static final long FILE_PREFIX = 10945948982L;
 
@@ -119,6 +119,13 @@ public class Set<X> {
 		return true;
 	}
 	
+	public boolean addAllXWC(X[] arr) {
+		if (arr == null || arr.length < 1) {
+			return false;
+		}
+		return this.addAllXWC(arr, arr.length);
+	}
+	
 	public boolean addAllXWC(X[] arr, int sz) {
 		if (arr == null || sz < 1) {
 			return false;
@@ -151,6 +158,16 @@ public class Set<X> {
 			return false;
 		}
 		for (int i = 0; i < sz; i++) {
+			this.add((X) arr[i]);
+		}
+		return true;
+	}
+	
+	public boolean addAllX(X[] arr) {
+		if (arr == null || arr.length < 1) {
+			return false;
+		}
+		for (int i = 0; i < arr.length; i++) {
 			this.add((X) arr[i]);
 		}
 		return true;
@@ -214,10 +231,24 @@ public class Set<X> {
 		StringBuilder s = new StringBuilder("{");
 		for (int i = 0; i < this.size; i++) {
 			s.append(this.values[i]);
-			s.append(", ");
+			if(i != (this.size - 1)) {
+				s.append(", ");
+			}
 		}
 		s.append("}");
 		return s.toString();
+	}
+	
+	@Override
+	public void toJsonString(OutputStream out) throws IOException {
+		out.write('[');
+		for (int i = 0; i < this.size; i++) {
+			JSONEncoder.writeValue(out, this.values[i]);
+			if(i != (this.size - 1)) {
+				out.write(',');
+			}
+		}
+		out.write(']');
 	}
 	
 	public Object[] toArray() {

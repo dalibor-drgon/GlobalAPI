@@ -1,3 +1,27 @@
+/*
+ The MIT License (MIT)
+
+ Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+ */
+
 package eu.wordnice.sockets;
 
 import java.io.IOException;
@@ -5,12 +29,16 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import eu.wordnice.api.Api;
+import eu.wordnice.api.Handler;
+
 public class HIOServer {
 	
 	public int port;
 	public ServerSocket server;
 	public long readtimeout;
 	public boolean readpost;
+	public Handler.TwoVoidHandler<Throwable, HIO> exc_handler;
 	
 	public HIOServer(String addr, int port) throws IOException {
 		this.port = port;
@@ -42,27 +70,50 @@ public class HIOServer {
 		return null;
 	}
 	
-	public void onAccept(HIOListener ac, boolean readpost, long timeout) {
+	public void onAccept(HIOListener ac, boolean nevThread, boolean readpost, long timeout, Handler.TwoVoidHandler<Throwable, HIO> thr_handler) {
 		this.readpost = readpost;
 		this.readtimeout = timeout;
-		this.onAccept(ac);
+		this.exc_handler = thr_handler;
+		this.onAccept(ac, nevThread);
 	}
 	
-	public void onAccept(HIOListener ac) {
-		Socket sock = null;
-		HIO hio;
+	public void onAccept(final HIOListener ac, boolean nevThread) {
 		while(this.isClosed() == false) {
-			sock = this.accept();
+			final Socket sock = this.accept();
 			if(sock != null) {
-				try {
-					hio = new HIO(sock);
-					Throwable t = hio.decode(this.readpost, this.readtimeout);
-					if(t != null) {
-						throw t;
+				if(nevThread) {
+					new Thread() {
+						@Override
+						public void run() {
+							HIO hio = null;
+							try {
+								hio = new HIO(sock);
+								Throwable t = hio.decode(HIOServer.this.readpost, HIOServer.this.readtimeout);
+								if(t != null) {
+									Api.throv(t);
+								}
+								ac.onAccept(hio);
+							} catch(Throwable t) {
+								if(HIOServer.this.exc_handler != null) {
+									HIOServer.this.exc_handler.handle(t, hio);
+								}
+							}
+						}
+					}.start();
+				} else {
+					HIO hio = null;
+					try {
+						hio = new HIO(sock);
+						Throwable t = hio.decode(this.readpost, this.readtimeout);
+						if(t != null) {
+							Api.throv(t);
+						}
+						ac.onAccept(hio);
+					} catch(Throwable t) {
+						if(this.exc_handler != null) {
+							this.exc_handler.handle(t, hio);
+						}
 					}
-					ac.onAccept(hio);
-				} catch(Throwable t) {
-					System.out.println("HIO Socket server: " + t.getMessage());
 				}
 			}
 		}

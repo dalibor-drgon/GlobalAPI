@@ -26,12 +26,8 @@ package eu.wordnice.api;
 
 public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 	
-	public static void out(String s) {
-		System.out.print("[Api P] " + s);
-	}
-	
-	public static void outf(String s, Object... args) {
-		System.out.print("[Api P] " + String.format(s, args));
+	protected static void out(String s) {
+		org.bukkit.Bukkit.getLogger().info(s);
 	}
 	
 	@Override

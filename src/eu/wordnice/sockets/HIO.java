@@ -1,6 +1,31 @@
+/*
+ The MIT License (MIT)
+
+ Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all
+ copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+ */
+
 package eu.wordnice.sockets;
 
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -17,7 +42,7 @@ import eu.wordnice.api.Val;
 import eu.wordnice.api.Val.TwoVal;
 import eu.wordnice.api.threads.TimeoutInputStream;
 
-public class HIO {
+public class HIO implements Closeable {
 	
 	public static boolean BLOCK_FAVICON = true;
 	
@@ -32,26 +57,22 @@ public class HIO {
 	public Map<String,String> POST;
 	public Map<String,String> HEAD;
 	
-	public HIO(Socket sock) {
+	public HIO(Socket sock) throws IOException {
 		this.sock = sock;
-		try {
-			this.in = new IStream(sock.getInputStream());
-			this.out = new OStream(sock.getOutputStream());
-		} catch(Throwable t) {
-			throw new RuntimeException(t);
-		}
+		this.in = new IStream(sock.getInputStream());
+		this.out = new OStream(sock.getOutputStream());
 	}
 	
 	public Throwable decode(boolean readPost, long to) {
 		try {
-			this.decodeHeads(readPost, to);
+			this.decodeException(readPost, to);
 		} catch(Throwable t) {
 			return t;
 		}
 		return null;
 	}
 	
-	private void decodeHeads(boolean readPost, long to) throws Throwable {
+	public void decodeException(boolean readPost, long to) throws Throwable {
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		
 		boolean read = false;
@@ -122,6 +143,7 @@ public class HIO {
 								}
 							}
 					);
+					this.PATH = this.PATH.substring(0, zeroi);
 				}
 				
 				ei += 1;
@@ -183,6 +205,15 @@ public class HIO {
 					}
 				}
 		);
+	}
+	
+	@Override
+	public void close() throws IOException {
+		try {
+			this.in.close();
+			this.out.close();
+		} catch(Throwable t) {}
+		this.sock.close();
 	}
 	
 	
