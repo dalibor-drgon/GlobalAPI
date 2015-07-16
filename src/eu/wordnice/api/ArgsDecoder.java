@@ -55,10 +55,10 @@ public class ArgsDecoder {
 		int i2, i3; 
 		String val, name;
 		boolean can = true;
-		while (can) {
+		while(can) {
 			i2 = s.indexOf(row);
 			if (i2 < 0) {
-				if (s.length() < 1) {
+				if (s.length() == 0) {
 					return map;
 				} else {
 					i2 = s.length() - 1;
@@ -83,7 +83,11 @@ public class ArgsDecoder {
 				map.add(name, val);
 			} else if(i3 > -1) {
 				name = s.substring(0, i3);
-				val = s.substring(i3 + valname.length(), i2);
+				if(can) {
+					val = s.substring(i3 + valname.length(), i2);
+				} else {
+					val = s.substring(i3 + valname.length(), i2 + 1);
+				}
 				if (handler != null) {
 					twoval.one = name;
 					twoval.two = val;
@@ -93,7 +97,7 @@ public class ArgsDecoder {
 				}
 				map.add(name, val);
 			}
-			s = s.substring(i2 + row.length());
+			s = s.substring(i2 + row.length(), s.length());
 		}
 		return map;
 	}
