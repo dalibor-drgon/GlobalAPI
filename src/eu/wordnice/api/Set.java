@@ -42,7 +42,7 @@ public class Set<X> implements Jsonizable {
 
 	public Object[] values;
 	public Handler.OneHandler<Boolean, Val.TwoVal<X, X>> set_handler;
-	protected int size = 0;
+	public int size = 0;
 
 	public Set() {
 		this.values = new Object[0];

@@ -42,7 +42,7 @@ public class Map<X, Y> implements Jsonizable {
 	public Object[] names;
 	public Object[] values;
 	public Handler.OneHandler<Boolean, Val.FourVal<X, Y, X, Y>> set_handler;
-	protected int size = 0;
+	public int size = 0;
 
 	public Map() {
 		this.names = new Object[0];
@@ -315,11 +315,13 @@ public class Map<X, Y> implements Jsonizable {
 		StringBuilder s = new StringBuilder("{");
 		for (int i = 0; i < this.size; i++) {
 			s.append(this.names[i]);
-			s.append(":");
+			s.append(':');
 			s.append(this.values[i]);
-			s.append(", ");
+			if(i != (this.size - 1)) {
+				s.append(',');
+			}
 		}
-		s.append("}");
+		s.append('}');
 		return s.toString();
 	}
 	

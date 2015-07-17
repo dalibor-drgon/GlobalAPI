@@ -130,7 +130,7 @@ public class HIO implements Closeable {
 				zeroi = this.PATH.indexOf('?');
 				if(zeroi > -1) {
 					this.GET = new Map<String,String>();
-					ArgsDecoder.decodeString(this.GET, this.PATH.substring(zeroi + 1, this.PATH.length()), "=", "?",
+					ArgsDecoder.decodeString(this.GET, this.PATH.substring(zeroi + 1, this.PATH.length()), "=", "&",
 							new Handler.OneVoidHandler<Val.TwoVal<String, String>>() {
 								@Override
 								public void handle(TwoVal<String, String> strings) {

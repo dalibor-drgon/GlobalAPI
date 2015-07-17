@@ -26,8 +26,8 @@ package eu.wordnice.api;
 
 public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 	
-	protected static void out(String s) {
-		org.bukkit.Bukkit.getLogger().info(s);
+	protected void out(String s) {
+		this.getLogger().info(s);
 	}
 	
 	@Override
@@ -37,12 +37,12 @@ public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 			out("System class loaded has " + Api.getLoadedClasses(Api.getClassLoader()).length + " classes!");
 			out("Totaly loaded " + Api.getAllLoadedClasses().length + " classes!");
 		} catch(Throwable t) {}
-		out("Main<WordNice>Api is enabled! Hello!");
+		out("MainAPI by wordnice is enabled! Hello!");
 	}
 	
 	@Override
 	public void onDisable() {
-		out("Main<WordNice>Api is disabled! Bye!");
+		out("MainAPI by wordnice was disabled! Bye!");
 	}
 	
 }
