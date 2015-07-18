@@ -26,6 +26,7 @@ package eu.wordnice.api;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 public class InstanceMan {
 	
@@ -90,6 +91,9 @@ public class InstanceMan {
 	}
 	
 	
+	public <X> Map<String, X> getValues(Class<X> ext) {
+		return InstanceMan.getValues(this.o, this.c, ext);
+	}
 	
 	public Set<Field> getFields() {
 		return InstanceMan.getFields(this.c);
@@ -163,6 +167,9 @@ public class InstanceMan {
 				try {
 					f.setAccessible(true);
 				} catch(Throwable t) {}
+				try {
+					f.setInt(f, f.getModifiers() & ~Modifier.FINAL);
+				} catch(Throwable t) {}
 				f.set(o, newval);
 				return true;
 			} catch(Throwable t) {}
@@ -172,6 +179,61 @@ public class InstanceMan {
 	}
 	
 	
+	public static <X> Map<String, X> getValues(Object o, Class<X> ext) {
+		return InstanceMan.getValues(o, o.getClass(), ext);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <X> Map<String, X> getValues(Object o, Class<?> c, Class<X> ext) {
+		Map<String, X> ret = new Map<String, X>();
+		
+		Field[] f = null;
+		Object val = null;
+		if(ext == null) {
+			Object[] vals = new Object[1];
+			Object[] nams = new Object[1];
+			while(c != null) {
+				try {
+					f = c.getDeclaredFields();
+					for(Field fi : f) {
+						try {
+							fi.setAccessible(true);
+						} catch(Throwable t) {}
+						try {
+							vals[0] = fi.get(o);
+							nams[0] = fi.getName();
+							ret.addAllWC(nams, vals, 1);
+						} catch(Throwable t) {}
+					}
+				} catch(Throwable t) {}
+				c = c.getSuperclass();
+			}
+		} else {
+			while(c != null) {
+				try {
+					f = c.getDeclaredFields();
+					for(Field fi : f) {
+						try {
+							fi.setAccessible(true);
+						} catch(Throwable t) {}
+						try {
+							fi.setInt(fi, fi.getModifiers() & ~Modifier.FINAL);
+						} catch(Throwable t) {}
+						try {
+							val = fi.get(o);
+							if(val != null) {
+								if(ext.isAssignableFrom(fi.getType())) {
+									ret.addWC(fi.getName(), (X) val);
+								}
+							}
+						} catch(Throwable t) {}
+					}
+				} catch(Throwable t) {}
+				c = c.getSuperclass();
+			}
+		}
+		return ret;
+	}
 	
 	public static Set<Field> getFields(Class<?> c) {
 		Set<Field> ret = new Set<Field>();
@@ -183,6 +245,9 @@ public class InstanceMan {
 				for(Field fi : f) {
 					try {
 						fi.setAccessible(true);
+					} catch(Throwable t) {}
+					try {
+						fi.setInt(fi, fi.getModifiers() & ~Modifier.FINAL);
 					} catch(Throwable t) {}
 					ret.addWC(fi);
 				}

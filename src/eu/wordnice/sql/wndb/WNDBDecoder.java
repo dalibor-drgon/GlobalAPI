@@ -24,9 +24,9 @@
 
 package eu.wordnice.sql.wndb;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
 import eu.wordnice.api.IStream;
@@ -59,7 +59,7 @@ public class WNDBDecoder {
 			return null;
 		}
 		Set<WNDBVarTypes> ret = new Set<WNDBVarTypes>();
-		if(set.size() < 1) {
+		if(set.size() == 0) {
 			return ret;
 		}
 		
@@ -70,177 +70,154 @@ public class WNDBDecoder {
 		return ret;
 	}
 
-	public static Set<Map<String, Object>> readFileData(File f) {
+	public static Set<Map<String, Object>> readFileData(File f) throws Exception {
+		InputStream fin = new FileInputStream(f);
+		IStream in = new IStream(new BufferedInputStream(fin));
+		Set<Map<String, Object>> ret = WNDBDecoder.readInputStreamData(in);
+		in.close();
 		try {
-			InputStream fin = new FileInputStream(f);
-			IStream in = new IStream(fin);
-			Set<Map<String, Object>> ret = WNDBDecoder.readInputStreamData(in);
 			fin.close();
-			return ret;
-		} catch (Throwable t) {
-			t.printStackTrace();
-		}
-		return null;
+		} catch(Throwable t) {}
+		return ret;
 	}
 	
-	public static Val.TwoVal<Set<String>, Set<Byte>> readInputStreamTypes(IStream in) {
-		try {
-			long type = in.readLong();
-			if (type != WNDBDecoder.STATIC_DB_PREFIX) {
-				throw new Exception("Isnt WNSQL stream!");
-			}
-
-			byte bt = in.readByte();
-			if (bt < 1) {
-				return null;
-			}
-
-			Set<String> names = new Set<String>();
-			Set<Byte> types = new Set<Byte>();
-			for (byte i = 0; i < bt; i++) {
-				names.addWC(in.readString());
-				types.addWC(in.readByte());
-			}
-			return new Val.TwoVal<Set<String>, Set<Byte>>(names, types);
-		} catch(Throwable t) {
-			t.printStackTrace();
+	public static Val.TwoVal<Set<String>, Set<Byte>> readInputStreamTypes(IStream in) throws Exception {
+		long type = in.readLong();
+		if (type != WNDBDecoder.STATIC_DB_PREFIX) {
+			throw new Exception("Not WNDB format!");
 		}
-		return null;
+			
+		int bt = in.readInt();
+		if (bt < 1) {
+			return null;
+		}
+			
+		Set<String> names = new Set<String>();
+		Set<Byte> types = new Set<Byte>();
+		int i = 0;
+		for (; i < bt; i++) {
+			names.addWC(in.readString());
+			types.addWC(in.readByte());
+		}
+		return new Val.TwoVal<Set<String>, Set<Byte>>(names, types);
 	}
 	
-	public static Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> readFileRawData(File f) {
+	public static Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> readFileRawData(File f) throws Exception {
+		InputStream fin = new FileInputStream(f);
+		IStream in = new IStream(new BufferedInputStream(fin));
+		Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> ret = WNDBDecoder.readInputStreamRawData(in);
+		in.close();
 		try {
-			InputStream fin = new FileInputStream(f);
-			IStream in = new IStream(fin);
-			Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> ret = WNDBDecoder.readInputStreamRawData(in);
 			fin.close();
-			return ret;
-		} catch (Throwable t) {
-			t.printStackTrace();
-		}
-		return null;
+		} catch(Throwable t) {}
+		return ret;
 	}
 	
-	public static Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> readInputStreamRawData(IStream in) {
-		try {
-			long type = in.readLong();
-			if (type != WNDBDecoder.STATIC_DB_PREFIX) {
-				throw new Exception("Isnt WNSQL stream!");
-			}
-
-			byte bt = in.readByte();
-			if (bt < 1) {
-				return null;
-			}
-
-			Set<String> names = new Set<String>();
-			Set<WNDBVarTypes> types = new Set<WNDBVarTypes>();
-			for (byte i = 0; i < bt; i++) {
-				names.addWC(in.readString());
-				types.addWC(WNDBVarTypes.getByByte(in.readByte()));
-			}
-			
-			byte b;
-			Set<Set<Object>> data = new Set<Set<Object>>();
-			Set<Object> curset;
-			while (in.readByte() == 1) {
-				curset = new Set<Object>();
-				for(b = 0; b < bt; b++) {
-					curset.addWC(WNDBDecoder.readObject(in, types.get(b)));
-				}
-				data.addWC(curset);
-			}
-			
-			return new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(names, types, data);
-		} catch(Throwable t) {
-			t.printStackTrace();
+	public static Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> readInputStreamRawData(IStream in) throws Exception {
+		long type = in.readLong();
+		if (type != WNDBDecoder.STATIC_DB_PREFIX) {
+			throw new Exception("Not WNDB format!");
 		}
-		return null;
+
+		int bt = in.readInt();
+		if (bt < 1) {
+			return null;
+		}
+
+		Set<String> names = new Set<String>();
+		Set<WNDBVarTypes> types = new Set<WNDBVarTypes>();
+		for (byte i = 0; i < bt; i++) {
+			names.addWC(in.readString());
+			types.addWC(WNDBVarTypes.getByByte(in.readByte()));
+		}
+			
+		int b = 0;
+		int i = 0;
+		Set<Set<Object>> data = new Set<Set<Object>>();
+		Set<Object> curset;
+		while (in.readByte() == 1) {
+			curset = new Set<Object>();
+			for(b = 0; b < bt; b++) {
+				curset.addWC(WNDBDecoder.readObject(in, types.get(b), i, b));
+			}
+			data.addWC(curset);
+			i++;
+		}
+		
+		return new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(names, types, data);
 	}
 	
-	public static Set<Set<Object>> readInputStreamValues(IStream in) {
-		try {
-			long type = in.readLong();
-			if (type != WNDBDecoder.STATIC_DB_PREFIX) {
-				throw new Exception("Isnt WNSQL stream!");
-			}
-
-			byte bt = in.readByte();
-			if (bt < 1) {
-				return null;
-			}
-
-			//Set<String> names = new Set<String>();
-			Set<WNDBVarTypes> types = new Set<WNDBVarTypes>();
-			for (byte i = 0; i < bt; i++) {
-				in.readString();
-				types.addWC(WNDBVarTypes.getByByte(in.readByte()));
-			}
-			
-			byte b;
-			Set<Set<Object>> data = new Set<Set<Object>>();
-			Set<Object> curset;
-			while (in.readByte() == 1) {
-				curset = new Set<Object>();
-				for(b = 0; b < bt; b++) {
-					curset.addWC(WNDBDecoder.readObject(in, types.get(b)));
-				}
-				data.addWC(curset);
-			}
-			
-			return data;
-		} catch(Throwable t) {
-			t.printStackTrace();
+	public static Set<Set<Object>> readInputStreamValues(IStream in) throws Exception {
+		long type = in.readLong();
+		if (type != WNDBDecoder.STATIC_DB_PREFIX) {
+			throw new Exception("Not WNDB format!");
 		}
-		return null;
+			
+		int bt = in.readInt();
+		if (bt < 1) {
+			return null;
+		}
+
+		Set<WNDBVarTypes> types = new Set<WNDBVarTypes>();
+		for (byte i = 0; i < bt; i++) {
+			in.readString();
+			types.addWC(WNDBVarTypes.getByByte(in.readByte()));
+		}
+		
+		int b = 0;
+		int i = 0;
+		Set<Set<Object>> data = new Set<Set<Object>>();
+		Set<Object> curset;
+		while (in.readByte() == 1) {
+			curset = new Set<Object>();
+			for(b = 0; b < bt; b++) {
+				curset.addWC(WNDBDecoder.readObject(in, types.get(b), i, b));
+			}
+			data.addWC(curset);
+			i++;
+		}
+		
+		return data;
 	}
 
-	public static Set<Map<String, Object>> readInputStreamData(IStream in) {
-		try {
-			long type = in.readLong();
-			if (type != WNDBDecoder.STATIC_DB_PREFIX) {
-				throw new Exception("Isnt WNSQL stream!");
-			}
-
-			byte bt = in.readByte();
-			if (bt < 1) {
-				return null;
-			}
-
-			Set<String> names = new Set<String>();
-			Set<WNDBVarTypes> types = new Set<WNDBVarTypes>();
-			for (byte i = 0; i < bt; i++) {
-				names.addWC(in.readString());
-				types.addWC(WNDBVarTypes.getByByte(in.readByte()));
-			}
-
-			byte b;
-			Set<Map<String, Object>> data = new Set<Map<String, Object>>();
-			Map<String, Object> curmap;
-			while (in.readByte() == 1) {
-				curmap = new Map<String, Object>();
-				for(b = 0; b < bt; b++) {
-					curmap.addWC(names.get(b), WNDBDecoder.readObject(in, types.get(b)));
-				}
-				data.addWC(curmap);
-			}
-			return data;
-			
-		} catch (Throwable t) {
-			t.printStackTrace();
+	public static Set<Map<String, Object>> readInputStreamData(IStream in) throws Exception {
+		long type = in.readLong();
+		if (type != WNDBDecoder.STATIC_DB_PREFIX) {
+			throw new Exception("Not WNDB format!");
 		}
 
-		return null;
+		int bt = in.readInt();
+		if (bt < 1) {
+			return null;
+		}
+
+		Set<String> names = new Set<String>();
+		Set<WNDBVarTypes> types = new Set<WNDBVarTypes>();
+		for (byte i = 0; i < bt; i++) {
+			names.addWC(in.readString());
+			types.addWC(WNDBVarTypes.getByByte(in.readByte()));
+		}
+
+		int i = 0;
+		int b = 0;
+		Set<Map<String, Object>> data = new Set<Map<String, Object>>();
+		Map<String, Object> curmap;
+		while (in.readByte() == 1) {
+			curmap = new Map<String, Object>();
+			for(b = 0; b < bt; b++) {
+				curmap.addWC(names.get(b), WNDBDecoder.readObject(in, types.get(b), i, b));
+			}
+			data.addWC(curmap);
+			i++;
+		}
+		return data;
 	}
 	
-	public static Object readObject(IStream in, Byte type) throws IOException {
-		return WNDBDecoder.readObject(in, WNDBVarTypes.getByByte(type));
+	public static Object readObject(IStream in, Byte type, int ri, int vi) throws Exception {
+		return WNDBDecoder.readObject(in, WNDBVarTypes.getByByte(type), ri, vi);
 	}
 
-	public static Object readObject(IStream in, WNDBVarTypes typ) throws IOException {
-		//WNDBVarTypes typ = WNDBVarTypes.getByByte(type);
-		//System.out.println("TYP: " + typ);
-		if(typ == null) {}
+	public static Object readObject(IStream in, WNDBVarTypes typ, int ri, int vi) throws Exception {
 		switch(typ) {
 			case BOOLEAN:
 				return in.readBoolean();
@@ -261,6 +238,6 @@ public class WNDBDecoder {
 			case BYTES:
 				return in.readBytes();
 		}
-		return null;
+		throw new Exception("Cannot read object at " + ri + ":" + vi + " - unsupported type " + typ.name());
 	}
 }

@@ -24,6 +24,8 @@
 
 package eu.wordnice.api;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -279,17 +281,18 @@ public class Set<X> implements Jsonizable {
 	
 	/*** Static FILE ***/
 	
-	public static boolean writeToFile(File f, Set<?> set) {
+	public static boolean writeToFile(File f, Set<?> set) throws Exception {
+		OutputStream out = new FileOutputStream(f);
+		OStream ost = new OStream(new BufferedOutputStream(out));
+		boolean ret = Set.writeToStream(ost, set);
+		ost.close();
 		try {
-			OutputStream out = new FileOutputStream(f);
-			boolean ret = Set.writeToStream(new OStream(out), set);
 			out.close();
-			return ret;
 		} catch(Throwable t) {}
-		return false;
+		return ret;
 	}
 	
-	public static boolean writeToStream(OStream o, Set<?> set) throws IOException {
+	public static boolean writeToStream(OStream o, Set<?> set) throws Exception {
 		o.writeLong(Set.FILE_PREFIX);
 		Object obj;
 		WNDBVarTypes t;
@@ -301,28 +304,29 @@ public class Set<X> implements Jsonizable {
 					return false;
 				}
 				o.writeByte(t.b);
-				WNDBEncoder.writeObject(o, obj, t);
+				WNDBEncoder.writeObject(o, obj, t, 0, i);
 			}
 		}
-		o.writeBoolean(false);
+		o.writeByte((byte) 0);
 		return true;
 	}
 	
-	public static <X> Set<X> loadFromFile(File f) {
+	public static <X> Set<X> loadFromFile(File f) throws Exception {
 		return Set.loadFromFile(new Set<X>(), f);
 	}
 	
-	public static <X> Set<X> loadFromFile(Set<X> set, File f) {
+	public static <X> Set<X> loadFromFile(Set<X> set, File f) throws Exception {
 		if(set == null || f == null || f.isFile() == false) {
-			return null;
+			throw new NullPointerException("File or set is null!");
 		}
+		InputStream in = new FileInputStream(f);
+		IStream ins = new IStream(new BufferedInputStream(in));
+		Set.loadFromStream(set, ins);
+		ins.close();
 		try {
-			InputStream in = new FileInputStream(f);
-			Set.loadFromStream(set, new IStream(in));
 			in.close();
-			return set;
-		} catch(Throwable t) { }
-		return null;
+		} catch(Throwable t) {}
+		return set;
 	}
 	
 	public static <X> Set<X> loadFromStream(IStream s) throws Exception {
@@ -336,11 +340,13 @@ public class Set<X> implements Jsonizable {
 		}
 		long l = s.readLong();
 		if(l != Set.FILE_PREFIX) {
-			throw new Exception("Not Set file!");
+			throw new Exception("Not SET format!");
 		}
 		byte b;
+		int i = 0;
 		while((b = s.readByte()) > 0) {
-			set.addWC((X) WNDBDecoder.readObject(s, b));
+			set.addWC((X) WNDBDecoder.readObject(s, b, 0, i));
+			i++;
 		}
 		
 		return set;

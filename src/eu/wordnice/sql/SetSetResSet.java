@@ -31,7 +31,7 @@ public class SetSetResSet extends SimpleResSet {
 
 	public Set<Set<Object>> values;
 	public Set<String> names;
-	public Integer i;
+	public Integer i = null;
 
 	public SetSetResSet() { }
 

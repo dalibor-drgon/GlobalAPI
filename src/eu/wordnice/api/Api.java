@@ -481,9 +481,19 @@ public class Api {
 		return file.substring((i + 1), file.length());
 	}
 	
+	public static File getFreeName(String old) {
+		long i = 1;
+		File nev = null;
+		while(true) {
+			nev = new File(old + i);
+			if(!nev.exists()) {
+				return nev;
+			}
+		}
+	}
 	
 	
-	
+	/*** CLASS LOADERS ***/
 	public static ClassLoader getClassLoader() {
 		return ClassLoader.getSystemClassLoader();
 	}
@@ -641,6 +651,14 @@ public class Api {
 			sb.append(in.substring(laste, in.length()));
 		}
 		return sb.toString();
+	}
+	
+	public static boolean equalStrings(String in, String p) {
+		return Api.equalStrings(in, Pattern.compile(p));
+	}
+	
+	public static boolean equalStrings(String in, Pattern p) {
+		return p.matcher(in).find();
 	}
 	
 	

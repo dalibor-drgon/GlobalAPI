@@ -24,6 +24,8 @@
 
 package eu.wordnice.api;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -342,17 +344,18 @@ public class Map<X, Y> implements Jsonizable {
 	
 	/*** Static FILE ***/
 	
-	public static boolean writeToFile(File f, Map<?,?> set) {
+	public static boolean writeToFile(File f, Map<?,?> set) throws Exception {
+		OutputStream out = new FileOutputStream(f);
+		OStream ost = new OStream(new BufferedOutputStream(out));
+		boolean ret = Map.writeToStream(ost, set);
+		ost.close();
 		try {
-			OutputStream out = new FileOutputStream(f);
-			boolean ret = Map.writeToStream(new OStream(out), set);
 			out.close();
-			return ret;
 		} catch(Throwable t) {}
-		return false;
+		return ret;
 	}
 	
-	public static boolean writeToStream(OStream o, Map<?,?> set) throws IOException {
+	public static boolean writeToStream(OStream o, Map<?,?> set) throws Exception {
 		o.writeLong(Map.FILE_PREFIX);
 		Object obj1;
 		Object obj2;
@@ -369,8 +372,8 @@ public class Map<X, Y> implements Jsonizable {
 				}
 				o.writeByte(t1.b);
 				o.writeByte(t2.b);
-				WNDBEncoder.writeObject(o, obj1, t1);
-				WNDBEncoder.writeObject(o, obj2, t2);
+				WNDBEncoder.writeObject(o, obj1, t1, 0, i);
+				WNDBEncoder.writeObject(o, obj2, t2, 0, i);
 			}
 		}
 		o.writeBoolean(false);
@@ -387,33 +390,39 @@ public class Map<X, Y> implements Jsonizable {
 		}
 		try {
 			InputStream in = new FileInputStream(f);
-			Map.loadFromStream(map, new IStream(in));
-			in.close();
+			IStream ins = new IStream(new BufferedInputStream(in));
+			Map.loadFromStream(map, ins);
+			ins.close();
+			try {
+				in.close();
+			} catch(Throwable t) {}
 		} catch(Throwable t) {}
 		return map;
 	}
 	
-	public static <X,Y> Map<X,Y> loadFromStream(IStream s) throws IOException {
+	public static <X,Y> Map<X,Y> loadFromStream(IStream s) throws Exception {
 		return Map.loadFromStream(new Map<X,Y>(), s);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <X,Y> Map<X,Y> loadFromStream(Map<X,Y> map, IStream s) throws IOException {
+	public static <X,Y> Map<X,Y> loadFromStream(Map<X,Y> map, IStream s) throws Exception {
 		if(map == null || s == null) {
 			return null;
 		}
 		long l = s.readLong();
 		if(l != Map.FILE_PREFIX) {
-			throw new IOException("Not Map<?,?> file!");
+			throw new Exception("Not MAP format!");
 		}
 		byte b;
 		byte b2;
 		Object o1, o2;
+		int i = 0;
 		while((b = s.readByte()) > 0) {
 			b2 = s.readByte();
-			o1 = WNDBDecoder.readObject(s, b);
-			o2 = WNDBDecoder.readObject(s, b2);
+			o1 = WNDBDecoder.readObject(s, b, 0, i);
+			o2 = WNDBDecoder.readObject(s, b2, 0, i);
 			map.addWC((X) o1, (Y) o2);
+			i++;
 		}
 		
 		return map;

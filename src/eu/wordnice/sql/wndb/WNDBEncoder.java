@@ -24,9 +24,9 @@
 
 package eu.wordnice.sql.wndb;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 
 import eu.wordnice.api.OStream;
@@ -35,76 +35,61 @@ import eu.wordnice.api.Val;
 
 public class WNDBEncoder {
 
-	public static boolean writeFileData(File f, 
-			Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals) {
+	public static void writeFileData(File f, 
+			Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals) throws Exception {
 		if(vals == null || f == null) {
-			return false;
+			throw new NullPointerException("File or values are null!");
 		}
+		OutputStream fout = new FileOutputStream(f);
+		OStream out = new OStream(new BufferedOutputStream(fout));
+		WNDBEncoder.writeOutputStreamData(out, vals);
+		out.close();
 		try {
-			OutputStream fout = new FileOutputStream(f);
-			OStream out = new OStream(fout);
-			boolean ret = WNDBEncoder.writeOutputStreamData(out, vals);
 			fout.close();
-			return ret;
-		} catch (Throwable t) {
-			t.printStackTrace();
-		}
-		return false;
+		} catch(Throwable t) {}
 	}
 	
-	public static boolean writeOutputStreamData(OStream out, 
-			Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals) {
-		if(vals == null) {
-			//System.out.println("VALS == NULL!");
-			return false;
-		}
-		//System.out.println("ARGS: " + vals.one + "\n" + vals.two + "\n" + vals.three);
+	public static void writeOutputStreamData(OStream out, 
+			Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals) throws Exception {
 		if(out == null || vals == null || 
 				vals.one == null || vals.two == null || vals.three == null ||
 				vals.one.size() < 1 || vals.two.size() < 1 || (vals.one.size() != vals.two.size())) {
-			return false;
+			throw new NullPointerException("File or values are null!");
 		}
-		try {
-			out.writeLong(WNDBDecoder.STATIC_DB_PREFIX);
-			byte sz = (byte) vals.one.size();
-			out.writeByte(sz);
-			
-			for(byte b = 0; b < sz; b++) {
-				out.writeString(vals.one.get(b));
-				out.writeByte(vals.two.get(b).b);
-			}
-			
-			int maxi = vals.three.size();
-			Set<Object> curset;
-			for(int i = 0; i < maxi; i++) {
-				curset = vals.three.get(i);
-				if(curset == null || curset.size() < sz) {
-					throw new Exception("curSet == NULL or has invalid size (is smaller than required)");
-				}
-				out.writeBoolean(true);
-				for(byte b = 0; b < sz; b++) {
-					WNDBEncoder.writeObject(out, curset.get(b), vals.two.get(b));
-				}
-			}
-			out.writeBoolean(false);
-			
-			return true;
-		} catch(Throwable t) {
-			t.printStackTrace();
+		out.writeLong(WNDBDecoder.STATIC_DB_PREFIX);
+		int sz = vals.one.size();
+		out.writeInt(sz);
+		
+		for(byte b = 0; b < sz; b++) {
+			out.writeString(vals.one.get(b));
+			out.writeByte(vals.two.get(b).b);
 		}
-		return false;
+			
+		int maxi = vals.three.size();
+		Set<Object> curset;
+		int i = 0;
+		int i2 = 0;
+		for(; i < maxi; i++) {
+			curset = vals.three.get(i);
+			if(curset == null || curset.size() < sz) {
+				throw new Exception("value set at " + i + " is null or has invalid size");
+			}
+			out.writeBoolean(true);
+			for(i2 = 0; i2 < curset.size(); i2++) {
+				WNDBEncoder.writeObject(out, curset.get(i2), vals.two.get(i2), i, i2);
+			}
+		}
+		out.writeBoolean(false);
 	}
 	
 	
-	public static void writeObject(OStream out, Object obj, Byte type) throws IOException {
-		WNDBEncoder.writeObject(out, obj, WNDBVarTypes.getByByte(type));
+	public static void writeObject(OStream out, Object obj, Byte type, int ri, int vi) throws Exception {
+		WNDBEncoder.writeObject(out, obj, WNDBVarTypes.getByByte(type), ri, vi);
 	}
 
-	public static void writeObject(OStream out, Object obj, WNDBVarTypes typ) throws IOException {
-		//WNDBVarTypes typ = WNDBVarTypes.getByByte(type);
-		boolean has = (obj == null || WNDBVarTypes.isAssignable(typ, obj));
-		if(has == false) {
-			throw new IOException("OBJECT - class\"" + obj.getClass() + "\" - is not assignable for type " + typ.name());
+	public static void writeObject(OStream out, Object obj, WNDBVarTypes typ, int ri, int vi) throws Exception {
+		if(obj != null && !WNDBVarTypes.isAssignable(typ, obj)) {
+			throw new Exception("Cannot write object at " + ri + ":" + vi + ", class " + obj.getClass().getName() + " - is not assignable for type " + typ.name());
 		}
 		switch(typ) {
 			case BOOLEAN:
@@ -162,6 +147,7 @@ public class WNDBEncoder {
 				out.writeBytes((byte[]) obj);
 				return;
 		}
+		throw new Exception("Cannot write object at " + ri + ":" + vi + ", class " + obj.getClass().getName() + " - unsupported type " + typ.name());
 	}
 	
 }

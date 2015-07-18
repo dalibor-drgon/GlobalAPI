@@ -26,7 +26,6 @@ package eu.wordnice.sql.wndb;
 
 import java.io.File;
 
-import eu.wordnice.api.Api;
 import eu.wordnice.api.Set;
 import eu.wordnice.api.Val;
 import eu.wordnice.api.Val.ThreeVal;
@@ -34,15 +33,15 @@ import eu.wordnice.sql.SetSetResSet;
 
 public class WNDB extends SetSetResSet {
 
-	public File file;
-	//public Set<String> names;
-	public Set<WNDBVarTypes> types;
-	//public Set<Set<Object>> values;
-	//public ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals;
+	public File file = null;
+	public Set<WNDBVarTypes> types = null;
 	public boolean changed = false;
-	//public Integer i;
 	
-	protected WNDB() {}
+	public WNDB() {
+		//For hackers
+		this.changed = false;
+		this.file = null;
+	}
 
 	public WNDB(String file) {
 		this(new File(file));
@@ -54,12 +53,19 @@ public class WNDB extends SetSetResSet {
 	
 	
 	
-	public boolean save() {
-		boolean ret = WNDBEncoder.writeFileData(this.file, new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(this.names, this.types, this.values));
-		if(ret) {
-			this.changed = false;
+	public void save() throws Exception {
+		if(this.file == null) {
+			return;
 		}
-		return ret;
+		WNDBEncoder.writeFileData(this.file, new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(this.names, this.types, this.values));
+		this.changed = false;
+	}
+	
+	public void saveIfChanged() throws Exception {
+		if(this.changed) {
+			return;
+		}
+		this.save();
 	}
 	
 	public WNDBVarTypes getValueType(int i) {
@@ -104,15 +110,22 @@ public class WNDB extends SetSetResSet {
 	}
 	
 	@Override
-	protected void checkSet() {
+	public void checkSet() {
 		if(this.values == null || this.names == null || this.types == null) {
-			if(this.file.exists() == false) {
-				throw new RuntimeException("File \"" + Api.getRealPath(this.file) + "\" doesnt exist!");
+			if(this.file == null) {
+				throw new NullPointerException("File is null");
 			}
-			ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals = WNDBDecoder.readFileRawData(this.file);
-			this.names = vals.one;
-			this.types = vals.two;
-			this.values = vals.three;
+			try {
+				if(!this.file.exists()) {
+					this.file.createNewFile();
+				}
+				ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals = WNDBDecoder.readFileRawData(this.file);
+				this.names = vals.one;
+				this.types = vals.two;
+				this.values = vals.three;
+			} catch(Throwable t) {
+				throw new RuntimeException(t);
+			}
 		}
 	}
 	
@@ -137,18 +150,15 @@ public class WNDB extends SetSetResSet {
 	
 	/*** Static CREATE ***/
 	
-	public static WNDB createWBDB(File f, Set<String> names, Set<Byte> types) throws Exception {
-		return WNDB.createWBDB_(f, names, WNDBDecoder.getBytesToVarTypes(types));
+	public static WNDB createWBDB_(File f, Set<String> names, Set<Byte> types) throws Exception {
+		return WNDB.createWBDB(f, names, WNDBDecoder.getBytesToVarTypes(types));
 	}
 	
-	public static WNDB createWBDB_(File f, Set<String> names, Set<WNDBVarTypes> types) throws Exception {
+	public static WNDB createWBDB(File f, Set<String> names, Set<WNDBVarTypes> types) throws Exception {
 		f.createNewFile();
 		Set<Set<Object>> vals = new Set<Set<Object>>();
 		Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> threevals = new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(names, types, vals);
-		boolean data = WNDBEncoder.writeFileData(f, threevals);
-		if(data == false) {
-			throw new Exception("STATUS_WRITE[data] == FALSE");
-		}
+		WNDBEncoder.writeFileData(f, threevals);
 		WNDB ret = new WNDB(f);
 		ret.names = names;
 		ret.types = types;
