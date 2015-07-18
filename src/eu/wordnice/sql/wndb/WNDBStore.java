@@ -54,6 +54,26 @@ public abstract class WNDBStore {
 		}
 	}
 	
+	public void loadEmptyDBs() {
+		Map<String, WNDB> dbs = this.getDBs();
+		int i = 0;
+		String name = null;
+		this.out("Due to some fatal errors occured, we are simulating configs...");
+		for(; i < dbs.size(); i++) {
+			name = dbs.getNameI(i);
+			this.out("Creating simulated config " + name + "!");
+			try {
+				loadEmptyDB(name);
+			} catch(Throwable t) {
+				this.err("This is really embarrassing... "
+						+ "We cannot simulate this database...  Details: ");
+				t.printStackTrace();
+				continue;
+			}
+			this.out("Simulated config created!");
+		}
+	}
+	
 	public void loadEmptyDB(String name) throws Exception {
 		@SuppressWarnings("unchecked")
 		Set<WNDBVarTypes> set_types = (Set<WNDBVarTypes>) InstanceMan.getValue(
@@ -163,7 +183,7 @@ public abstract class WNDBStore {
 			if(file.exists()) {
 				try {
 					File moveto = Api.getFreeName(Api.getRealPath(file) + ".invalid");
-					this.out("Save unsaved dbs: old database renamed to '" + Api.getRealPath(moveto) 
+					this.out("Save unsaved db: old database renamed to '" + Api.getRealPath(moveto) 
 							+ "' and we are going to create new one!");
 					file.renameTo(moveto);
 				} catch(Throwable t) {
