@@ -26,6 +26,10 @@ package eu.wordnice.api;
 
 public interface Handler {
 	
+	static interface ZeroHandler<R> {
+		public R handle();
+	}
+	
 	static interface OneHandler<R, X> {
 		public R handle(X x);
 	}
@@ -50,6 +54,11 @@ public interface Handler {
 		public R handle(X x, Y y, Z z, A a, B b, C c);
 	}
 	
+	
+	
+	static interface ZeroVoidHandler {
+		public void handle();
+	}
 	
 	static interface OneVoidHandler<X> {
 		public void handle(X x);

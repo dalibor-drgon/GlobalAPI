@@ -36,6 +36,7 @@ public class WNDB extends SetSetResSet {
 	public File file = null;
 	public Set<WNDBVarTypes> types = null;
 	public boolean changed = false;
+	public long timeout = 2000;
 	
 	public WNDB() {
 		//For hackers
@@ -57,7 +58,7 @@ public class WNDB extends SetSetResSet {
 		if(this.file == null) {
 			return;
 		}
-		WNDBEncoder.writeFileData(this.file, new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(this.names, this.types, this.values));
+		WNDBEncoder.writeFileData(this.file, new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(this.names, this.types, this.values), this.timeout);
 		this.changed = false;
 	}
 	
@@ -119,7 +120,7 @@ public class WNDB extends SetSetResSet {
 				if(!this.file.exists()) {
 					this.file.createNewFile();
 				}
-				ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals = WNDBDecoder.readFileRawData(this.file);
+				ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals = WNDBDecoder.readFileRawData(this.file, this.timeout);
 				this.names = vals.one;
 				this.types = vals.two;
 				this.values = vals.three;
@@ -150,15 +151,15 @@ public class WNDB extends SetSetResSet {
 	
 	/*** Static CREATE ***/
 	
-	public static WNDB createWBDB_(File f, Set<String> names, Set<Byte> types) throws Exception {
-		return WNDB.createWBDB(f, names, WNDBDecoder.getBytesToVarTypes(types));
+	public static WNDB createWBDB_(File f, Set<String> names, Set<Byte> types, long timeout) throws Exception {
+		return WNDB.createWBDB(f, names, WNDBDecoder.getBytesToVarTypes(types), timeout);
 	}
 	
-	public static WNDB createWBDB(File f, Set<String> names, Set<WNDBVarTypes> types) throws Exception {
+	public static WNDB createWBDB(File f, Set<String> names, Set<WNDBVarTypes> types, long timeout) throws Exception {
 		f.createNewFile();
 		Set<Set<Object>> vals = new Set<Set<Object>>();
 		Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> threevals = new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(names, types, vals);
-		WNDBEncoder.writeFileData(f, threevals);
+		WNDBEncoder.writeFileData(f, threevals, timeout);
 		WNDB ret = new WNDB(f);
 		ret.names = names;
 		ret.types = types;

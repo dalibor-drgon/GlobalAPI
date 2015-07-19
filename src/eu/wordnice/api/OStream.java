@@ -58,49 +58,23 @@ public class OStream extends OutputStream {
 	}
 
 	public void writeLong(long value) throws IOException {
-		/*
-		this.write(new byte[] { (byte) (value >> 56), (byte) (value >> 48),
-				(byte) (value >> 40), (byte) (value >> 32),
-				(byte) (value >> 24), (byte) (value >> 16),
-				(byte) (value >> 8), (byte) value });
-		*/
 		this.write(new byte[] { (byte) value, (byte) (value >> 8),
 				(byte) (value >> 16), (byte) (value >> 24),
 				(byte) (value >> 32), (byte) (value >> 40),
 				(byte) (value >> 48), (byte) (value >> 56)});
 	}
-	
-	public void writeuLong(long value) throws IOException {
-		this.writeLong(value + Long.MIN_VALUE);
-	}
 
 	public void writeInt(int value) throws IOException {
-		/*
-		this.write(new byte[] { (byte) (value >> 24), (byte) (value >> 16),
-				(byte) (value >> 8), (byte) value });
-		*/
 		this.write(new byte[] { (byte) value, (byte) (value >> 8),
 				(byte) (value >> 16), (byte) (value >> 24)});
-	}
-	
-	public void writeuInt(long value) throws IOException {
-		this.writeInt((int) (value + Integer.MIN_VALUE));
 	}
 
 	public void writeShort(short value) throws IOException {
 		this.write(new byte[] { (byte) value, (byte) (value >> 8)});
 	}
-	
-	public void writeuShort(int value) throws IOException {
-		this.writeShort((short) (value + Short.MIN_VALUE));
-	}
 
 	public void writeByte(byte value) throws IOException {
 		this.write(value);
-	}
-	
-	public void writeuByte(short value) throws IOException {
-		this.writeByte((byte) (value + Byte.MIN_VALUE));
 	}
 	
 	public void writeBoolean(boolean value) throws IOException {

@@ -32,21 +32,19 @@ import java.io.OutputStream;
 import eu.wordnice.api.OStream;
 import eu.wordnice.api.Set;
 import eu.wordnice.api.Val;
+import eu.wordnice.api.threads.TimeoutOutputStream;
 
 public class WNDBEncoder {
 
 	public static void writeFileData(File f, 
-			Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals) throws Exception {
+			Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals, long timeout) throws Exception {
 		if(vals == null || f == null) {
 			throw new NullPointerException("File or values are null!");
 		}
 		OutputStream fout = new FileOutputStream(f);
-		OStream out = new OStream(new BufferedOutputStream(fout));
+		OStream out = new OStream(new TimeoutOutputStream(new BufferedOutputStream(fout), timeout));
 		WNDBEncoder.writeOutputStreamData(out, vals);
 		out.close();
-		try {
-			fout.close();
-		} catch(Throwable t) {}
 	}
 	
 	public static void writeOutputStreamData(OStream out, 
@@ -60,7 +58,7 @@ public class WNDBEncoder {
 		int sz = vals.one.size();
 		out.writeInt(sz);
 		
-		for(byte b = 0; b < sz; b++) {
+		for(int b = 0; b < sz; b++) {
 			out.writeString(vals.one.get(b));
 			out.writeByte(vals.two.get(b).b);
 		}

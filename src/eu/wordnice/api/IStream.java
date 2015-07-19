@@ -107,59 +107,23 @@ public class IStream extends InputStream {
 		return Float.intBitsToFloat(this.readInt());
 	}
 	
-	public long readuLong() throws IOException {
-		return (long) (this.readLong() - Long.MIN_VALUE);
-	}
-
 	public long readLong() throws IOException {
 		byte[] b = this.readFully(8);
-		//long value = 0;
-		/*value += b[0] << 24;
-		value += b[1] << 16;
-		value += b[2] << 8;
-		value += b[3];*/
-		/*value = ((long)b[0] << 56) + ((long)b[1] << 48) + ((long)b[2] << 40) + ((long)b[3] << 32) +
-				((long)b[4] << 24) + ((long)b[5] << 16) + ((long)b[6] << 8) + ((long)b[7]);*/
-		return (long) (((long) b[0] & 0xffL) << 56) + (((long) b[1] & 0xffL) << 48) +
-				(((long) b[2] & 0xffL) << 40) + (((long) b[3] & 0xffL) << 32) + 
-				(((long) b[4] & 0xffL) << 24) + (((long) b[5] & 0xffL) << 16) +
-				(((long) b[6] & 0xffL) << 8) + ((long) b[7] & 0xffL);
-		//System.out.println("Read long: " + value);
-		//return value;
-	}
-	
-	public long readuInt() throws IOException {
-		return ((long) this.readInt() - Integer.MIN_VALUE);
+		return (long) ((((long) b[0] & 0xFF)) | (((long) b[1] & 0xFF) << 8) |
+				(((long) b[2] & 0xFF) << 16) | (((long) b[3] & 0xFF) << 24) |
+				(((long) b[4] & 0xFF) << 32) | (((long) b[5] & 0xFF) << 40) |
+				(((long) b[6] & 0xFF) << 48) | (((long) b[7] & 0xFF) << 56));
 	}
 
 	public int readInt() throws IOException {
 		byte[] b = this.readFully(4);
-		int value = 0;
-		/*for (int i = 0; i < 4; i++) {
-			int shift = (4 - 1 - i) * 8;
-			value += (b[i] & 0x000000FF) << shift;
-		}*/
-		value = (b[0] << 24) + (b[1] << 16) + (b[2] << 8) + (b[3]);
-		return value;
-	}
-	
-	public int readuShort() throws IOException {
-		return ((int) this.readShort() - Short.MIN_VALUE);
+		return (int) ((((int) b[0] & 0xFF)) | (((int) b[1] & 0xFF) << 8) |
+				(((int) b[2] & 0xFF) << 16) | (((int) b[3] & 0xFF) << 24));
 	}
 
 	public short readShort() throws IOException {
 		byte[] b = this.readFully(2);
-		short value = 0;
-		/*for (int i = 0; i < 2; i++) {
-			int shift = (4 - 1 - i) * 8;
-			value += (b[i] & 0x000000FF) << shift;
-		}*/
-		value = (short) ((b[0] << 8) + (b[1]));
-		return value;
-	}
-	
-	public short readuByte() throws IOException {
-		return (short) ((short) this.readByte() - Byte.MIN_VALUE);
+		return (short) ((((short) b[0] & 0xFF)) | (((short) b[1] & 0xFF) << 8));
 	}
 
 	public byte readByte() throws IOException {

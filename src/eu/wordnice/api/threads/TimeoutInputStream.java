@@ -44,10 +44,10 @@ public class TimeoutInputStream extends InputStream {
 
 	@Override
 	public int read() throws IOException {
-		Runa<Object> run = new Runa<Object>() {
+		thread.run = new Runa<Object>() {
 			
 			@Override
-			public Object call() throws Exception {
+			public Object call() {
 				try {
 					return TimeoutInputStream.this.in.read();
 				} catch(IOException t) {
@@ -56,8 +56,7 @@ public class TimeoutInputStream extends InputStream {
 			};
 			
 		};
-		thread.run = run;
-		Object out = thread.run(null);
+		Object out = thread.run(new IOException("Timed out"));
 		if(out instanceof Integer) {
 			return (Integer) out;
 		}
@@ -69,10 +68,10 @@ public class TimeoutInputStream extends InputStream {
 
 	@Override
 	public int read(final byte[] bytes) throws IOException {
-		Runa<Object> run = new Runa<Object>() {
+		thread.run = new Runa<Object>() {
 			
 			@Override
-			public Object call() throws Exception {
+			public Object call() {
 				try {
 					return TimeoutInputStream.this.in.read(bytes);
 				} catch(IOException t) {
@@ -81,8 +80,7 @@ public class TimeoutInputStream extends InputStream {
 			};
 			
 		};
-		thread.run = run;
-		Object out = thread.run(null);
+		Object out = thread.run(new IOException("Timed out"));
 		if(out instanceof Integer) {
 			return (Integer) out;
 		}
@@ -94,10 +92,10 @@ public class TimeoutInputStream extends InputStream {
 
 	@Override
 	public int read(final byte[] bytes, final int of, final int l) throws IOException {
-		Runa<Object> run = new Runa<Object>() {
+		thread.run = new Runa<Object>() {
 			
 			@Override
-			public Object call() throws Exception {
+			public Object call() {
 				try {
 					return TimeoutInputStream.this.in.read(bytes, of, l);
 				} catch(IOException t) {
@@ -106,8 +104,7 @@ public class TimeoutInputStream extends InputStream {
 			};
 			
 		};
-		thread.run = run;
-		Object out = thread.run(null);
+		Object out = thread.run(new IOException("Timed out"));
 		if(out instanceof Integer) {
 			return (Integer) out;
 		}

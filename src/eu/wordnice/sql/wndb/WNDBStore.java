@@ -11,6 +11,7 @@ public abstract class WNDBStore {
 	
 	/*** INSTANCE FIELDS ***/
 	public File dir = null;
+	public long timeout = 2000;
 	
 	
 	/*** CONSTRUCTOR ***/
@@ -46,7 +47,12 @@ public abstract class WNDBStore {
 				this.out("Loading (overwriting) database " + name + "!");
 			}
 			try {
-				this.loadDB(name);
+				if(!this.loadDB(name)) {
+					this.err("Types or names for " + name + " database are null! "
+							+ "Probably they do not exist, we are sorry for that bug.");
+				} else {
+					this.out("Database loaded!");
+				}
 			} catch(Throwable t) {
 				this.err("We are really sorry, but we cannot load database... Details:");
 				t.printStackTrace();
@@ -64,13 +70,12 @@ public abstract class WNDBStore {
 			this.out("Creating simulated config " + name + "!");
 			try {
 				loadEmptyDB(name);
+				this.out("Simulated config created!");
 			} catch(Throwable t) {
 				this.err("This is really embarrassing... "
 						+ "We cannot simulate this database...  Details: ");
 				t.printStackTrace();
-				continue;
 			}
-			this.out("Simulated config created!");
 		}
 	}
 	
@@ -90,6 +95,7 @@ public abstract class WNDBStore {
 		db.values = new Set<Set<Object>>();
 		db.names = set_names;
 		db.types = set_types;
+		db.timeout = this.timeout;
 		
 		if(!InstanceMan.setValue(this, this.getClass(), name, db)) {
 			if(set_types == null || set_names == null) {
@@ -98,7 +104,7 @@ public abstract class WNDBStore {
 		}
 	}
 	
-	public void loadDB(String name) throws Exception {
+	public boolean loadDB(String name) {
 		@SuppressWarnings("unchecked")
 		Set<WNDBVarTypes> set_types = (Set<WNDBVarTypes>) InstanceMan.getValue(
 				this, this.getClass(), name + "_types");
@@ -106,8 +112,7 @@ public abstract class WNDBStore {
 		Set<String> set_names = (Set<String>) InstanceMan.getValue(this, this.getClass(), name + "_names");
 		
 		if(set_types == null || set_names == null) {
-			throw new NullPointerException("Types or names for " + name + " database are null! "
-					+ "Probably they do not exist, we are sorry for that bug.");
+			return false;
 		}
 		
 		WNDB db = null;
@@ -115,6 +120,7 @@ public abstract class WNDBStore {
 		if(file.exists()) {
 			try {
 				db = new WNDB(file);
+				db.timeout = this.timeout;
 				db.checkSet();
 			} catch(Throwable t) {
 				db = null;
@@ -136,12 +142,13 @@ public abstract class WNDBStore {
 					db.values = new Set<Set<Object>>();
 					db.names = set_names;
 					db.types = set_types;
+					db.timeout = this.timeout;
 				}
 			}
 		}
 		if(db == null) {
 			try {
-				db = WNDB.createWBDB(file, set_names, set_types);
+				db = WNDB.createWBDB(file, set_names, set_types, this.timeout);
 				db.checkSet();
 			} catch (Throwable t) {
 				this.err("We cannot create the database " + name + "... Details: ");
@@ -153,13 +160,15 @@ public abstract class WNDBStore {
 				db.values = new Set<Set<Object>>();
 				db.names = set_names;
 				db.types = set_types;
+				db.timeout = this.timeout;
 			}
 		}
 		if(!InstanceMan.setValue(this, this.getClass(), name, db)) {
 			if(set_types == null || set_names == null) {
-				throw new NullPointerException("We cannot set database value, it probably does not exists...");
+				return false;
 			}
 		}
+		return true;
 	}
 	
 	public boolean saveDB(String name) {

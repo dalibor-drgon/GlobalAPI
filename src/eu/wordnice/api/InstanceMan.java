@@ -165,10 +165,10 @@ public class InstanceMan {
 			try {
 				f = c.getDeclaredField(name);
 				try {
-					f.setAccessible(true);
+					f.setInt(f, f.getModifiers() & ~Modifier.FINAL);
 				} catch(Throwable t) {}
 				try {
-					f.setInt(f, f.getModifiers() & ~Modifier.FINAL);
+					f.setAccessible(true);
 				} catch(Throwable t) {}
 				f.set(o, newval);
 				return true;
@@ -214,17 +214,15 @@ public class InstanceMan {
 					f = c.getDeclaredFields();
 					for(Field fi : f) {
 						try {
-							fi.setAccessible(true);
-						} catch(Throwable t) {}
-						try {
 							fi.setInt(fi, fi.getModifiers() & ~Modifier.FINAL);
 						} catch(Throwable t) {}
 						try {
+							fi.setAccessible(true);
+						} catch(Throwable t) {}
+						try {
 							val = fi.get(o);
-							if(val != null) {
-								if(ext.isAssignableFrom(fi.getType())) {
-									ret.addWC(fi.getName(), (X) val);
-								}
+							if(ext.isAssignableFrom(fi.getType())) {
+								ret.addWC(fi.getName(), (X) val);
 							}
 						} catch(Throwable t) {}
 					}
@@ -244,10 +242,10 @@ public class InstanceMan {
 				f = c.getDeclaredFields();
 				for(Field fi : f) {
 					try {
-						fi.setAccessible(true);
+						fi.setInt(fi, fi.getModifiers() & ~Modifier.FINAL);
 					} catch(Throwable t) {}
 					try {
-						fi.setInt(fi, fi.getModifiers() & ~Modifier.FINAL);
+						fi.setAccessible(true);
 					} catch(Throwable t) {}
 					ret.addWC(fi);
 				}

@@ -30,9 +30,9 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 
 import eu.wordnice.api.IStream;
-import eu.wordnice.api.Map;
 import eu.wordnice.api.Set;
 import eu.wordnice.api.Val;
+import eu.wordnice.api.threads.TimeoutInputStream;
 
 public class WNDBDecoder { 
 
@@ -70,46 +70,12 @@ public class WNDBDecoder {
 		return ret;
 	}
 
-	public static Set<Map<String, Object>> readFileData(File f) throws Exception {
-		InputStream fin = new FileInputStream(f);
-		IStream in = new IStream(new BufferedInputStream(fin));
-		Set<Map<String, Object>> ret = WNDBDecoder.readInputStreamData(in);
-		in.close();
-		try {
-			fin.close();
-		} catch(Throwable t) {}
-		return ret;
-	}
 	
-	public static Val.TwoVal<Set<String>, Set<Byte>> readInputStreamTypes(IStream in) throws Exception {
-		long type = in.readLong();
-		if (type != WNDBDecoder.STATIC_DB_PREFIX) {
-			throw new Exception("Not WNDB format!");
-		}
-			
-		int bt = in.readInt();
-		if (bt < 1) {
-			return null;
-		}
-			
-		Set<String> names = new Set<String>();
-		Set<Byte> types = new Set<Byte>();
-		int i = 0;
-		for (; i < bt; i++) {
-			names.addWC(in.readString());
-			types.addWC(in.readByte());
-		}
-		return new Val.TwoVal<Set<String>, Set<Byte>>(names, types);
-	}
-	
-	public static Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> readFileRawData(File f) throws Exception {
+	public static Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> readFileRawData(File f, long tm) throws Exception {
 		InputStream fin = new FileInputStream(f);
-		IStream in = new IStream(new BufferedInputStream(fin));
+		IStream in = new IStream(new TimeoutInputStream(new BufferedInputStream(fin), tm));
 		Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> ret = WNDBDecoder.readInputStreamRawData(in);
 		in.close();
-		try {
-			fin.close();
-		} catch(Throwable t) {}
 		return ret;
 	}
 	
@@ -126,7 +92,7 @@ public class WNDBDecoder {
 
 		Set<String> names = new Set<String>();
 		Set<WNDBVarTypes> types = new Set<WNDBVarTypes>();
-		for (byte i = 0; i < bt; i++) {
+		for (int i = 0; i < bt; i++) {
 			names.addWC(in.readString());
 			types.addWC(WNDBVarTypes.getByByte(in.readByte()));
 		}
@@ -145,72 +111,6 @@ public class WNDBDecoder {
 		}
 		
 		return new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(names, types, data);
-	}
-	
-	public static Set<Set<Object>> readInputStreamValues(IStream in) throws Exception {
-		long type = in.readLong();
-		if (type != WNDBDecoder.STATIC_DB_PREFIX) {
-			throw new Exception("Not WNDB format!");
-		}
-			
-		int bt = in.readInt();
-		if (bt < 1) {
-			return null;
-		}
-
-		Set<WNDBVarTypes> types = new Set<WNDBVarTypes>();
-		for (byte i = 0; i < bt; i++) {
-			in.readString();
-			types.addWC(WNDBVarTypes.getByByte(in.readByte()));
-		}
-		
-		int b = 0;
-		int i = 0;
-		Set<Set<Object>> data = new Set<Set<Object>>();
-		Set<Object> curset;
-		while (in.readByte() == 1) {
-			curset = new Set<Object>();
-			for(b = 0; b < bt; b++) {
-				curset.addWC(WNDBDecoder.readObject(in, types.get(b), i, b));
-			}
-			data.addWC(curset);
-			i++;
-		}
-		
-		return data;
-	}
-
-	public static Set<Map<String, Object>> readInputStreamData(IStream in) throws Exception {
-		long type = in.readLong();
-		if (type != WNDBDecoder.STATIC_DB_PREFIX) {
-			throw new Exception("Not WNDB format!");
-		}
-
-		int bt = in.readInt();
-		if (bt < 1) {
-			return null;
-		}
-
-		Set<String> names = new Set<String>();
-		Set<WNDBVarTypes> types = new Set<WNDBVarTypes>();
-		for (byte i = 0; i < bt; i++) {
-			names.addWC(in.readString());
-			types.addWC(WNDBVarTypes.getByByte(in.readByte()));
-		}
-
-		int i = 0;
-		int b = 0;
-		Set<Map<String, Object>> data = new Set<Map<String, Object>>();
-		Map<String, Object> curmap;
-		while (in.readByte() == 1) {
-			curmap = new Map<String, Object>();
-			for(b = 0; b < bt; b++) {
-				curmap.addWC(names.get(b), WNDBDecoder.readObject(in, types.get(b), i, b));
-			}
-			data.addWC(curmap);
-			i++;
-		}
-		return data;
 	}
 	
 	public static Object readObject(IStream in, Byte type, int ri, int vi) throws Exception {

@@ -32,26 +32,76 @@ public class TimeoutOutputStream extends OutputStream {
 	public final OutputStream out;
 	public TimeoutThread<Object> thread;
 	
-	@Deprecated
 	public TimeoutOutputStream(OutputStream stream, long maxtime_read) {
 		this.out = stream;
 		this.thread = new TimeoutThread<Object>(null, maxtime_read);
-		throw new RuntimeException("//TODO");
+	}
+	
+	public void setTimeout(long tm) {
+		this.thread.timeout = tm;
 	}
 	
 	@Override
-	public void write(int obyte) throws IOException {
-		this.out.write(obyte);
+	public void write(final int obyte) throws IOException {
+		thread.run = new Runa<Object>() {
+			
+			@Override
+			public Object call() {
+				try {
+					TimeoutOutputStream.this.write(obyte);
+					return null;
+				} catch(IOException t) {
+					return t;
+				}
+			};
+			
+		};
+		Object out = thread.run(new IOException("Timed out"));
+		if(out instanceof IOException) {
+			throw (IOException) out;
+		}
 	}
 
 	@Override
-	public void write(byte[] bytes) throws IOException {
-		this.out.write(bytes);
+	public void write(final byte[] bytes) throws IOException {
+		thread.run = new Runa<Object>() {
+			
+			@Override
+			public Object call() {
+				try {
+					TimeoutOutputStream.this.write(bytes);
+					return null;
+				} catch(IOException t) {
+					return t;
+				}
+			};
+			
+		};
+		Object out = thread.run(new IOException("Timed out"));
+		if(out instanceof IOException) {
+			throw (IOException) out;
+		}
 	}
 
 	@Override
-	public void write(byte[] bytes, int off, int l) throws IOException {
-		this.out.write(bytes, off, l);
+	public void write(final byte[] bytes, final int off, final int l) throws IOException {
+		thread.run = new Runa<Object>() {
+			
+			@Override
+			public Object call() {
+				try {
+					TimeoutOutputStream.this.write(bytes, off, l);
+					return null;
+				} catch(IOException t) {
+					return t;
+				}
+			};
+			
+		};
+		Object out = thread.run(new IOException("Timed out"));
+		if(out instanceof IOException) {
+			throw (IOException) out;
+		}
 	}
 
 	@Override
