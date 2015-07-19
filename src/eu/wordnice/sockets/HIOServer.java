@@ -38,7 +38,8 @@ public class HIOServer {
 	public ServerSocket server;
 	public long readtimeout;
 	public boolean readpost;
-	public Handler.TwoVoidHandler<Throwable, HIO> exc_handler;
+	public Handler.ThreeVoidHandler<Thread, Throwable, HIO> exc_handler;
+	public Thread thr;
 	
 	public HIOServer(String addr, int port) throws IOException {
 		this.port = port;
@@ -70,14 +71,14 @@ public class HIOServer {
 		return null;
 	}
 	
-	public void onAccept(HIOListener ac, boolean nevThread, boolean readpost, long timeout, Handler.TwoVoidHandler<Throwable, HIO> thr_handler) {
+	public void onAccept(Handler.TwoVoidHandler<Thread, HIO> ac, boolean nevThread, boolean readpost, long timeout, Handler.ThreeVoidHandler<Thread, Throwable, HIO> thr_handler) {
 		this.readpost = readpost;
 		this.readtimeout = timeout;
 		this.exc_handler = thr_handler;
 		this.onAccept(ac, nevThread);
 	}
 	
-	public void onAccept(final HIOListener ac, boolean nevThread) {
+	public void onAccept(final Handler.TwoVoidHandler<Thread, HIO> ac, boolean nevThread) {
 		while(this.isClosed() == false) {
 			final Socket sock = this.accept();
 			if(sock != null) {
@@ -92,10 +93,10 @@ public class HIOServer {
 								if(t != null) {
 									Api.throv(t);
 								}
-								ac.onAccept(hio);
+								ac.handle(this, hio);
 							} catch(Throwable t) {
 								if(HIOServer.this.exc_handler != null) {
-									HIOServer.this.exc_handler.handle(t, hio);
+									HIOServer.this.exc_handler.handle(this, t, hio);
 								}
 							}
 						}
@@ -108,13 +109,22 @@ public class HIOServer {
 						if(t != null) {
 							Api.throv(t);
 						}
-						ac.onAccept(hio);
+						ac.handle(null, hio);
 					} catch(Throwable t) {
 						if(this.exc_handler != null) {
-							this.exc_handler.handle(t, hio);
+							this.exc_handler.handle(null, t, hio);
 						}
 					}
 				}
+			}
+		}
+	}
+	
+	public void onAcceptRaw(final Handler.OneVoidHandler<Socket> ac) {
+		while(this.isClosed() == false) {
+			final Socket sock = this.accept();
+			if(sock != null) {
+				ac.handle(sock);
 			}
 		}
 	}
@@ -126,7 +136,7 @@ public class HIOServer {
 		try {
 			this.server.close();
 			return true;
-		} catch(Throwable t) { }
+		} catch(Throwable t) {}
 		return false;
 	}
 	
