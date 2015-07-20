@@ -1,17 +1,22 @@
 package eu.wordnice.api;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collection;
 
 public class JSONEncoder {
 	
 	public static void writeString(OutputStream out, String val) throws IOException {
 		out.write('\"');
-		out.write(val.replace("\\", "\\\\").replace("\"", "\\\"").replace("\'", "\\\'").getBytes());
+		out.write(val.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\\n")
+				.replace("\t", "\\\t").replace("\b", "\\\b").replace("\r", "\\\r").getBytes());
 		out.write('\"');
+		
+		//ch < ' ' => Integer.toHexString(ch)
 	}
 	
-	public static void writeValue(OutputStream out, Object val) throws IOException {
+	public static void writeObject(OutputStream out, Object val) throws IOException {
 		if(val == null) {
 			out.write(new byte[] { 'n', 'u', 'l', 'l' });
 		} else if(val instanceof CharSequence) {
@@ -34,7 +39,7 @@ public class JSONEncoder {
 						throw (IOException) t;
 					}
 				}
-				out.write(new byte[] { '"', 'A', 'R', 'R', '"' });
+				JSONEncoder.writeString(out, val.toString());
 			} else if(clz.equals(Byte.class)) {
 				out.write(String.valueOf((Byte) val).getBytes());
 			} else if(clz.equals(Short.class)) {
@@ -52,11 +57,23 @@ public class JSONEncoder {
 			} else {
 				if(val instanceof Jsonizable) {
 					((Jsonizable) val).toJsonString(out);
+				} else if(val instanceof Collection<?>) {
+					new Set<Object>((Collection<?>) val).toJsonString(out);
 				} else {
 					JSONEncoder.writeString(out, val.toString());
 				}
 			}
 		}
+	}
+	
+	
+	public static byte[] toJsonString(Object val) {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			JSONEncoder.writeObject(baos, val);
+			return baos.toByteArray();
+		} catch(Throwable t) {}
+		return new byte[0]; //not possible!
 	}
 	
 }

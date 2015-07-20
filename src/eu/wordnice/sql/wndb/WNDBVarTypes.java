@@ -24,9 +24,13 @@
 
 package eu.wordnice.sql.wndb;
 
+import eu.wordnice.api.Map;
+import eu.wordnice.api.Set;
+
 public enum WNDBVarTypes {
 
-	BOOLEAN(1), BYTE(2), SHORT(3), INT(4), LONG(5), FLOAT(6), DOUBLE(7), STRING(8), BYTES(9);
+	BOOLEAN(1), BYTE(2), SHORT(3), INT(4), LONG(5), FLOAT(6), DOUBLE(7), STRING(8), BYTES(9),
+	SET(11), MAP(12);
 
 	public byte b;
 
@@ -35,14 +39,12 @@ public enum WNDBVarTypes {
 	}
 	
 	public static WNDBVarTypes getByByte(Byte b) {
-		//System.out.println("Getting  WNDBVarTypes by byte " + b);
 		WNDBVarTypes[] wnsqlvt = WNDBVarTypes.values();
 		for(WNDBVarTypes tp : wnsqlvt) {
 			if(tp.b == b) {
 				return tp;
 			}
 		}
-		//System.out.println("Got null!");
 		return null;
 	}
 	
@@ -56,62 +58,71 @@ public enum WNDBVarTypes {
 		Class<?> c = o.getClass();
 		switch(typ) {
 			case BOOLEAN:
-				return (c.isAssignableFrom(Boolean.class) || c.isAssignableFrom(boolean.class));
+				return c.isAssignableFrom(Boolean.class);
 			case BYTE:
-				return (c.isAssignableFrom(Byte.class) || c.isAssignableFrom(byte.class));
+				return c.isAssignableFrom(Byte.class);
 			case SHORT:
-				return (c.isAssignableFrom(Short.class) || c.isAssignableFrom(short.class));
+				return c.isAssignableFrom(Short.class);
 			case INT:
-				return (c.isAssignableFrom(Integer.class) || c.isAssignableFrom(int.class));
+				return c.isAssignableFrom(Integer.class);
 			case LONG:
-				return (c.isAssignableFrom(Long.class) || c.isAssignableFrom(long.class));
+				return c.isAssignableFrom(Long.class);
 			case FLOAT:
-				return (c.isAssignableFrom(Float.class) || c.isAssignableFrom(float.class));
+				return c.isAssignableFrom(Float.class);
 			case DOUBLE:
-				return (c.isAssignableFrom(Double.class) || c.isAssignableFrom(double.class));
+				return c.isAssignableFrom(Double.class);
 			case STRING:
-				return (c.isAssignableFrom(String.class));
+				return c.isAssignableFrom(String.class);
 			case BYTES:
 				return (c.isAssignableFrom(byte[].class) || c.isAssignableFrom(Byte[].class));
+			case SET:
+				return c.isAssignableFrom(Set.class);
+			case MAP:
+				return c.isAssignableFrom(Map.class);
 		}
 		return false;
 	}
 	
 	public static WNDBVarTypes getByObject(Object o) {
 		if(o == null) {
-			return null;
+			return BYTES;
 		}
 		return WNDBVarTypes.getByClass(o.getClass());
 	}
 	
 	public static WNDBVarTypes getByClass(Class<?> c) {
-		if((c.isAssignableFrom(Boolean.class) || c.isAssignableFrom(boolean.class))) {
+		if(c.isAssignableFrom(Boolean.class)) {
 			return BOOLEAN;
 		}
-		
-		if((c.isAssignableFrom(Byte.class) || c.isAssignableFrom(byte.class))) {
+		if(c.isAssignableFrom(Byte.class) || c.isAssignableFrom(byte.class)) {
 			return BYTE;
 		}
-		if((c.isAssignableFrom(Short.class) || c.isAssignableFrom(short.class))) {
+		if(c.isAssignableFrom(Short.class) || c.isAssignableFrom(short.class)) {
 			return SHORT;
 		}
-		if((c.isAssignableFrom(Integer.class) || c.isAssignableFrom(int.class))) {
+		if(c.isAssignableFrom(Integer.class) || c.isAssignableFrom(int.class)) {
 			return INT;
 		}
-		if((c.isAssignableFrom(Long.class) || c.isAssignableFrom(long.class))) {
+		if(c.isAssignableFrom(Long.class) || c.isAssignableFrom(long.class)) {
 			return LONG;
 		}
-		if((c.isAssignableFrom(Float.class) || c.isAssignableFrom(float.class))) {
+		if(c.isAssignableFrom(Float.class) || c.isAssignableFrom(float.class)) {
 			return FLOAT;
 		}
-		if((c.isAssignableFrom(Double.class) || c.isAssignableFrom(double.class))) {
+		if(c.isAssignableFrom(Double.class) || c.isAssignableFrom(double.class)) {
 			return DOUBLE;
 		}
-		if((c.isAssignableFrom(String.class))) {
+		if(c.isAssignableFrom(String.class)) {
 			return STRING;
 		}
-		if((c.isAssignableFrom(byte[].class) || c.isAssignableFrom(Byte[].class))) {
+		if(c.isAssignableFrom(Byte[].class) || c.isAssignableFrom(byte[].class)) {
 			return BYTES;
+		}
+		if(c.isAssignableFrom(Set.class)) {
+			return SET;
+		}
+		if(c.isAssignableFrom(Map.class)) {
+			return MAP;
 		}
 		
 		return null;

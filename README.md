@@ -3,6 +3,111 @@
 
 Java library for easy reading & writing primite types, fast data serialization, timeout threads, mysql & sqlite interface.
 
-Usable as Bukkit plugin, with small changes compatible with plain Java.
+Usable as Bukkit plugin, with small changes compatible with plain Java. Not well documented, but try it on your own.
 
 Under MIT license.
+
+
+
+## Examples
+
+
+
+### Serialize Set & read back
+
+Serialize Set with another Set, Map and random primitives to 131 bytes! And parse it back.
+
+```java
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+
+import eu.wordnice.api.OStream;
+import eu.wordnice.api.IStream;
+import eu.wordnice.api.Map;
+import eu.wordnice.api.Set;
+
+
+		// Write
+		ByteArrayOutputStream ot = new ByteArrayOutputStream();
+		OStream os = new OStream(ot);
+		os.writeSet(new Set<Object>("Hello!", 123456, true, true,
+				new Map<String, Integer>(new String[]{"Zero","One","Two","Three","Four"}, new Integer[] {0,1,2,3,4}),
+				false, "YES", new Set<Object>(404,"NotFound")));
+		os.close();
+
+		// Read
+		IStream is = new IStream(new ByteArrayInputStream(ot.toByteArray()));
+		Set<Object> set = is.readSet();
+		System.out.println("Set: " + set);
+		is.close();
+```
+
+Output:
+```
+Set: {Hello!, 123456, true, true, {Zero:0,One:1,Two:2,Three:3,Four:4}, false, YES, {404, NotFound}}
+```
+
+
+
+### Simple HTTP server
+
+Simple HTTP server at localhost:8192. Write headers and "Hello!" with date.
+
+```java
+import java.util.Date;
+
+import eu.wordnice.api.Handler;
+import eu.wordnice.sockets.HIO;
+import eu.wordnice.sockets.HIOServer;
+
+
+		HIOServer server = new HIOServer("localhost", 8192);
+		System.out.println("Server running at " + server.server.getInetAddress().toString() 
+				+ ", port " + server.port);
+
+		//public void onAccept(Handler.TwoVoidHandler<Thread, HIO> request_handler, boolean create_new_thread, boolean read_post, long timeout_per_read, Handler.ThreeVoidHandler<Thread, Throwable, HIO> error_handler)
+
+		server.onAccept(new Handler.TwoVoidHandler<Thread, HIO>() {
+			@Override
+			public void handle(Thread thrd, HIO hio) {
+				try {
+					System.out.println("Accepted: " + hio.METHOD + " " + hio.REQTYPE);
+					System.out.println(" - Path: " + hio.PATH);
+					System.out.println(" - Args: " + hio.GET);
+					System.out.println(" - Head: " + hio.HEAD);
+					
+					// HTTP Head
+					hio.out.write(new String(hio.REQTYPE + " 200 OK\r\n" +
+							"Content-Type: text/plain; charset=utf-8\r\n\r\n").getBytes());
+					
+					// Content
+					hio.out.write(new String("Hello!\n\n" + new Date().toString()).getBytes());
+					
+					// Close
+					hio.close();
+				} catch(Throwable t) {
+					t.printStackTrace();
+				}
+			}
+		}, false, false, 3000, null);
+```
+
+Sample browser output:
+```
+Hello!
+
+Mon Jul 20 13:33:04 CEST 2015
+```
+
+Sample console output:
+```
+Accepted: GET HTTP/1.1
+ - Path: /
+ - Args: null
+ - Head: {host:localhost:8192,connection:keep-alive,cache-control:max-age=0,accept:text/html,application/xhtml xml,application/xml;q=0.9,image/webp,*/*;q=0.8,user-agent:Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.101 Safari/537.36,accept-encoding:gzip, deflate, sdch,accept-language:sk-SK,sk;q=0.8,cs;q=0.6,en-US;q=0.4,en;q=0.2}
+Accepted: GET HTTP/1.1
+ - Path: /favicon.ico
+ - Args: null
+ - Head: null
+```
+

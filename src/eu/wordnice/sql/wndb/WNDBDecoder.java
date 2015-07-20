@@ -137,6 +137,10 @@ public class WNDBDecoder {
 				return in.readString();
 			case BYTES:
 				return in.readBytes();
+			case SET:
+				return in.readSet();
+			case MAP:
+				return in.readMap();
 		}
 		throw new Exception("Cannot read object at " + ri + ":" + vi + " - unsupported type " + typ.name());
 	}

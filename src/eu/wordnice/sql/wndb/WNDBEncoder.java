@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
+import eu.wordnice.api.Map;
 import eu.wordnice.api.OStream;
 import eu.wordnice.api.Set;
 import eu.wordnice.api.Val;
@@ -92,57 +93,80 @@ public class WNDBEncoder {
 		switch(typ) {
 			case BOOLEAN:
 				if(obj == null) {
-					obj = (Boolean) false;
+					out.writeBoolean(false);
+				} else {
+					out.writeBoolean((Boolean) obj);
 				}
-				out.writeBoolean((Boolean) obj);
 				return;
 			case BYTE:
 				if(obj == null) {
-					obj = (Byte) Byte.MIN_VALUE;
+					out.writeByte((byte) 0);
+				} else {
+					out.writeByte((Byte) obj);
 				}
-				out.writeByte((Byte) obj);
 				return;
 			case SHORT:
 				if(obj == null) {
-					obj = (Short) Short.MIN_VALUE;
+					out.writeShort((short) 0);
+				} else {
+					out.writeShort((Short) obj);
 				}
-				out.writeShort((Short) obj);
 				return;
 			case INT:
 				if(obj == null) {
-					obj = (Integer) Integer.MIN_VALUE;
+					out.writeInt((int) 0);
+				} else {
+					out.writeInt((Integer) obj);
 				}
-				out.writeInt((Integer) obj);
 				return;
 			case LONG:
 				if(obj == null) {
-					obj = (Long) Long.MIN_VALUE;
+					out.writeByte((byte) 0);
+				} else {
+					out.writeByte((Byte) obj);
 				}
-				out.writeLong((Long) obj);
 				return;
 			case FLOAT:
 				if(obj == null) {
-					obj = (Float) Float.MIN_VALUE;
+					out.writeFloat((float) 0);
+				} else {
+					out.writeFloat((Float) obj);
 				}
-				out.writeFloat((Float) obj);
 				return;
 			case DOUBLE:
 				if(obj == null) {
-					obj = (Double) Double.MIN_VALUE;
+					out.writeDouble((double) 0);
+				} else {
+					out.writeDouble((Double) obj);
 				}
-				out.writeDouble((Double) obj);
 				return;
 			case STRING:
 				if(obj == null) {
-					obj = (String) "";
+					out.writeString(null);
+				} else {
+					out.writeString((String) obj.toString());
 				}
-				out.writeString((String) obj.toString());
 				return;
 			case BYTES:
 				if(obj == null) {
-					obj = (byte[]) new byte[0];
+					out.writeBytes(null);
+				} else {
+					out.writeBytes((byte[]) obj);
 				}
-				out.writeBytes((byte[]) obj);
+				return;
+			case SET:
+				if(obj == null) {
+					out.writeSet(null);
+				} else {
+					out.writeSet((Set<?>) obj);
+				}
+				return;
+			case MAP:
+				if(obj == null) {
+					out.writeMap(null);
+				} else {
+					out.writeMap((Map<?,?>) obj);
+				}
 				return;
 		}
 		throw new Exception("Cannot write object at " + ri + ":" + vi + ", class " + obj.getClass().getName() + " - unsupported type " + typ.name());

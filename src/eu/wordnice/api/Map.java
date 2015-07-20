@@ -51,6 +51,13 @@ public class Map<X, Y> implements Jsonizable {
 		this.values = new Object[0];
 		this.size = 0;
 	}
+	
+	public Map(X[] nams, Y[] vals) {
+		this.names = nams;
+		this.values = vals;
+		this.size = nams.length;
+	}
+	
 
 	public boolean set(int i, X name, Y value) {
 		if (i < 0 || i > this.size) {
@@ -75,8 +82,8 @@ public class Map<X, Y> implements Jsonizable {
 		int ns = this.size + 1;
 		Object[] lnames = new Object[ns];
 		Object[] lvalues = new Object[ns];
-		System.arraycopy(this.names, 0, lnames, 0, this.size);
-		System.arraycopy(this.values, 0, lvalues, 0, this.size);
+		Api.memcpy(lnames, 0, this.names, 0, this.size);
+		Api.memcpy(lvalues, 0, this.values, 0, this.size);
 		this.names = lnames;
 		this.values = lvalues;
 		this.names[this.size] = name;
@@ -102,10 +109,8 @@ public class Map<X, Y> implements Jsonizable {
 		int ns = si + msz;
 		Object[] lnames = new Object[ns];
 		Object[] lvalues = new Object[ns];
-		System.arraycopy(this.names, 0, lnames, 0, this.size);
-		System.arraycopy(this.values, 0, lvalues, 0, this.size);
-		//System.arraycopy(names, 0, lnames, si, size);
-		//System.arraycopy(values, 0, lvalues, si, size);
+		Api.memcpy(lnames, 0, this.names, 0, this.size);
+		Api.memcpy(lvalues, 0, this.values, 0, this.size);
 		java.util.Set<? extends X> set = map.keySet();
 		int ci = si;
 		for(X x : set) {
@@ -131,10 +136,10 @@ public class Map<X, Y> implements Jsonizable {
 		int ns = si + size;
 		Object[] lnames = new Object[ns];
 		Object[] lvalues = new Object[ns];
-		System.arraycopy(this.names, 0, lnames, 0, this.size);
-		System.arraycopy(this.values, 0, lvalues, 0, this.size);
-		System.arraycopy(names, 0, lnames, si, size);
-		System.arraycopy(values, 0, lvalues, si, size);
+		Api.memcpy(lnames, 0, this.names, 0, this.size);
+		Api.memcpy(lvalues, 0, this.values, 0, this.size);
+		Api.memcpy(lnames, si, names, 0, size);
+		Api.memcpy(lvalues, si, values, 0, size);
 		this.names = lnames;
 		this.values = lvalues;
 		this.size = ns;
@@ -156,10 +161,10 @@ public class Map<X, Y> implements Jsonizable {
 		int ns = si + size;
 		Object[] lnames = new Object[ns];
 		Object[] lvalues = new Object[ns];
-		System.arraycopy(this.names, 0, lnames, 0, this.size);
-		System.arraycopy(this.values, 0, lvalues, 0, this.size);
-		System.arraycopy(names, 0, lnames, si, size);
-		System.arraycopy(values, 0, lvalues, si, size);
+		Api.memcpy(lnames, 0, this.names, 0, this.size);
+		Api.memcpy(lvalues, 0, this.values, 0, this.size);
+		Api.memcpy(lnames, si, names, 0, size);
+		Api.memcpy(lvalues, si, values, 0, size);
 		this.names = lnames;
 		this.values = lvalues;
 		this.size = ns;
@@ -229,10 +234,10 @@ public class Map<X, Y> implements Jsonizable {
 		int sz2 = this.size - i - 1;
 		Object[] vals = new Object[nsz];
 		Object[] names = new Object[nsz];
-		System.arraycopy(this.values, 0, vals, 0, sz1);
-		System.arraycopy(this.values, (sz1 + 1), vals, 0, sz2);
-		System.arraycopy(this.names, 0, names, 0, sz1);
-		System.arraycopy(this.names, (sz1 + 1), names, 0, sz2);
+		Api.memcpy(vals, 0, this.values, 0, sz1);
+		Api.memcpy(vals, 0, this.values, (sz1 + 1), sz2);
+		Api.memcpy(names, 0, this.names, 0, sz1);
+		Api.memcpy(names, 0, this.names, (sz1 + 1), sz2);
 		this.values = vals;
 		this.names = names;
 		this.size--;
@@ -331,9 +336,9 @@ public class Map<X, Y> implements Jsonizable {
 	public void toJsonString(OutputStream out) throws IOException {
 		out.write('{');
 		for (int i = 0; i < this.size; i++) {
-			JSONEncoder.writeValue(out, this.names[i]);
+			JSONEncoder.writeObject(out, this.names[i]);
 			out.write(':');
-			JSONEncoder.writeValue(out, this.values[i]);
+			JSONEncoder.writeObject(out, this.values[i]);
 			if(i != (this.size - 1)) {
 				out.write(',');
 			}

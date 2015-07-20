@@ -53,9 +53,8 @@ public class Set<X> implements Jsonizable {
 	
 	@SafeVarargs
 	public Set(X... vals) {
-		this.values = new Object[0];
-		this.size = 0;
-		this.addAllWC(vals, vals.length);
+		this.values = vals;
+		this.size = vals.length;
 	}
 
 	public boolean set(int i, X value) {
@@ -245,7 +244,7 @@ public class Set<X> implements Jsonizable {
 	public void toJsonString(OutputStream out) throws IOException {
 		out.write('[');
 		for (int i = 0; i < this.size; i++) {
-			JSONEncoder.writeValue(out, this.values[i]);
+			JSONEncoder.writeObject(out, this.values[i]);
 			if(i != (this.size - 1)) {
 				out.write(',');
 			}

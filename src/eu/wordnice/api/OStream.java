@@ -27,6 +27,9 @@ package eu.wordnice.api;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import eu.wordnice.sql.wndb.WNDBEncoder;
+import eu.wordnice.sql.wndb.WNDBVarTypes;
+
 public class OStream extends OutputStream {
 
 	public OutputStream out;
@@ -41,11 +44,19 @@ public class OStream extends OutputStream {
 	/*** SpecialWrite ***/
 
 	public void writeBytes(byte[] bytes) throws IOException {
+		if(bytes == null) {
+			this.writeInt(-1);
+			return;
+		}
 		this.writeInt(bytes.length);
 		this.write(bytes);
 	}
 
 	public void writeString(String s) throws IOException {
+		if(s == null) {
+			this.writeInt(-1);
+			return;
+		}
 		this.writeBytes(s.getBytes());
 	}
 
@@ -80,6 +91,49 @@ public class OStream extends OutputStream {
 	public void writeBoolean(boolean value) throws IOException {
 		this.writeByte((byte) ((value == true) ? 1 : 0));
 	}
+	
+	public void writeSet(Set<?> set) throws Exception {
+		if(set == null) {
+			this.writeInt(-1);
+			return;
+		}
+		int size = set.size();
+		this.writeInt(size);
+		int i = 0;
+		for(; i < size; i++) {
+			this.writeObject(set.get(i), i, -1);
+		}
+	}
+	
+	public void writeMap(Map<?,?> map) throws Exception {
+		if(map == null) {
+			this.writeInt(-1);
+			return;
+		}
+		int size = map.size();
+		this.writeInt(size);
+		int i = 0;
+		for(; i < size; i++) {
+			this.writeObject(map.getNameI(i), i, -1);
+			this.writeObject(map.getI(i), i, -1);
+		}
+	}
+	
+	public void writeObject(Object obj) throws Exception {
+		this.writeObject(obj, -1, -1);
+	}
+	
+	public void writeObject(Object obj, int ri, int vi) throws Exception {
+		if(obj == null) {
+			this.writeByte(WNDBVarTypes.BYTES.b);
+			this.writeInt(-1);
+		} else {
+			WNDBVarTypes typ = WNDBVarTypes.getByObject(obj);
+			this.writeByte(typ.b);
+			WNDBEncoder.writeObject(this, obj, typ, ri, vi);
+		}
+	}
+	
 
 	/*** Override ***/
 

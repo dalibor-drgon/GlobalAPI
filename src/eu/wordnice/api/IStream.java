@@ -28,6 +28,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import eu.wordnice.sql.wndb.WNDBDecoder;
+
 public class IStream extends InputStream {
 
 	public InputStream in;
@@ -51,7 +53,6 @@ public class IStream extends InputStream {
 		int lene = 1024 * 4;
 		int len = (lene > all) ? all : lene;
 		byte[] buffer = new byte[len];
-		// try {
 
 		int cur = this.in.read(buffer);
 		if (cur == 0) {
@@ -84,18 +85,19 @@ public class IStream extends InputStream {
 
 	}
 
-	/*
-	 * public static int byteArrayToInt(byte[] b) { int value = 0; for (int i =
-	 * 0; i < 4; i++) { int shift = (4 - 1 - i) * 8; value += (b[i] &
-	 * 0x000000FF) << shift; } return value; }
-	 */
-
 	public String readString() throws IOException {
-		return new String(this.readBytes());
+		byte[] bytes = this.readBytes();
+		if(bytes == null) {
+			return null;
+		}
+		return new String(bytes);
 	}
 
 	public byte[] readBytes() throws IOException {
 		int len = this.readInt();
+		if(len < 0) {
+			return null;
+		}
 		return this.readFully(len);
 	}
 
@@ -133,6 +135,42 @@ public class IStream extends InputStream {
 	public boolean readBoolean() throws IOException {
 		return (this.readByte() != 0);
 	}
+	
+	
+	public Set<Object> readSet() throws Exception {
+		int size = this.readInt();
+		if(size < 0) {
+			return null;
+		}
+		Set<Object> set = new Set<Object>();
+		int i = 0;
+		for(; i < size; i++) {
+			set.addWC(this.readObject(i, -1));
+		}
+		return set;
+	}
+	
+	public Map<Object, Object> readMap() throws Exception {
+		int size = this.readInt();
+		if(size < 0) {
+			return null;
+		}
+		Map<Object, Object> map = new Map<Object, Object>();
+		int i = 0;
+		for(; i < size; i++) {
+			map.addWC(this.readObject(), this.readObject());
+		}
+		return map;
+	}
+	
+	public Object readObject() throws Exception {
+		return this.readObject(-1, -1);
+	}
+	
+	public Object readObject(int ri, int vi) throws Exception {
+		return WNDBDecoder.readObject(this, this.readByte(), ri, vi);
+	}
+	
 
 	/*** Override ***/
 
