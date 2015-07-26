@@ -202,10 +202,9 @@ public class Set<X> implements Jsonizable {
 		return this.size;
 	}
 
-	public boolean clear() {
+	public void clear() {
 		this.size = 0;
 		this.values = new Object[0];
-		return true;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -229,14 +228,14 @@ public class Set<X> implements Jsonizable {
 
 	@Override
 	public String toString() {
-		StringBuilder s = new StringBuilder("{");
+		StringBuilder s = new StringBuilder("[");
 		for (int i = 0; i < this.size; i++) {
 			s.append(this.values[i]);
 			if(i != (this.size - 1)) {
-				s.append(", ");
+				s.append(',');
 			}
 		}
-		s.append("}");
+		s.append(']');
 		return s.toString();
 	}
 	

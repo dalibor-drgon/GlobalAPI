@@ -50,6 +50,18 @@ public class Api {
 	protected static Instrumentation instr;
 	protected static InstanceMan unsafe;
 	
+	
+	public static Set<Thread> getThreads() {
+		Object gt = InstanceMan.getValue(null, Thread.class, "getThreads");
+		if(gt instanceof Thread[]) {
+			return new Set<Thread>((Thread[]) gt);
+		}
+		java.util.Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
+		Set<Thread> retv = new Set<Thread>();
+		retv.addAllWC(threadSet);
+		return retv;
+	}
+	
 	public static String join(String w, String... data) {
 		StringBuilder ret = new StringBuilder();
 		for(String d : data) {

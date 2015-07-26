@@ -65,7 +65,11 @@ import eu.wordnice.sockets.HIOServer;
 		System.out.println("Server running at " + server.server.getInetAddress().toString() 
 				+ ", port " + server.port);
 
-		//public void onAccept(Handler.TwoVoidHandler<Thread, HIO> request_handler, boolean create_new_thread, boolean read_post, long timeout_per_read, Handler.ThreeVoidHandler<Thread, Throwable, HIO> error_handler)
+		/*
+		 public void onAccept(Handler.TwoVoidHandler<Thread, HIO> request_handler, 
+			boolean create_new_thread, boolean read_post, long timeout_per_read, 
+			Handler.ThreeVoidHandler<Thread, Throwable, HIO> error_handler);
+		 */
 
 		server.onAccept(new Handler.TwoVoidHandler<Thread, HIO>() {
 			@Override
@@ -97,6 +101,7 @@ Sample browser output:
 Hello!
 
 Mon Jul 20 13:33:04 CEST 2015
+
 ```
 
 Sample console output:
@@ -111,3 +116,91 @@ Accepted: GET HTTP/1.1
  - Head: null
 ```
 
+
+
+### Simple HTTPS server
+
+Simple HTTPS server. It's too same with few args more when creating.
+
+First, if already not got, you must generate your own keystore file, i.e. self-signed certificate - your browser will warn you about untrusted certificate on page enter. Just skip that warning and continue, connection will be still encrypted. If you want "trusted" certificate, you must register it (for non-commercial use it might be free).
+
+```
+$ keytool -genkey -keysize 2048 -keyalg RSA -keypass $KEYPASS -storepass $STOREPASS -keystore $OUTPUT
+
+What is your first and last name?
+  [Unknown]:  mail.ru
+What is the name of your organizational unit?
+  [Unknown]:  IT
+What is the name of your organization?
+  [Unknown]:  LLC Mail.ru
+What is the name of your City or Locality?
+  [Unknown]:  Moscow
+What is the name of your State or Province?
+  [Unknown]:  RUSSIAN FEDERATION
+What is the two-letter country code for this unit?
+  [Unknown]:  RU
+Is CN=mail.ru, OU=IT, O=LLC Mail.ru, L=Moscow, ST=RUSSIAN FEDERATION, C=RU correct?
+  [no]:  yes
+
+```
+
+or
+
+```
+$ keytool -genkey -keysize 2048 -keyalg RSA -keypass $KEYPASS -storepass $STOREPASS -keystore $OUTPUT
+
+What is your first and last name?
+  [Unknown]:  www.example.com
+What is the name of your organizational unit?
+  [Unknown]:  Software Development
+What is the name of your organization?
+  [Unknown]:  Example, Inc.
+What is the name of your City or Locality?
+  [Unknown]:  Talkeetna
+What is the name of your State or Province?
+  [Unknown]:  AK
+What is the two-letter country code for this unit?
+  [Unknown]:  US
+Is CN=www.example.com, OU=Software Development, O=Example, Inc., L=Talkeetna, ST=AK, C=US correct?
+  [no]:  yes
+
+```
+
+Or, if your country is not divided into states, you can just copy "Location" to "State or Province" field:
+
+```
+$ keytool -genkey -keysize 2048 -keyalg RSA -keypass $KEYPASS -storepass $STOREPASS -keystore $OUTPUT
+
+What is your first and last name?
+  [Unknown]:  git.priklad.eu
+What is the name of your organizational unit?
+  [Unknown]:  Services
+What is the name of your organization?
+  [Unknown]:  Priklad s.r.o.
+What is the name of your City or Locality?
+  [Unknown]:  Spacince 1
+What is the name of your State or Province?
+  [Unknown]:  Spacince 1
+What is the two-letter country code for this unit?
+  [Unknown]:  SK
+Is CN=git.priklad.eu, OU=Services, O=Priklad s.r.o., L=Spacince 1, ST=Spacince 1, C=SK correct?
+  [no]:  y
+
+```
+
+Let's say we generated password with KP="s1mul4t0r" and SP="goodnight" with output file ".keystore", we will costruct `HIOServer` with folowing arguments:
+
+```
+		HIOServer server = new HIOServer("localhost", 8192, "s1mul4t0r", "goodnight", ".keystore");
+```
+
+To get working example, just copy code from `Simple HTTP server` and replace constructor. Connect to `https://localhost:8192` (note the `https://`).
+
+
+
+
+
+
+### WNDB
+
+WNDB class is for easy tables serialization & deserialization. Low-level inserting, querying and updating.

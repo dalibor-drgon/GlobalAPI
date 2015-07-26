@@ -248,11 +248,10 @@ public class Map<X, Y> implements Jsonizable {
 		return this.size;
 	}
 
-	public boolean clear() {
+	public void clear() {
 		this.size = 0;
 		this.values = new Object[0];
 		this.names = new Object[0];
-		return true;
 	}
 
 	@SuppressWarnings("unchecked")

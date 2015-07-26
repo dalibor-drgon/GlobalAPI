@@ -24,10 +24,17 @@
 
 package eu.wordnice.sockets;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.KeyStore;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.Handler;
@@ -50,8 +57,28 @@ public class HIOServer {
 		this.readpost = true;
 	}
 	
-	public HIOServer(ServerSocket sock, int port) {
+	public HIOServer(String addr, int port, String keypass, String storepass, String keystorefile) throws Exception {
 		this.port = port;
+		
+		KeyStore kstore = KeyStore.getInstance("JKS");
+		kstore.load(new FileInputStream(keystorefile), keypass.toCharArray());
+		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+		kmf.init(kstore, storepass.toCharArray());
+		
+		SSLContext sslcx = SSLContext.getInstance("TLS");
+		sslcx.init(kmf.getKeyManagers(), null, null);
+		
+		SSLServerSocketFactory ssf = sslcx.getServerSocketFactory();
+		SSLServerSocket server = (SSLServerSocket) ssf.createServerSocket();
+		server.bind(new InetSocketAddress(addr, port));
+		this.server = server;
+		
+		this.readtimeout = 30000;
+		this.readpost = true;
+	}
+	
+	public HIOServer(ServerSocket sock) {
+		this.port = sock.getLocalPort();
 		this.server = sock;
 		this.readtimeout = 30000;
 		this.readpost = true;
@@ -99,6 +126,9 @@ public class HIOServer {
 									HIOServer.this.exc_handler.handle(this, t, hio);
 								}
 							}
+							try {
+								hio.close();
+							} catch(Throwable tign) {}
 						}
 					}.start();
 				} else {
@@ -115,6 +145,9 @@ public class HIOServer {
 							this.exc_handler.handle(null, t, hio);
 						}
 					}
+					try {
+						hio.close();
+					} catch(Throwable tign) {}
 				}
 			}
 		}
