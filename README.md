@@ -203,4 +203,5 @@ To get working example, just copy code from `Simple HTTP server` and replace con
 
 ### WNDB
 
-WNDB class is for easy tables serialization & deserialization. Low-level inserting, querying and updating.
+WNDB class is for easy tables serialization & deserialization. Low-level inserting, querying and updating. WNDB is targeting for File save & read, but can be easily edited to 
+ as
