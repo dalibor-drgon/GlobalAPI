@@ -121,9 +121,9 @@ public class WNDBEncoder {
 				return;
 			case LONG:
 				if(obj == null) {
-					out.writeByte((byte) 0);
+					out.writeLong((long) 0);
 				} else {
-					out.writeByte((Byte) obj);
+					out.writeLong((Long) obj);
 				}
 				return;
 			case FLOAT:

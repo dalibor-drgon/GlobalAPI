@@ -87,7 +87,7 @@ public class SetSetResSet extends SimpleResSet {
 		if(this.values == null) {
 			return null;
 		}
-		int so = this.numberOfEntries();
+		int so = this.size();
 		if(i >= so) {
 			return null;
 		}
@@ -107,7 +107,7 @@ public class SetSetResSet extends SimpleResSet {
 		if(this.values == null) {
 			return false;
 		}
-		int so = this.numberOfEntries();
+		int so = this.size();
 		if(i >= so) {
 			return false;
 		}
@@ -144,7 +144,7 @@ public class SetSetResSet extends SimpleResSet {
 		if(this.isSetOK(set) == false) {
 			return false;
 		}
-		int so = this.numberOfEntries();
+		int so = this.size();
 		if(i == so) {
 			return this.insert(set);
 		}
@@ -183,7 +183,7 @@ public class SetSetResSet extends SimpleResSet {
 	}
 	
 	public boolean insert(SetSetResSet ssrs, int i) {
-		if(ssrs == null || i < 0 || i >= ssrs.numberOfEntries()) {
+		if(ssrs == null || i < 0 || i >= ssrs.size()) {
 			return false;
 		}
 		return this.insert(ssrs.getEntry(i), ssrs.names);
@@ -369,7 +369,7 @@ public class SetSetResSet extends SimpleResSet {
 			return null;
 		}
 		this.checkSet();
-		int sz1 = this.numberOfEntries();
+		int sz1 = this.size();
 		int sz2 = this.sizeOfHeader();
 		if(this.values == null) {
 			return null;
@@ -406,7 +406,7 @@ public class SetSetResSet extends SimpleResSet {
 		if(this.isValueOK(val, i2) == false) {
 			return false;
 		}
-		int sz1 = this.numberOfEntries();
+		int sz1 = this.size();
 		int sz2 = this.sizeOfHeader();
 		if(i >= sz1 || i2 >= sz2) {
 			return false;
@@ -449,7 +449,6 @@ public class SetSetResSet extends SimpleResSet {
 		return null;
 	}
 
-	//numberOfFieldsInHeader
 	public int sizeOfHeader() {
 		this.checkSet();
 		if(this.names != null) {
@@ -464,8 +463,7 @@ public class SetSetResSet extends SimpleResSet {
 		return 0;
 	}
 	
-	//numberOfEntries
-	public int numberOfEntries() {
+	public int size() {
 		this.checkSet();
 		if(this.values == null) {
 			return 0;
@@ -492,7 +490,7 @@ public class SetSetResSet extends SimpleResSet {
 	
 	public boolean setIndex(int i) {
 		this.checkSet();
-		if(i < 0 || i >= this.numberOfEntries()) {
+		if(i < 0 || i >= this.size()) {
 			return false;
 		}
 		this.i = i;

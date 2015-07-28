@@ -27,6 +27,7 @@ public abstract class WNDBStore {
 	/*** UTITILITIES ***/
 	public abstract void err(String str);
 	public abstract void out(String str);
+	public abstract void exc(Throwable t);
 	
 	
 	public Map<String, WNDB> getDBs() {
@@ -44,18 +45,18 @@ public abstract class WNDBStore {
 			if(db == null) {
 				this.out("Loading database " + name + "!");
 			} else {
-				this.out("Loading (overwriting) database " + name + "!");
+				this.out("Loading (overwriting runtime data) database " + name + "!");
 			}
 			try {
 				if(!this.loadDB(name)) {
 					this.err("Types or names for " + name + " database are null! "
 							+ "Probably they do not exist, we are sorry for that bug.");
 				} else {
-					this.out("Database loaded!");
+					this.out("Database " + name +" loaded!");
 				}
 			} catch(Throwable t) {
-				this.err("We are really sorry, but we cannot load database... Details:");
-				t.printStackTrace();
+				this.err("We are really sorry, but we cannot load database " + name +"... Details:");
+				this.exc(t);
 			}
 		}
 	}
@@ -70,16 +71,14 @@ public abstract class WNDBStore {
 			this.out("Creating simulated config " + name + "!");
 			try {
 				loadEmptyDB(name);
-				this.out("Simulated config created!");
+				this.out("Simulated config for " + name +" created!");
 			} catch(Throwable t) {
-				this.err("This is really embarrassing... "
-						+ "We cannot simulate this database...  Details: ");
-				t.printStackTrace();
+				this.exc(t);
 			}
 		}
 	}
 	
-	public void loadEmptyDB(String name) throws Exception {
+	public void loadEmptyDB(String name) throws RuntimeException {
 		@SuppressWarnings("unchecked")
 		Set<WNDBVarTypes> set_types = (Set<WNDBVarTypes>) InstanceMan.getValue(
 				this, this.getClass(), name + "_types");
@@ -128,13 +127,13 @@ public abstract class WNDBStore {
 				this.err("Cannot read database " + name + "; database renamed to '" 
 						+ Api.getRealPath(movedto) + "' and we are going to create new one! "
 						+ "Database parse error:");
-				t.printStackTrace();
+				this.exc(t);
 				
 				try {
 					file.renameTo(movedto);
 				} catch(Throwable t2) {
 					this.err("We are really sorry... Cannot rename the database... Details: ");
-					t2.printStackTrace();
+					this.exc(t2);
 					
 					this.err("Due this unexpected error, all settings will be saved to RAM "
 							+ "and after restart will be lost! Please, fix this problem.");
@@ -148,14 +147,13 @@ public abstract class WNDBStore {
 		}
 		if(db == null) {
 			try {
-				db = WNDB.createWBDB(file, set_names, set_types, this.timeout);
-				db.checkSet();
+				db = WNDB.createWNDB(file, set_names, set_types, this.timeout);
 			} catch (Throwable t) {
 				this.err("We cannot create the database " + name + "... Details: ");
-				t.printStackTrace();
+				this.exc(t);
 				
-				this.err("Due this unexpected error, all settings will be saved to RAM "
-						+ "and after restart will be lost! Please, fix this problem.");
+				this.err("Due this unexpected error, all settings for database " + name +" will be "
+						+ "saved to RAM and after restart will be lost! Please, fix this problem.");
 				db = new WNDB();
 				db.values = new Set<Set<Object>>();
 				db.names = set_names;
@@ -182,8 +180,8 @@ public abstract class WNDBStore {
 				db.save();
 			} catch(Throwable t) {
 				this.err("This is embarrassing... "
-						+ "We cannot save the database...  Details: ");
-				t.printStackTrace();
+						+ "We cannot save the database " + name +"...  Details: ");
+				this.exc(t);
 				return true;
 			}
 		} else {
@@ -192,13 +190,13 @@ public abstract class WNDBStore {
 			if(file.exists()) {
 				try {
 					File moveto = Api.getFreeName(Api.getRealPath(file) + ".invalid");
-					this.out("Save unsaved db: old database renamed to '" + Api.getRealPath(moveto) 
+					this.out("Save unsaved db: old " + name +" database renamed to '" + Api.getRealPath(moveto) 
 							+ "' and we are going to create new one!");
 					file.renameTo(moveto);
 				} catch(Throwable t) {
 					this.err("This is embarrassing... "
-							+ "We cannot rename the database again... Details: ");
-					t.printStackTrace();
+							+ "We cannot rename the database " + name +"... Details: ");
+					this.exc(t);
 					return true;
 				}
 			}
@@ -208,8 +206,8 @@ public abstract class WNDBStore {
 			} catch(Throwable t) {
 				db.file = null;
 				this.err("This is embarrassing... "
-						+ "We cannot save the database...  Details: ");
-				t.printStackTrace();
+						+ "We cannot save the database " + name +"...  Details: ");
+				this.exc(t);
 				return true;
 			}
 			InstanceMan.setValue(this, name, db);
@@ -241,7 +239,7 @@ public abstract class WNDBStore {
 						} catch(Throwable t) {
 							this.err("This is embarrassing... "
 									+ "We cannot rename the database again... Continue to next db... Details: ");
-							t.printStackTrace();
+							this.exc(t);
 							continue;
 						}
 					}
@@ -252,7 +250,7 @@ public abstract class WNDBStore {
 						db.file = null;
 						this.err("This is embarrassing... "
 								+ "We cannot save the database... Continue to next db... Details: ");
-						t.printStackTrace();
+						this.exc(t);
 						continue;
 					}
 					InstanceMan.setValue(this, name, db);
@@ -284,7 +282,7 @@ public abstract class WNDBStore {
 						} catch(Throwable t) {
 							this.err("This is embarrassing... "
 									+ "We cannot rename the database again... Continue to next db... Details: ");
-							t.printStackTrace();
+							this.exc(t);
 							continue;
 						}
 					}
@@ -295,7 +293,7 @@ public abstract class WNDBStore {
 						db.file = null;
 						this.err("This is embarrassing... "
 								+ "We cannot save the database... Continue to next db... Details: ");
-						t.printStackTrace();
+						this.exc(t);
 						continue;
 					}
 					InstanceMan.setValue(this, name, db);
@@ -307,7 +305,7 @@ public abstract class WNDBStore {
 					} catch(Throwable t) {
 						this.err("This is embarrassing... "
 								+ "We cannot save the database... Continue to next db... Details: ");
-						t.printStackTrace();
+						this.exc(t);
 						continue;
 					}
 					InstanceMan.setValue(this, name, db);

@@ -26,6 +26,8 @@ package eu.wordnice.sql.wndb;
 
 import java.io.File;
 
+import eu.wordnice.api.IStream;
+import eu.wordnice.api.OStream;
 import eu.wordnice.api.Set;
 import eu.wordnice.api.Val;
 import eu.wordnice.api.Val.ThreeVal;
@@ -59,6 +61,19 @@ public class WNDB extends SetSetResSet {
 			return;
 		}
 		WNDBEncoder.writeFileData(this.file, new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(this.names, this.types, this.values), this.timeout);
+		this.changed = false;
+	}
+	
+	public void save(OStream ost) throws Exception {
+		WNDBEncoder.writeOutputStreamData(ost, new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(this.names, this.types, this.values));
+		this.changed = false;
+	}
+	
+	public void load(IStream ist) throws Exception {
+		ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals = WNDBDecoder.readInputStreamRawData(ist);
+		this.names = vals.one;
+		this.types = vals.two;
+		this.values = vals.three;
 		this.changed = false;
 	}
 	
@@ -151,11 +166,11 @@ public class WNDB extends SetSetResSet {
 	
 	/*** Static CREATE ***/
 	
-	public static WNDB createWBDB_(File f, Set<String> names, Set<Byte> types, long timeout) throws Exception {
-		return WNDB.createWBDB(f, names, WNDBDecoder.getBytesToVarTypes(types), timeout);
+	public static WNDB createWNDB_(File f, Set<String> names, Set<Byte> types, long timeout) throws Exception {
+		return WNDB.createWNDB(f, names, WNDBDecoder.getBytesToVarTypes(types), timeout);
 	}
 	
-	public static WNDB createWBDB(File f, Set<String> names, Set<WNDBVarTypes> types, long timeout) throws Exception {
+	public static WNDB createWNDB(File f, Set<String> names, Set<WNDBVarTypes> types, long timeout) throws Exception {
 		f.createNewFile();
 		Set<Set<Object>> vals = new Set<Set<Object>>();
 		Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> threevals = new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(names, types, vals);

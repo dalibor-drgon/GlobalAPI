@@ -34,66 +34,91 @@ import java.util.concurrent.TimeUnit;
 
 public class TimeoutThread<X> {
 
-    public Runa<X> run = null;
-    public ExecutorService executor = null;
-    public long timeout = 100L;
-    private boolean canceled = false;
-    private boolean runed = false;
+	public Runa<X> run = null;
+	public ExecutorService executor = null;
+	public long timeout = 100L;
+	private boolean canceled = false;
+	private boolean runed = false;
+	
+	public void exc(Throwable t, boolean fatal) {}
 
-    public TimeoutThread(Runnable runit, X ret, long timeout) {
-        this(new Runa<X>(runit, ret), timeout);
-    }
+	public TimeoutThread(Runnable runit, X ret, long timeout) {
+		this(new Runa<X>(runit, ret), timeout);
+	}
 
-    public TimeoutThread(Runa<X> runit, long timeout) {
-        this.run = runit;
-        if(timeout < 1L) {
-            timeout = 10L;
-        }
-        this.timeout = timeout;
-    }
+	public TimeoutThread(Runa<X> runit, long timeout) {
+		this.run = runit;
+		if(timeout < 1L) {
+			timeout = 10L;
+		}
+		this.timeout = timeout;
+	}
 
 
-    public X run() {
-        return this.run(null);
-    }
+	public X run() {
+		return this.run(null);
+	}
 
-    public X run(X defaulte) {
+	public X run(X defaulte) {
+		this.runed = true;
+		List<Future<X>> list = null;
+		this.executor = Executors.newCachedThreadPool();
+		try {
+			list = executor.invokeAll(Arrays.asList(this.run), this.timeout, TimeUnit.MILLISECONDS);
+		} catch(Throwable t) {
+			this.canceled = true;
+			this.exc(t, true);
+		}
+		executor.shutdown();
 
-        this.runed = true;
-        List<Future<X>> list = null;
-        try {
-            this.executor = Executors.newCachedThreadPool();
-            list = executor.invokeAll(Arrays.asList(this.run), this.timeout, TimeUnit.MILLISECONDS);
-        } catch (Exception e) {
-            e.printStackTrace();
-            this.canceled = true;
-        }
-        executor.shutdown();
+		if(list == null || list.size() != 1) {
+			return defaulte;
+		}
 
-        if(list == null) {
-            return defaulte;
-        }
-        if(list.size() != 1) {
-            return defaulte;
-        }
+		try {
+			Future<X> f = list.get(0);
+			try {
+				return f.get();
+			} catch(Throwable t2) {
+				this.canceled = true;
+				this.exc(t2, false);
+			}
+		} catch(Throwable t) {
+			this.exc(t, false);
+		}
+		return defaulte;
+	}
 
-        try {
-            Future<X> f = list.get(0);
-            try {
-                return f.get();
-            } catch (Exception e) {
-                this.canceled = true;
-            }
-        } catch (Exception e) { }
-        return defaulte;
-    }
+	public boolean wasRunned() {
+		return this.runed;
+	}
 
-    public boolean wasRunned() {
-        return this.runed;
-    }
+	public boolean wasCanceled() {
+		return this.canceled;
+	}
+	
+	
+	/*** STATIC ***/
+	
+	public static <X> X run(Runa<X> rn, X defaulte, long timeout) {
+		List<Future<X>> list = null;
+		ExecutorService exec = Executors.newCachedThreadPool();
+		try {
+			list = exec.invokeAll(Arrays.asList(rn), timeout, TimeUnit.MILLISECONDS);
+		} catch(Throwable t) {}
+		try {
+			exec.shutdown();
+		} catch(Throwable t) {}
 
-    public boolean wasCanceled() {
-        return this.canceled;
-    }
+		if(list == null || list.size() != 1) {
+			return defaulte;
+		}
+
+		try {
+			Future<X> f = list.get(0);
+			return f.get();
+		} catch(Throwable t) {}
+		return defaulte;
+	}
 
 }

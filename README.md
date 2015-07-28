@@ -26,7 +26,9 @@ import eu.wordnice.api.IStream;
 import eu.wordnice.api.Map;
 import eu.wordnice.api.Set;
 
-
+public class SerializeExample {
+	
+	public static void main(String... args) throws Exception {
 		// Write
 		ByteArrayOutputStream ot = new ByteArrayOutputStream();
 		OStream os = new OStream(ot);
@@ -40,11 +42,13 @@ import eu.wordnice.api.Set;
 		Set<Object> set = is.readSet();
 		System.out.println("Set: " + set);
 		is.close();
+	}
+}
 ```
 
 Output:
 ```
-Set: {Hello!, 123456, true, true, {Zero:0,One:1,Two:2,Three:3,Four:4}, false, YES, {404, NotFound}}
+Set: [Hello!,123456,true,true,{Zero:0,One:1,Two:2,Three:3,Four:4},false,YES,[404,NotFound]]
 ```
 
 
@@ -60,7 +64,9 @@ import eu.wordnice.api.Handler;
 import eu.wordnice.sockets.HIO;
 import eu.wordnice.sockets.HIOServer;
 
-
+public class HIOExample {
+	
+	public static void main(String... args) throws Exception {
 		HIOServer server = new HIOServer("localhost", 8192);
 		System.out.println("Server running at " + server.server.getInetAddress().toString() 
 				+ ", port " + server.port);
@@ -94,6 +100,8 @@ import eu.wordnice.sockets.HIOServer;
 				}
 			}
 		}, false, false, 3000, null);
+	}
+}
 ```
 
 Sample browser output:
@@ -120,7 +128,7 @@ Accepted: GET HTTP/1.1
 
 ### Simple HTTPS server
 
-Simple HTTPS server. It's too same with few args more when creating.
+Simple HTTPS server. It's too same with few args more when creating `HIOServer` instance.
 
 First, if already not got, you must generate your own keystore file, i.e. self-signed certificate - your browser will warn you about untrusted certificate on page enter. Just skip that warning and continue, connection will be still encrypted. If you want "trusted" certificate, you must register it (for non-commercial use it might be free).
 
@@ -203,5 +211,21 @@ To get working example, just copy code from `Simple HTTP server` and replace con
 
 ### WNDB
 
-WNDB class is for easy tables serialization & deserialization. Low-level inserting, querying and updating. WNDB is targeting for File save & read, but can be easily edited to 
- as
+`WNDB` class is for easy tables serialization & deserialization, low-level inserting, querying and updating. For even easily work, there was created `WNDBStore` abstract class, and with its help there can be created very short and clean databases store class. Example, class with 2 databases is below. Run it twice, if everything is OK and no errors are displayed, you should get Outputs as under code.
+
+
+```java
+
+```
+
+First output:
+
+```
+
+```
+
+Second output:
+
+```
+
+```

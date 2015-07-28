@@ -36,7 +36,7 @@ import eu.wordnice.api.threads.TimeoutInputStream;
 
 public class WNDBDecoder { 
 
-	public static final long STATIC_DB_PREFIX = 1957294757399235L;
+	public static final long STATIC_DB_PREFIX = 0xDEADCAFEBEEFBABEL;
 	
 	public static Set<Byte> getVarTypesToBytes(Set<WNDBVarTypes> set) {
 		if(set == null) {
