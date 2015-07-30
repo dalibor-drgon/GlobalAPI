@@ -8,9 +8,13 @@ import java.util.Collection;
 public class JSONEncoder {
 	
 	public static void writeString(OutputStream out, String val) throws IOException {
+		if(val == null) {
+			out.write(new byte[] {'n','u','l','l'});
+			return;
+		}
 		out.write('\"');
-		out.write(val.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\\n")
-				.replace("\t", "\\\t").replace("\b", "\\\b").replace("\r", "\\\r").getBytes());
+		out.write(val.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")
+				.replace("\t", "\\t").replace("\b", "\\b").replace("\r", "\\r").getBytes());
 		out.write('\"');
 		
 		//ch < ' ' => Integer.toHexString(ch)
@@ -58,7 +62,29 @@ public class JSONEncoder {
 				if(val instanceof Jsonizable) {
 					((Jsonizable) val).toJsonString(out);
 				} else if(val instanceof Collection<?>) {
-					new Set<Object>((Collection<?>) val).toJsonString(out);
+					try {
+						Set<Object> st = new Set<Object>();
+						st.addAllWC((Collection<?>) val);
+						st.toJsonString(out);
+						return;
+					} catch(Throwable t) {
+						if(t instanceof IOException) {
+							throw (IOException) t;
+						}
+					}
+					JSONEncoder.writeString(out, val.toString());
+				} else if(val instanceof java.util.Map<?,?>) {
+					try {
+						Map<Object, Object> st = new Map<Object, Object>();
+						st.addAllWC((java.util.Map<?,?>) val);
+						st.toJsonString(out);
+						return;
+					} catch(Throwable t) {
+						if(t instanceof IOException) {
+							throw (IOException) t;
+						}
+					}
+					JSONEncoder.writeString(out, val.toString());
 				} else {
 					JSONEncoder.writeString(out, val.toString());
 				}
