@@ -181,5 +181,22 @@ public class WNDB extends SetSetResSet {
 		ret.values = vals;
 		return ret;
 	}
+	
+	
+	public static WNDB createWNDB_(OStream out, Set<String> names, Set<Byte> types) throws Exception {
+		return WNDB.createWNDB(out, names, WNDBDecoder.getBytesToVarTypes(types));
+	}
+	
+	public static WNDB createWNDB(OStream out, Set<String> names, Set<WNDBVarTypes> types) throws Exception {
+		Set<Set<Object>> vals = new Set<Set<Object>>();
+		Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> threevals = new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(names, types, vals);
+		WNDBEncoder.writeOutputStreamData(out, threevals);
+		WNDB ret = new WNDB();
+		ret.file = null;
+		ret.names = names;
+		ret.types = types;
+		ret.values = vals;
+		return ret;
+	}
 
 }

@@ -48,7 +48,7 @@ public class TimeoutOutputStream extends OutputStream {
 			@Override
 			public Object call() {
 				try {
-					TimeoutOutputStream.this.write(obyte);
+					TimeoutOutputStream.this.out.write(obyte);
 					return null;
 				} catch(IOException t) {
 					return t;
@@ -69,7 +69,7 @@ public class TimeoutOutputStream extends OutputStream {
 			@Override
 			public Object call() {
 				try {
-					TimeoutOutputStream.this.write(bytes);
+					TimeoutOutputStream.this.out.write(bytes);
 					return null;
 				} catch(IOException t) {
 					return t;
@@ -90,7 +90,7 @@ public class TimeoutOutputStream extends OutputStream {
 			@Override
 			public Object call() {
 				try {
-					TimeoutOutputStream.this.write(bytes, off, l);
+					TimeoutOutputStream.this.out.write(bytes, off, l);
 					return null;
 				} catch(IOException t) {
 					return t;

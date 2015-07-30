@@ -215,17 +215,123 @@ To get working example, just copy code from `Simple HTTP server` and replace con
 
 
 ```java
+package eu.wordnice.test;
 
-```
+import java.io.File;
 
-First output:
+import eu.wordnice.api.Api;
+import eu.wordnice.api.Set;
+import eu.wordnice.sql.wndb.WNDB;
+import eu.wordnice.sql.wndb.WNDBStore;
+import eu.wordnice.sql.wndb.WNDBVarTypes;
 
-```
+public class WNDBStoreExample extends WNDBStore {
+	
+	/*** DATABASES & DATAS ***/
+	
+	public WNDB users;
+ 	Set<WNDBVarTypes> users_types = new Set<WNDBVarTypes>(
+ 			WNDBVarTypes.STRING, WNDBVarTypes.INT
+ 	);
+ 	Set<String> users_names = new Set<String>(
+ 			"name", "pass"
+ 	);
+ 	
+ 	
+ 	public WNDB posts;
+ 	Set<WNDBVarTypes> posts_types = new Set<WNDBVarTypes>(
+ 			WNDBVarTypes.STRING, WNDBVarTypes.STRING, WNDBVarTypes.STRING
+ 	);
+ 	Set<String> posts_names = new Set<String>(
+ 			"name", "title", "text"
+ 	);
+	
+	
+	/*** OVERRIDE ***/
+ 	
+ 	public WNDBStoreExample(File dir) {
+ 		super(dir);
+ 		this.timeout = 5000;
+ 		if(dir.exists() == false) {
+ 			try {
+ 				dir.mkdirs();
+ 			} catch(Throwable t) {
+ 				this.err("Error while creating database folder, details:");
+ 				this.exc(t);
+ 				this.err("Cancelling");
+ 				
+ 				//this.loadEmptyDBs();
+ 				return;
+ 			}
+ 			this.loadDBs();
+ 		} else {
+ 			this.loadDBs();
+ 		}
+ 	}
+	
+	@Override
+	public void err(String msg) {
+		System.out.println(msg);
+	}
 
-```
+	@Override
+	public void out(String msg) {
+		System.out.println(msg);
+	}
 
-Second output:
-
-```
-
+	@Override
+	public void exc(Throwable t) {
+		t.printStackTrace();
+	}
+	
+	
+	
+	/*** MAIN ***/
+	
+	public static void main(String... args) throws Exception {
+		WNDBStoreExample ws = new WNDBStoreExample(new File("./dbs/"));
+		
+		if(ws.posts.size() == 0 || ws.users.size() == 0) {
+			System.out.println("Databases do not exist, inserting some data...");
+			
+			String curusr = Api.genString(10);
+			int curusr_pass = Api.genString(12).hashCode();
+			System.out.println("Inserting user1: " + curusr + " with password hash " + curusr_pass);
+			if(!ws.users.insert(curusr, curusr_pass)) { System.out.println("Cannot insert new user..."); }
+			
+			curusr = Api.genString(10);
+			curusr_pass = Api.genString(12).hashCode();
+			System.out.println("Inserting user2: " + curusr + " with password hash " + curusr_pass);
+			if(!ws.users.insert(curusr, curusr_pass)) { System.out.println("Cannot insert new user..."); }
+			
+			String title = "How to decode " + Api.genString(12);
+			String text = "Blah blah blah, I really cannot say you how to do it, because it just random string.";
+			System.out.println("Inserting post1: from " + curusr + " with title " + title);
+			if(!ws.posts.insert(curusr, title, text)) { System.out.println("Cannot insert new post..."); }
+			
+			ws.saveDBs();
+			System.out.println("Databases should be saved. Run this program again to load and print data...");
+		} else {
+			System.out.println("Displaying saved users:");
+			int n = ws.users.size();
+			int i = 0;
+			Set<Object> vals = null;
+			for(i = 0; i < n; i++) {
+				vals = ws.users.getEntry(i);
+				System.out.println("\t- " + ((String) vals.get(0)) + " with password hash " + ((Integer) vals.get(1)));
+			}
+			System.out.println("");
+			
+			
+			System.out.println("Displaying saved posts:");
+			n = ws.posts.size();
+			for(i = 0; i < n; i++) {
+				vals = ws.posts.getEntry(i);
+				System.out.println("\t- " + ((String) vals.get(1)) + " from user " + ((String) vals.get(0)));
+				System.out.println("\t\t" + ((String) vals.get(2)));
+			}
+			System.out.println("");
+		}
+	}
+}
 ```

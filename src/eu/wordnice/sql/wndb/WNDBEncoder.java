@@ -46,6 +46,7 @@ public class WNDBEncoder {
 		OStream out = new OStream(new TimeoutOutputStream(new BufferedOutputStream(fout), timeout));
 		WNDBEncoder.writeOutputStreamData(out, vals);
 		out.close();
+		fout.close();
 	}
 	
 	public static void writeOutputStreamData(OStream out, 

@@ -76,6 +76,7 @@ public class WNDBDecoder {
 		IStream in = new IStream(new TimeoutInputStream(new BufferedInputStream(fin), tm));
 		Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> ret = WNDBDecoder.readInputStreamRawData(in);
 		in.close();
+		fin.close();
 		return ret;
 	}
 	
