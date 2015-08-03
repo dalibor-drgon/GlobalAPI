@@ -43,62 +43,41 @@ public class CLoader extends URLClassLoader {
 	}
 	
 	
-	public boolean addJar(File f) {
-		try {
-			return this.addJar(f.toURI().toURL());
-		} catch(Throwable t) {}
-		return false;
+	public void addJar(File f) throws Throwable {
+		this.addJar(f.toURI().toURL());
 	}
 	
-	public boolean addJar(URL u) {
-		try {
-			super.addURL(u);
-			return true;
-		} catch(Throwable t) {}
-		return false;
+	public void addJar(URL u) throws Throwable {
+		super.addURL(u);
 	}
 	
 	@SuppressWarnings("deprecation")
-	public Class<?> defClass(byte[] b, int off, int l) {
-		try {
-			return super.defineClass(b, off, l);
-		} catch(Throwable t) {}
-		return null;
+	public Class<?> defClass(byte[] b, int off, int l) throws Throwable {
+		return super.defineClass(b, off, l);
 	}
 	
-	public Class<?> defClass(String name, byte[] b, int off, int l) {
-		try {
-			return super.defineClass(name, b, off, l);
-		} catch(Throwable t) {}
-		return null;
+	public Class<?> defClass(String name, byte[] b, int off, int l) throws Throwable {
+		return super.defineClass(name, b, off, l);
 	}
 	
-	public Package getPackage(String name) {
+	public Package getPackage(String name) throws RuntimeThrowable {
 		try {
 			return super.getPackage(name);
-		} catch(Throwable t) {}
-		return null;
+		} catch(Throwable t) {
+			throw new RuntimeThrowable(t);
+		}
 	}
 	
-	public Package[] getPackages(String name) {
-		try {
-			return super.getPackages();
-		} catch(Throwable t) {}
-		return null;
+	public Package[] getPackages(String name) throws Throwable {
+		return super.getPackages();
 	}
 	
-	public Class<?> getLoadedClass(String name) {
-		try {
-			return super.findLoadedClass(name);
-		} catch(Throwable t) {}
-		return null;
+	public Class<?> getLoadedClass(String name) throws Throwable {
+		return super.findLoadedClass(name);
 	}
 	
-	public Class<?> getClass(String name) {
-		try {
-			return super.findClass(name);
-		} catch(Throwable t) {}
-		return null;
+	public Class<?> getClass(String name) throws Throwable {
+		return super.findClass(name);
 	}
 	
 }
