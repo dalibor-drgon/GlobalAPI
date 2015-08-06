@@ -22,27 +22,29 @@
  SOFTWARE.
  */
 
-package eu.wordnice.api;
+package eu.wordnice.api.sponge;
 
-public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
+import eu.wordnice.api.Api;
+
+@org.spongepowered.api.plugin.Plugin(id="MainAPI", name="MainAPI", version="1.8.0")
+public class MainApi {
 	
-	protected void out(String s) {
-		this.getLogger().info(s);
-	}
-	
-	@Override
-	public void onEnable() {
+	@com.google.inject.Inject
+	private org.slf4j.Logger log;
+
+	@org.spongepowered.api.event.Subscribe
+    public void onServerStart(org.spongepowered.api.event.state.ServerStartedEvent event) {
 		try {
-			out("Instrumentation: " + Api.getInstrumentation());
-			out("System class loaded has " + Api.getLoadedClasses(Api.getClassLoader()).length + " classes!");
-			out("Totaly loaded " + Api.getAllLoadedClasses().length + " classes!");
+			this.log.info("Instrumentation: " + Api.getInstrumentation());
+			this.log.info("System class loaded has " + Api.getLoadedClasses(Api.getClassLoader()).length + " classes!");
+			this.log.info("Totaly loaded " + Api.getAllLoadedClasses().length + " classes!");
 		} catch(Throwable t) {}
-		out("MainAPI by wordnice is enabled! Hello!");
+		this.log.info("MainAPI by wordnice was enabled! Hello!");
 	}
 	
-	@Override
-	public void onDisable() {
-		out("MainAPI by wordnice was disabled! Bye!");
+	@org.spongepowered.api.event.Subscribe
+    public void onServerStart(org.spongepowered.api.event.state.ServerStoppingEvent event) {
+		this.log.info("MainAPI by wordnice was disabled! Bye!");
 	}
 	
 }

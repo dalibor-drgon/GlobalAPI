@@ -40,10 +40,6 @@ import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.bukkit.ChatColor;
-
-//import javaagent.JavaAgent;
-
 public class Api {
 	
 	protected static Random rand = new Random();
@@ -285,52 +281,54 @@ public class Api {
 	}
 	
 	public static String getColoredString(String text) {
-		text = text.replaceAll("&0", (""+ChatColor.BLACK));
-		text = text.replaceAll("&1", (""+ChatColor.DARK_BLUE));
-		text = text.replaceAll("&2", (""+ChatColor.DARK_GREEN));
-		text = text.replaceAll("&3", (""+ChatColor.DARK_AQUA));
-		text = text.replaceAll("&4", (""+ChatColor.DARK_RED));
-		text = text.replaceAll("&5", (""+ChatColor.DARK_PURPLE));
-		text = text.replaceAll("&6", (""+ChatColor.GOLD));
-		text = text.replaceAll("&7", (""+ChatColor.GRAY));
-		text = text.replaceAll("&8", (""+ChatColor.DARK_GRAY));
-		text = text.replaceAll("&9", (""+ChatColor.BLUE));
-		text = text.replaceAll("&a", (""+ChatColor.GREEN));
-		text = text.replaceAll("&b", (""+ChatColor.AQUA));
-		text = text.replaceAll("&c", (""+ChatColor.RED));
-		text = text.replaceAll("&d", (""+ChatColor.LIGHT_PURPLE));
-		text = text.replaceAll("&e", (""+ChatColor.YELLOW));
-		text = text.replaceAll("&f", (""+ChatColor.WHITE));
-		text = text.replaceAll("&l", (""+ChatColor.BOLD));
-		text = text.replaceAll("&o", (""+ChatColor.ITALIC));
-		text = text.replaceAll("&r", (""+ChatColor.RESET));
-		text = text.replaceAll("&m", (""+ChatColor.STRIKETHROUGH));
-		text = text.replaceAll("&n", (""+ChatColor.UNDERLINE));
+		text = text.replace("&0", "\u00A7\u0000");
+		text = text.replace("&1", "\u00A7\u0001");
+		text = text.replace("&2", "\u00A7\u0002");
+		text = text.replace("&3", "\u00A7\u0003");
+		text = text.replace("&4", "\u00A7\u0004");
+		text = text.replace("&5", "\u00A7\u0005");
+		text = text.replace("&6", "\u00A7\u0006");
+		text = text.replace("&7", "\u00A7\u0007");
+		text = text.replace("&8", "\u00A7\u0008");
+		text = text.replace("&9", "\u00A7\u0009");
+		text = text.replace("&a", new String(new char[] {0x00A7, 0x000A}));
+		text = text.replace("&b", "\u00A7\u000B");
+		text = text.replace("&c", "\u00A7\u000C");
+		text = text.replace("&d", new String(new char[] {0x00A7, 0x000D}));
+		text = text.replace("&e", "\u00A7\u000E");
+		text = text.replace("&f", "\u00A7\u000F");
+		text = text.replace("&k", "\u00A7\u0010");
+		text = text.replace("&l", "\u00A7\u0011");
+		text = text.replace("&m", "\u00A7\u0012");
+		text = text.replace("&n", "\u00A7\u0013");
+		text = text.replace("&o", "\u00A7\u0014");
+		text = text.replace("&r", "\u00A7\u0015");
 		return text;
 	}
 	
 	public static String getDecoloredString(String text) {
-		text = text.replaceAll((""+ChatColor.BLACK), "&0");
-		text = text.replaceAll((""+ChatColor.DARK_BLUE), "&1");
-		text = text.replaceAll((""+ChatColor.DARK_GREEN), "&2");
-		text = text.replaceAll((""+ChatColor.DARK_AQUA), "&3");
-		text = text.replaceAll((""+ChatColor.DARK_RED), "&4");
-		text = text.replaceAll((""+ChatColor.DARK_PURPLE), "&5");
-		text = text.replaceAll((""+ChatColor.GOLD), "&6");
-		text = text.replaceAll((""+ChatColor.GRAY), "&7");
-		text = text.replaceAll((""+ChatColor.DARK_GRAY), "&8");
-		text = text.replaceAll((""+ChatColor.BLUE), "&9");
-		text = text.replaceAll((""+ChatColor.GREEN), "&a");
-		text = text.replaceAll((""+ChatColor.AQUA), "&b");
-		text = text.replaceAll((""+ChatColor.RED), "&c");
-		text = text.replaceAll((""+ChatColor.LIGHT_PURPLE), "&d");
-		text = text.replaceAll((""+ChatColor.YELLOW), "&e");
-		text = text.replaceAll((""+ChatColor.WHITE), "&f");
-		text = text.replaceAll((""+ChatColor.BOLD), "&l");
-		text = text.replaceAll((""+ChatColor.ITALIC), "&o");
-		text = text.replaceAll((""+ChatColor.RESET), "&r");
-		text = text.replaceAll((""+ChatColor.STRIKETHROUGH), "&m");
-		text = text.replaceAll((""+ChatColor.UNDERLINE), "&n");
+		text = text.replace("\u00A7\u0000", "&0");
+		text = text.replace("\u00A7\u0001", "&1");
+		text = text.replace("\u00A7\u0002", "&2");
+		text = text.replace("\u00A7\u0003", "&3");
+		text = text.replace("\u00A7\u0004", "&4");
+		text = text.replace("\u00A7\u0005", "&5");
+		text = text.replace("\u00A7\u0006", "&6");
+		text = text.replace("\u00A7\u0007", "&7");
+		text = text.replace("\u00A7\u0008", "&8");
+		text = text.replace("\u00A7\u0009", "&9");
+		text = text.replace(new String(new char[] {0x00A7, 0x000A}), "&a");
+		text = text.replace("\u00A7\u000B", "&b");
+		text = text.replace("\u00A7\u000C", "&c");
+		text = text.replace(new String(new char[] {0x00A7, 0x000D}), "&d");
+		text = text.replace("\u00A7\u000E", "&e");
+		text = text.replace("\u00A7\u000F", "&f");
+		text = text.replace("\u00A7\u0010", "&k");
+		text = text.replace("\u00A7\u0011", "&l");
+		text = text.replace("\u00A7\u0012", "&m");
+		text = text.replace("\u00A7\u0013", "&n");
+		text = text.replace("\u00A7\u0014", "&o");
+		text = text.replace("\u00A7\u0015", "&r");
 		return text;
 	}
 	
