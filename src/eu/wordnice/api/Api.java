@@ -42,7 +42,9 @@ import java.util.regex.Pattern;
 
 public class Api {
 	
-	protected static Random rand = new Random();
+	public static Random rand = new Random();
+	public static byte[] GENSTRING = "abcdefghijklmnopqrstuvwxyz1234567890QWERTZUIOPASDFGHJKLYXCVBNM".getBytes();
+	
 	protected static Instrumentation instr;
 	protected static InstanceMan unsafe;
 	
@@ -723,17 +725,24 @@ public class Api {
 	
 	/*** RANDOM ***/
 	
-	public static String genString(int length) {
-		return genString(length, ("abcdefghijklmnopqrstuvwxyz1234567890QWERTZUIOPASDFGHJKLYXCVBNM").toCharArray());
+	public static byte[] genBytes(int length) {
+		return genBytes(length, Api.GENSTRING);
 	}
 	
-	public static String genString(int length, char[] chars) {
-		String sb = new String("");
+	public static byte[] genBytes(int length, byte[] chars) {
+		byte[] out = new byte[length];
 		for (int i = 0; i < length; i++) {
-			char c = chars[rand.nextInt(chars.length)];
-			sb += c;
+			out[i] = chars[rand.nextInt(chars.length)];
 		}
-		return sb;
+		return out;
+	}
+	
+	public static String genString(int length) {
+		return new String(Api.genBytes(length));
+	}
+	
+	public static String genString(int length, byte[] chars) {
+		return new String(Api.genBytes(length, chars));
 	}
 	
 	public static int genInt(int length) {
