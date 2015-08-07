@@ -133,11 +133,11 @@ public class Base64 {
 	}
 	
 	
-	public static byte[] encode(byte[] in) throws Exception {
+	public static byte[] encode(byte[] in) {
 		return Base64.encode(in, 0, in.length);
 	}
 	
-	public static byte[] encode(byte[] in, int off, int len) throws Exception {
+	public static byte[] encode(byte[] in, int off, int len) {
 		return Base64.encode(in, off, len, Base64.TRN_BASE64_CHARS);
 	}
 	

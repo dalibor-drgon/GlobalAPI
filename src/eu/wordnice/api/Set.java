@@ -32,7 +32,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 
 import eu.wordnice.sql.wndb.WNDBDecoder;
 import eu.wordnice.sql.wndb.WNDBEncoder;
@@ -205,6 +207,15 @@ public class Set<X> implements Jsonizable {
 	public void clear() {
 		this.size = 0;
 		this.values = new Object[0];
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void sort(Comparator<X> comp) {
+		Arrays.sort(this.values, 0, this.size(), (Comparator<Object>) comp);
+	}
+	
+	public void sortObject(Comparator<Object> comp) {
+		Arrays.sort(this.values, 0, this.size(), comp);
 	}
 
 	@SuppressWarnings("unchecked")
