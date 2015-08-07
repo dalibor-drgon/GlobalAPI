@@ -31,10 +31,10 @@ package eu.wordnice.api.codings;
 
 public class Base64 {
 	
-	byte[] TRN_BASE64_CHARS = 
+	public static byte[] TRN_BASE64_CHARS = 
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".getBytes();
 
-	byte[] TRN_BASE64_BYTES = new byte[] {
+	public static byte[] TRN_BASE64_BYTES = new byte[] {
 		64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64,
 		64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64,
 		64,64,64,64, 64,64,64,64, 64,64,64,62, 64,64,64,63,
@@ -56,20 +56,36 @@ public class Base64 {
 		64,64,64,64, 64,64,64,64, 64,64,64,64, 64,64,64,64
 	};
 	
-	public byte[] decode(byte[] in, int off, int len) throws Exception {
+	
+	public static byte[] decode(byte[] in) throws Exception {
+		return Base64.decode(in, 0, in.length);
+	}
+	
+	public static byte[] decode(byte[] in, int off, int len) throws Exception {
+		return Base64.decode(in, off, len, Base64.TRN_BASE64_BYTES);
+	}
+	
+	public static byte[] decode(byte[] in, int off, int len, byte[] filter) throws Exception {
 		while(in[off + len - 1] == (byte) '=') {
 			len--;
 		}
-		byte[] out = new byte[((len + 3) / 4) * 3];
 		int i = off;
-		int rl = (off + len) & 0xFFFFFFFC;
+		int rl = off + (len & 0xFFFFFFFC);
 		int oi = 0;
 		int curv = 0;
-		for(; i < rl;) {
-			byte b1 = TRN_BASE64_BYTES[in[i++]];
-			byte b2 = TRN_BASE64_BYTES[in[i++]];
-			byte b3 = TRN_BASE64_BYTES[in[i++]];
-			byte b4 = TRN_BASE64_BYTES[in[i++]];
+		int outsz = (len / 4) * 3;
+		switch(len & 0x03) {
+			case 3:
+				outsz++;
+			case 2:
+				outsz++;
+		}
+		byte[] out = new byte[outsz];
+		while(i < rl) {
+			byte b1 = filter[in[i++]];
+			byte b2 = filter[in[i++]];
+			byte b3 = filter[in[i++]];
+			byte b4 = filter[in[i++]];
 			if(b1 == 64 || b2 == 64 || b3 == 64 || b4 == 64) {
 				throw new Exception("Unknow character near indexes " + (i - 4) + " - " + (i - 1));
 			}
@@ -83,14 +99,14 @@ public class Base64 {
 			out[oi++] = (byte) ((curv >> 8 ) & 0xFF);
 			out[oi++] = (byte) ((curv      ) & 0xFF);
 		}
-		rl = ((off + len) & 0x03);
+		rl = (len & 0x03);
 		if(rl > 0) {
 			if(rl == 1) {
 				throw new Exception("Unknown base64 strings length");
 			}
 
-			byte b1 = TRN_BASE64_BYTES[in[i++]];
-			byte b2 = TRN_BASE64_BYTES[in[i++]];
+			byte b1 = filter[in[i++]];
+			byte b2 = filter[in[i++]];
 			byte b3;
 
 			if(b1 == 64 || b2 == 64) {
@@ -104,7 +120,7 @@ public class Base64 {
 
 
 			if(rl == 3) {
-				b3 = TRN_BASE64_BYTES[in[i++]];
+				b3 = filter[in[i++]];
 				if(b3 == 64) {
 					throw new Exception("Unknow character at the end at index " + (i - 1));
 				}
@@ -112,6 +128,53 @@ public class Base64 {
 				curv |= (b3 << 6);
 				out[oi++] = (byte) ((curv >> 8) & 0xFF);
 			}
+		}
+		return out;
+	}
+	
+	
+	public static byte[] encode(byte[] in) throws Exception {
+		return Base64.encode(in, 0, in.length);
+	}
+	
+	public static byte[] encode(byte[] in, int off, int len) throws Exception {
+		return Base64.encode(in, off, len, Base64.TRN_BASE64_CHARS);
+	}
+	
+	public static byte[] encode(byte[] in, int off, int len, byte[] filter) {
+		int i = off;
+		int rl = off + ((len / 3) * 3);
+		int cur = 0;
+		int oi = 0;
+		byte[] out = new byte[((len + 2) / 3) * 4];
+		while(i < rl) {
+			cur  = ((in[i++]) << 16);
+			cur |= ((in[i++]) << 8 );
+			cur |= ((in[i++])      );
+	
+			out[oi++] = filter[((cur >> 18) & 0x3F)];
+			out[oi++] = filter[((cur >> 12) & 0x3F)];
+			out[oi++] = filter[((cur >> 6 ) & 0x3F)];
+			out[oi++] = filter[((cur      ) & 0x3F)];
+		}
+		
+		rl = len % 3;
+		if(rl != 0) {
+			cur = ((in[i++]) << 16);
+	
+			if(rl == 2) {
+				cur |= ((in[i++]) << 8);
+			}
+			out[oi++] = filter[((cur >> 18) & 0x3F)];
+			out[oi++] = filter[((cur >> 12) & 0x3F)];
+	
+			if(rl == 2) {
+				out[oi++] = filter[((cur >> 6) & 0x3F)];
+			} else {
+				out[oi++] = '=';
+			}
+	
+			out[oi++] = '=';
 		}
 		return out;
 	}

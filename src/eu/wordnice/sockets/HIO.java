@@ -45,6 +45,18 @@ import eu.wordnice.api.threads.TimeoutInputStream;
 public class HIO implements Closeable {
 	
 	public static boolean BLOCK_FAVICON = true;
+	public static Handler.OneVoidHandler<Val.TwoVal<String, String>> URL_DECODER = 
+			new Handler.OneVoidHandler<Val.TwoVal<String, String>>() {
+				@Override
+				public void handle(TwoVal<String, String> strings) {
+					if(strings.one != null) {
+						strings.one = Api.getURLDecoded(strings.one);
+					}
+					if(strings.two != null) {
+						strings.two = Api.getURLDecoded(strings.two);
+					}
+				}
+			};
 	
 	public Socket sock;
 	public IStream in;
@@ -130,19 +142,8 @@ public class HIO implements Closeable {
 				zeroi = this.PATH.indexOf('?');
 				if(zeroi > -1) {
 					this.GET = new Map<String,String>();
-					ArgsDecoder.decodeString(this.GET, this.PATH.substring(zeroi + 1, this.PATH.length()), "=", "&",
-							new Handler.OneVoidHandler<Val.TwoVal<String, String>>() {
-								@Override
-								public void handle(TwoVal<String, String> strings) {
-									if(strings.one != null) {
-										strings.one = Api.getURLDecoded(strings.one);
-									}
-									if(strings.two != null) {
-										strings.two = Api.getURLDecoded(strings.two);
-									}
-								}
-							}
-					);
+					ArgsDecoder.decodeString(this.GET, this.PATH.substring(zeroi + 1, this.PATH.length()), 
+							"=", "&", URL_DECODER);
 					this.PATH = this.PATH.substring(0, zeroi);
 				}
 				
