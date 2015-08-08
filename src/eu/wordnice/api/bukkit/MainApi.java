@@ -25,17 +25,40 @@
 package eu.wordnice.api.bukkit;
 
 import eu.wordnice.api.Api;
+import eu.wordnice.api.Set;
 
 public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 	
+	/*
+	 * Bukkit only utils
+	 */
+	public static String NMS = null;
+	
+	public static String getNMS(String clz) {
+		return "net.minecraft.server." + MainApi.NMS + "." + clz;
+	}
+	
+	public static String getCB(String clz) {
+		return "org.bukkit.craftbukkit." + MainApi.NMS + "." + clz;
+	}
+	
+	
+	/*
+	 * Enable, Disable
+	 */
 	@Override
 	public void onEnable() {
 		try {
-			this.getLogger().info("Instrumentation: " + Api.getInstrumentation());
-			this.getLogger().info("System class loaded has " + Api.getLoadedClasses(Api.getClassLoader()).length + " classes!");
-			this.getLogger().info("Totaly loaded " + Api.getAllLoadedClasses().length + " classes!");
+			Set<String> clzs = Api.getClasses(Api.getClassesLocation(org.bukkit.Bukkit.class));
+			this.getLogger().info("Bukkit classes: " + clzs.size());
+			this.getLogger().info("Bukkit packages: " + Api.filterPackages(clzs, null).size());
 		} catch(Throwable t) {}
-		this.getLogger().info("MainAPI by wordnice was enabled! Hello!");
+		
+		String cpkg = org.bukkit.Bukkit.getServer().getClass().getPackage().getName();
+		MainApi.NMS = cpkg.substring(cpkg.lastIndexOf('.') + 1);
+		this.getLogger().info("NMS version: " + MainApi.NMS);
+		
+		this.getLogger().info("MainAPI by wordnice for Bukkit was enabled! Hello!");
 	}
 	
 	@Override

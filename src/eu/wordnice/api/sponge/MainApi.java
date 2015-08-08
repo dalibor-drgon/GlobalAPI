@@ -25,6 +25,7 @@
 package eu.wordnice.api.sponge;
 
 import eu.wordnice.api.Api;
+import eu.wordnice.api.Set;
 
 @org.spongepowered.api.plugin.Plugin(id="MainAPI", name="MainAPI", version="1.8.0")
 public class MainApi {
@@ -35,11 +36,12 @@ public class MainApi {
 	@org.spongepowered.api.event.Subscribe
     public void onServerStart(org.spongepowered.api.event.state.ServerStartedEvent event) {
 		try {
-			this.log.info("Instrumentation: " + Api.getInstrumentation());
-			this.log.info("System class loaded has " + Api.getLoadedClasses(Api.getClassLoader()).length + " classes!");
-			this.log.info("Totaly loaded " + Api.getAllLoadedClasses().length + " classes!");
+			Set<String> clzs = Api.getClasses(Api.getClassesLocation(org.spongepowered.api.Server.class));
+			this.log.info("Sponge classes: " + clzs.size());
+			this.log.info("Sponge packages: " + Api.filterPackages(clzs, null).size());
 		} catch(Throwable t) {}
-		this.log.info("MainAPI by wordnice was enabled! Hello!");
+		
+		this.log.info("MainAPI by wordnice for Sponge was enabled! Hello!");
 	}
 	
 	@org.spongepowered.api.event.Subscribe

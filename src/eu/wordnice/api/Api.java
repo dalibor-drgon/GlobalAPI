@@ -30,22 +30,21 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Field;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.text.Normalizer;
 import java.util.Random;
-import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class Api {
 	
 	public static Random rand = new Random();
 	public static byte[] GENSTRING = "abcdefghijklmnopqrstuvwxyz1234567890QWERTZUIOPASDFGHJKLYXCVBNM".getBytes();
 	
-	protected static Instrumentation instr;
 	protected static InstanceMan unsafe;
 	
 	
@@ -541,106 +540,152 @@ public class Api {
 		return c.isAssignableFrom(o.getClass());
 	}
 	
-	public static Class<?> getClass(String name) {
-		try {
-			return (Class<?>) Class.forName(name);
-		} catch(Throwable t) {}
-		return null;
+	public static Class<?> getClass(String name) throws Throwable {
+		return (Class<?>) Class.forName(name);
 	}
 	
-	public static Set<Class<?>> getClasses(ClassLoader cl, String pref) {
-		return Api.getClasses(new Set<Class<?>>(), cl, pref);
+	public static Set<String> filterClasses(Set<String> in, String pref) {
+		Set<String> out = new Set<String>();
+		Api.filterClasses(out, in, pref);
+		return out;
 	}
 	
-	public static Set<Class<?>> getClasses(Set<Class<?>> set, String pref) {
-		return Api.getClasses(set, Api.getClassLoader(), pref);
-	}
-	
-	public static Set<Class<?>> getClasses(String pref) {
-		return Api.getClasses(new Set<Class<?>>(), Api.getClassLoader(), pref);
-	}
-	
-	public static Set<Class<?>> getClasses(Set<Class<?>> set, ClassLoader cl, String pref) {
-		if(set == null) {
-			return null;
+	public static void filterClasses(Set<String> out, Set<String> in, String pref) {
+		if(pref == null || pref.length() == 0) {
+			int i = 0;
+			int size = in.size();
+			for(; i < size; i++) {
+				String cur = in.get(i);
+				if(cur.startsWith(pref)) {
+					out.addWC(cur);
+				}
+			}
+			return;
 		}
-
-		Class<?>[] cls = null;
-		if(cl != null) {
-			cls = Api.getLoadedClasses(cl);
-		} else {
-			cls = Api.getAllLoadedClasses();
+		int i = 0;
+		int size = in.size();
+		for(; i < size; i++) {
+			String cur = in.get(i);
+			if(cur.startsWith(pref) && cur.startsWith(pref)) {
+				out.addWC(cur);
+			}
 		}
-		if(cls != null) {
-			String name;
-			for(Class<?> c : cls) {
-				name = c.getCanonicalName();
-				if(name != null && name.startsWith(pref)) {
-					set.addWC(c);
+	}
+	
+	public static Set<String> filterPackages(Set<String> in, String pref) {
+		Set<String> out = new Set<String>();
+		Api.filterPackages(out, in, pref);
+		return out;
+	}
+	
+	public static void filterPackages(Set<String> out, Set<String> in, String pref) {
+		if(pref == null || pref.length() == 0) {
+			int i = 0;
+			int size = in.size();
+			for(; i < size; i++) {
+				String cur = in.get(i);
+				int ind = cur.lastIndexOf('.');
+				if(ind != -1) {
+					out.add(cur.substring(0, ind));
+				}
+			}
+			return;
+		}
+		int i = 0;
+		int size = in.size();
+		for(; i < size; i++) {
+			String cur = in.get(i);
+			int ind = cur.lastIndexOf('.');
+			if(ind != -1 && cur.startsWith(pref)) {
+				out.add(cur.substring(0, ind));
+			}
+		}
+	}
+	
+	public static void loadClasses(Set<Class<?>> out, Set<String> in) throws Throwable {
+		int i = 0;
+		int size = in.size();
+		while(i < size) {
+			out.addWC(Api.getClass(in.get(i++)));
+		}
+	}
+	
+	public static void loadClasses(Set<Class<?>> out, Set<String> in, ClassLoader cl) throws Throwable {
+		int i = 0;
+		int size = in.size();
+		while(i < size) {
+			out.addWC(cl.loadClass(in.get(i++)));
+		}
+	}
+	
+	public static void loadPackages(Set<Package> out, Set<String> in) throws Throwable {
+		int i = 0;
+		int size = in.size();
+		while(i < size) {
+			out.addWC(Package.getPackage(in.get(i++)));
+		}
+	}
+	
+	public static File getClassesLocation(Class<?> cls) throws URISyntaxException {
+		return new File(cls.getProtectionDomain().getCodeSource().getLocation().toURI());
+	}
+	
+	public static File getClassesLocation(ClassLoader cl) throws URISyntaxException {
+		return new File(cl.getResource("").toURI());
+	}
+	
+	private static void getClassesFolder(Set<String> set, File fd, String pref) {
+		String[] ls = fd.list();
+		int i = 0;
+		for(; i < ls.length; i++) {
+			String curstr = ls[i];
+			File cur = new File(fd, curstr);
+			if(cur.isDirectory()) {
+				Api.getClassesFolder(set, cur, (pref + curstr + "."));
+			} else {
+				String clsn = pref + curstr;
+				if(clsn.endsWith(".class") && clsn.indexOf('$') == -1) {
+					set.addWC(clsn.substring(0, clsn.length() - 6).replace(File.separatorChar, '.'));
 				}
 			}
 		}
+	}
+	
+	public static Set<String> getClasses(File fd) throws Exception {
+		if(fd.isDirectory()) {
+			Set<String> set = new Set<String>();
+			Api.getClassesFolder(set, fd, "");
+			return set;
+		}
+		return Api.getClasses(new ZipInputStream(new FileInputStream(fd)));
+	}
+	
+	public static void getClasses(Set<String> set, File fd) throws Exception {
+		if(fd.isDirectory()) {
+			Api.getClassesFolder(set, fd, "");
+			return;
+		}
+		Api.getClasses(set, new ZipInputStream(new FileInputStream(fd)));
+	}
+	
+	public static Set<String> getClasses(ZipInputStream zip) throws Exception {
+		Set<String> set = new Set<String>();
+		Api.getClasses(set, zip);
 		return set;
 	}
 	
-	public static Class<?>[] getLoadedClasses(ClassLoader loader) {
-		return Api.getInstrumentation().getInitiatedClasses(loader);
-	}
-	
-	public static Class<?>[] getAllLoadedClasses() {
-		return Api.getInstrumentation().getAllLoadedClasses();
-	}
-	
-	public static Instrumentation getInstrumentation() {
-		//return JavaAgent.getInstrumentation();
-		if(instr == null) {
-			instr = Api.createEmptyInstance(Instrumentation.class);
-		}
-		return instr;
-	}
-	
-	public static Set<Package> getPackages(String pref) {
-		return Api.getPackages(new Set<Package>(), Api.getClassLoader(), pref);
-	}
-	
-	public static Set<Package> getPackages(Set<Package> set, String pref) {
-		return Api.getPackages(set, Api.getClassLoader(), pref);
-	}
-	
-	public static Set<Package> getPackages(ClassLoader cl, String pref) {
-		return Api.getPackages(new Set<Package>(), cl, pref);
-	}
-	
-	public static Set<Package> getPackages(Set<Package> ret, ClassLoader cl, String pref) {
-		if(cl == null || ret == null) {
-			return null;
-		}
-		if(pref == null || pref.length() < 1) {
-			Package[] arr = Package.getPackages();
-			ret.addAllWC(arr, arr.length);
-			return ret;
-		}
-		Package[] p = Package.getPackages();
-		String name;
-		for(Package pack : p) {
-			name = pack.getName();
-			if(name.startsWith(pref)) {
-				ret.add(pack);
+	public static void getClasses(Set<String> set, ZipInputStream zip) throws Exception {
+		ZipEntry ent = null;
+		while((ent = zip.getNextEntry()) != null) {
+			if(!ent.isDirectory()) {
+				String clsn = ent.getName();
+				if(clsn.endsWith(".class") && clsn.indexOf('$') == -1) {
+					set.addWC(clsn.substring(0, clsn.length() - 6).replace(File.separatorChar, '.'));
+				}
 			}
+			zip.closeEntry();
 		}
-		return ret;
-	}
-	
-	@SuppressWarnings("unchecked")
-	public static Vector<Class<?>> getClassesFromClassLoader(ClassLoader cl) {
-		try {
-			Field f = ClassLoader.class.getDeclaredField("classes");
-			f.setAccessible(true);
-			return (Vector<Class<?>>) f.get(cl);
-		} catch(Throwable t) {
-			t.printStackTrace();
-		}
-		return null;
+		zip.close();
 	}
 	
 	
@@ -767,8 +812,13 @@ public class Api {
 	/*** C & UNSAFE ***/
 	
 	public static InstanceMan getUnsafe() {
-		if(unsafe == null) {
-			InstanceMan im = new InstanceMan(Api.getClass("sun.misc.Unsafe"), null);
+		if(Api.unsafe == null) {
+			InstanceMan im = null;
+			try {
+				im = new InstanceMan(Api.getClass("sun.misc.Unsafe"), null);
+			} catch(Throwable t) {
+				im = new InstanceMan(new Object());
+			}
 			Object val = im.getValue("theUnsafe");
 			Api.unsafe = im;
 			if(val != null) {
@@ -796,10 +846,8 @@ public class Api {
 	
 	public static void throv(Throwable t) {
 		try {
-			if(Api.getUnsafe().callMethod("throwException", new Object[] { t }, 
-					new Class<?>[] { Throwable.class }) != null) {
-				return; //unreach
-			}
+			Api.getUnsafe().callMethod("throwException", new Object[] { t }, 
+					new Class<?>[] { Throwable.class });
 		} catch(Throwable ign) {}
 		throw new RuntimeException(t);
 	}
