@@ -30,8 +30,7 @@ public class ResultResSet implements ResSet {
 
 	public ResultSet rs;
 
-	public ResultResSet() {
-	}
+	public ResultResSet() {}
 
 	public ResultResSet(ResultSet rs) {
 		this.rs = rs;
@@ -50,8 +49,7 @@ public class ResultResSet implements ResSet {
 	public Object getObject(int in) {
 		try {
 			return this.rs.getObject(in);
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -230,8 +228,7 @@ public class ResultResSet implements ResSet {
 	public boolean next() {
 		try {
 			return this.rs.next();
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return false;
 	}
 
@@ -240,9 +237,13 @@ public class ResultResSet implements ResSet {
 		try {
 			this.rs.close();
 			return true;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return false;
+	}
+	
+	
+	public ResultSet getResultSet() {
+		return this.rs;
 	}
 
 }

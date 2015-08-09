@@ -25,20 +25,20 @@
 package eu.wordnice.api.threads;
 
 /*** TimeoutThread.java ***/
-import java.util.Arrays;
-import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class TimeoutThread<X> {
 
-	public Runa<X> run = null;
-	public ExecutorService executor = null;
+	public Callable<X> callable = null;
 	public long timeout = 100L;
-	private boolean canceled = false;
-	private boolean runed = false;
+	private boolean cancelled = false;
+	private boolean ran = false;
 	
 	public void exc(Throwable t, boolean fatal) {}
 
@@ -46,79 +46,65 @@ public class TimeoutThread<X> {
 		this(new Runa<X>(runit, ret), timeout);
 	}
 
-	public TimeoutThread(Runa<X> runit, long timeout) {
-		this.run = runit;
+	public TimeoutThread(Callable<X> runit, long timeout) {
+		this.callable = runit;
 		if(timeout < 1L) {
 			timeout = 10L;
 		}
 		this.timeout = timeout;
 	}
-
-
-	public X run() {
-		return this.run(null);
-	}
-
-	public X run(X defaulte) {
-		this.runed = true;
-		List<Future<X>> list = null;
-		this.executor = Executors.newCachedThreadPool();
-		try {
-			list = executor.invokeAll(Arrays.asList(this.run), this.timeout, TimeUnit.MILLISECONDS);
-		} catch(Throwable t) {
-			this.canceled = true;
-			this.exc(t, true);
-		}
+	
+	public X run() throws Exception {
+		ExecutorService executor = Executors.newSingleThreadExecutor();
+		Future<X> future = executor.submit(this.callable);
 		executor.shutdown();
-
-		if(list == null || list.size() != 1) {
-			return defaulte;
-		}
-
 		try {
-			Future<X> f = list.get(0);
-			try {
-				return f.get();
-			} catch(Throwable t2) {
-				this.canceled = true;
-				this.exc(t2, false);
+			return future.get(this.timeout, TimeUnit.MILLISECONDS);
+		} catch(TimeoutException e) {
+			future.cancel(true);
+			throw e;
+		} catch(ExecutionException e) {
+			Throwable t = e.getCause();
+			if (t instanceof Error) {
+				throw (Error) t;
+			} else if (t instanceof Exception) {
+				throw (Exception) e;
+			} else {
+				throw new IllegalStateException(t);
 			}
-		} catch(Throwable t) {
-			this.exc(t, false);
 		}
-		return defaulte;
 	}
 
-	public boolean wasRunned() {
-		return this.runed;
+	public boolean wasRan() {
+		return this.ran;
 	}
 
-	public boolean wasCanceled() {
-		return this.canceled;
+	public boolean wasCancelled() {
+		return this.cancelled;
 	}
 	
 	
 	/*** STATIC ***/
 	
-	public static <X> X run(Runa<X> rn, X defaulte, long timeout) {
-		List<Future<X>> list = null;
-		ExecutorService exec = Executors.newCachedThreadPool();
+	public static <Y> Y run(Callable<Y> callable, long timeout) throws Exception {
+		ExecutorService executor = Executors.newSingleThreadExecutor();
+		Future<Y> future = executor.submit(callable);
+		executor.shutdown();
 		try {
-			list = exec.invokeAll(Arrays.asList(rn), timeout, TimeUnit.MILLISECONDS);
-		} catch(Throwable t) {}
-		try {
-			exec.shutdown();
-		} catch(Throwable t) {}
-
-		if(list == null || list.size() != 1) {
-			return defaulte;
+			return future.get(timeout, TimeUnit.MILLISECONDS);
+		} catch(TimeoutException e) {
+			future.cancel(true);
+			throw e;
+		} catch(ExecutionException e) {
+			Throwable t = e.getCause();
+			if (t instanceof Error) {
+				throw (Error) t;
+			} else if (t instanceof Exception) {
+				throw (Exception) e;
+			} else {
+				throw new IllegalStateException(t);
+			}
 		}
-
-		try {
-			Future<X> f = list.get(0);
-			return f.get();
-		} catch(Throwable t) {}
-		return defaulte;
 	}
 
 }

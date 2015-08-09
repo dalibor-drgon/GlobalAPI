@@ -26,92 +26,73 @@ package eu.wordnice.api.threads;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeoutException;
 
 public class TimeoutInputStream extends InputStream {
 	
 	public final InputStream in;
-	public TimeoutThread<Object> thread;
+	public long timeout;
+	public boolean safe;
 	
 	public TimeoutInputStream(InputStream in, long maxtime_read) {
+		this(in, maxtime_read, true);
+	}
+	
+	public TimeoutInputStream(InputStream in, long maxtime_read, boolean safe) {
 		this.in = in;
-		this.thread = new TimeoutThread<Object>(null, maxtime_read);
+		this.timeout = maxtime_read;
+		this.safe = safe;
 	}
 	
 	public void setTimeout(long to) {
-		this.thread.timeout = to;
+		this.timeout = to;
 	}
 	
 
 	@Override
 	public int read() throws IOException {
-		thread.run = new Runa<Object>() {
-			
-			@Override
-			public Object call() {
-				try {
-					return TimeoutInputStream.this.in.read();
-				} catch(IOException t) {
-					return t;
+		if(this.safe) {
+			try {
+				return TimeoutInputStream.read(this.in, this.timeout);
+			} catch(Throwable t) {
+				if(t instanceof IOException) {
+					throw (IOException) t;
 				}
-			};
-			
-		};
-		Object out = thread.run(new IOException("Timed out"));
-		if(out instanceof Integer) {
-			return (Integer) out;
+				throw new IOException("Timed out (safe fail for " + t + ")");
+			}
 		}
-		if(out instanceof IOException) {
-			throw (IOException) out;
-		}
-		return -1;
+		return TimeoutInputStream.read(this.in, this.timeout);
 	}
 
 	@Override
 	public int read(final byte[] bytes) throws IOException {
-		thread.run = new Runa<Object>() {
-			
-			@Override
-			public Object call() {
-				try {
-					return TimeoutInputStream.this.in.read(bytes);
-				} catch(IOException t) {
-					return t;
+		if(this.safe) {
+			try {
+				return TimeoutInputStream.read(this.in, this.timeout, bytes);
+			} catch(Throwable t) {
+				if(t instanceof IOException) {
+					throw (IOException) t;
 				}
-			};
-			
-		};
-		Object out = thread.run(new IOException("Timed out"));
-		if(out instanceof Integer) {
-			return (Integer) out;
+				throw new IOException("Timed out (safe fail for " + t + ")");
+			}
 		}
-		if(out instanceof IOException) {
-			throw (IOException) out;
-		}
-		return 0;
+		return TimeoutInputStream.read(this.in, this.timeout, bytes);
 	}
 
 	@Override
 	public int read(final byte[] bytes, final int of, final int l) throws IOException {
-		thread.run = new Runa<Object>() {
-			
-			@Override
-			public Object call() {
-				try {
-					return TimeoutInputStream.this.in.read(bytes, of, l);
-				} catch(IOException t) {
-					return t;
+		if(this.safe) {
+			try {
+				return TimeoutInputStream.read(this.in, this.timeout, bytes, of, l);
+			} catch(Throwable t) {
+				if(t instanceof IOException) {
+					throw (IOException) t;
 				}
-			};
-			
-		};
-		Object out = thread.run(new IOException("Timed out"));
-		if(out instanceof Integer) {
-			return (Integer) out;
+				throw new IOException("Timed out (safe fail for " + t + ")");
+			}
 		}
-		if(out instanceof IOException) {
-			throw (IOException) out;
-		}
-		return 0;
+		return TimeoutInputStream.read(this.in, this.timeout, bytes, of, l);
 	}
 
 	@Override
@@ -149,72 +130,108 @@ public class TimeoutInputStream extends InputStream {
 	/*** STATIC ***/
 	
 	public static int read(final InputStream in, long timeout) throws IOException {
-		TimeoutThread<Object> thread = new TimeoutThread<Object>(new Runa<Object>() {
+		Object ret = null; 
+		try {
+			ret = TimeoutThread.run(new Callable<Object>() {
 			
-			@Override
-			public Object call() throws Exception {
-				try {
-					return in.read();
-				} catch(IOException t) {
-					return t;
+				@Override
+				public Object call() {
+					try {
+						return in.read();
+					} catch(IOException t) {
+						return t;
+					}
 				}
-			};
-			
-		}, timeout);
-		Object out = thread.run(-1);
-		if(out instanceof Integer) {
-			return (Integer) out;
+				
+			}, timeout);
+		} catch(Throwable t) {
+			if(t instanceof TimeoutException) {
+				throw new IOException("Timed out: " + t.getMessage());
+			} else {
+				if(t instanceof RuntimeException) {
+					throw (RuntimeException) t;
+				}
+				throw new RuntimeException(t);
+			}
 		}
-		if(out instanceof IOException) {
-			throw (IOException) out;
+		if(ret instanceof Integer) {
+			return (Integer) ret;
 		}
-		return -1;
+		if(ret instanceof IOException) {
+			throw (IOException) ret;
+		}
+		throw new IllegalStateException("Unknown returned value: " 
+				+ ((ret == null) ? null : ret.getClass().getName()) + " / " + ret);
 	}
 
 	public static int read(final InputStream in, long timeout ,final byte[] bytes) throws IOException {
-		TimeoutThread<Object> thread = new TimeoutThread<Object>(new Runa<Object>() {
-			
-			@Override
-			public Object call() throws Exception {
-				try {
-					return in.read(bytes);
-				} catch(IOException t) {
-					return t;
+		Object ret = null;
+		try {
+			TimeoutThread.run(new Runa<Object>() {
+				
+				@Override
+				public Object call() {
+					try {
+						return in.read(bytes);
+					} catch(IOException t) {
+						return t;
+					}
+				};
+				
+			}, timeout);
+		} catch(Throwable t) {
+			if(t instanceof TimeoutException) {
+				throw new IOException("Timed out: " + t.getMessage());
+			} else {
+				if(t instanceof RuntimeException) {
+					throw (RuntimeException) t;
 				}
-			};
-			
-		}, timeout);
-		Object out = thread.run(null);
-		if(out instanceof Integer) {
-			return (Integer) out;
+				throw new RuntimeException(t);
+			}
 		}
-		if(out instanceof IOException) {
-			throw (IOException) out;
+		if(ret instanceof Integer) {
+			return (Integer) ret;
 		}
-		return 0;
+		if(ret instanceof IOException) {
+			throw (IOException) ret;
+		}
+		throw new IllegalStateException("Unknown returned value: " 
+				+ ((ret == null) ? null : ret.getClass().getName()) + " / " + ret);
 	}
 
 	public static int read(final InputStream in, long timeout, final byte[] bytes, final int of, final int l) throws IOException {
-		TimeoutThread<Object> thread = new TimeoutThread<Object>(new Runa<Object>() {
-			
-			@Override
-			public Object call() throws Exception {
-				try {
-					return in.read(bytes, of, l);
-				} catch(IOException t) {
-					return t;
+		Object ret = null;
+		try {
+			ret = TimeoutThread.run(new Runa<Object>() {
+		
+				@Override
+				public Object call() {
+					try {
+						return in.read(bytes, of, l);
+					} catch(IOException t) {
+						return t;
+					}
+				};
+				
+			}, timeout);
+		} catch(Throwable t) {
+			if(t instanceof TimeoutException) {
+				throw new IOException("Timed out: " + t.getMessage());
+			} else {
+				if(t instanceof RuntimeException) {
+					throw (RuntimeException) t;
 				}
-			};
-			
-		}, timeout);
-		Object out = thread.run(null);
-		if(out instanceof Integer) {
-			return (Integer) out;
+				throw new RuntimeException(t);
+			}
 		}
-		if(out instanceof IOException) {
-			throw (IOException) out;
+		if(ret instanceof Integer) {
+			return (Integer) ret;
 		}
-		return 0;
+		if(ret instanceof IOException) {
+			throw (IOException) ret;
+		}
+		throw new IllegalStateException("Unknown returned value: " 
+				+ ((ret == null) ? null : ret.getClass().getName()) + " / " + ret);
 	}
 	
 }

@@ -35,8 +35,7 @@ public class JDBCSQL extends ConnectionSQL {
 	public String user;
 	public String pass;
 
-	public JDBCSQL() {
-	}
+	public JDBCSQL() {}
 
 	public JDBCSQL(String db_url) {
 		this.single = true;

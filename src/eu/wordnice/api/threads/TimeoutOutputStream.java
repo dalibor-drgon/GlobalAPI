@@ -26,82 +26,74 @@ package eu.wordnice.api.threads;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.TimeoutException;
 
 public class TimeoutOutputStream extends OutputStream {
 	
 	public final OutputStream out;
-	public TimeoutThread<Object> thread;
+	public long timeout;
+	public boolean safe;
 	
-	public TimeoutOutputStream(OutputStream stream, long maxtime_read) {
+	public TimeoutOutputStream(OutputStream stream, long maxtime_write) {
+		this(stream, maxtime_write, true);
+	}
+	
+	public TimeoutOutputStream(OutputStream stream, long maxtime_write, boolean safe) {
 		this.out = stream;
-		this.thread = new TimeoutThread<Object>(null, maxtime_read);
+		this.timeout = maxtime_write;
+		this.safe = safe;
 	}
 	
 	public void setTimeout(long tm) {
-		this.thread.timeout = tm;
+		this.timeout = tm;
 	}
 	
 	@Override
 	public void write(final int obyte) throws IOException {
-		thread.run = new Runa<Object>() {
-			
-			@Override
-			public Object call() {
-				try {
-					TimeoutOutputStream.this.out.write(obyte);
-					return null;
-				} catch(IOException t) {
-					return t;
+		if(this.safe) {
+			try {
+				TimeoutOutputStream.write(this.out, this.timeout, obyte);
+				return;
+			} catch(Throwable t) {
+				if(t instanceof IOException) {
+					throw (IOException) t;
 				}
-			};
-			
-		};
-		Object out = thread.run(new IOException("Timed out"));
-		if(out instanceof IOException) {
-			throw (IOException) out;
+				throw new IOException("Timed out (safe fail for " + t + ")");
+			}
 		}
+		TimeoutOutputStream.write(this.out, this.timeout, obyte);
 	}
 
 	@Override
 	public void write(final byte[] bytes) throws IOException {
-		thread.run = new Runa<Object>() {
-			
-			@Override
-			public Object call() {
-				try {
-					TimeoutOutputStream.this.out.write(bytes);
-					return null;
-				} catch(IOException t) {
-					return t;
+		if(this.safe) {
+			try {
+				TimeoutOutputStream.write(this.out, this.timeout, bytes);
+				return;
+			} catch(Throwable t) {
+				if(t instanceof IOException) {
+					throw (IOException) t;
 				}
-			};
-			
-		};
-		Object out = thread.run(new IOException("Timed out"));
-		if(out instanceof IOException) {
-			throw (IOException) out;
+				throw new IOException("Timed out (safe fail for " + t + ")");
+			}
 		}
+		TimeoutOutputStream.write(this.out, this.timeout, bytes);
 	}
 
 	@Override
 	public void write(final byte[] bytes, final int off, final int l) throws IOException {
-		thread.run = new Runa<Object>() {
-			
-			@Override
-			public Object call() {
-				try {
-					TimeoutOutputStream.this.out.write(bytes, off, l);
-					return null;
-				} catch(IOException t) {
-					return t;
+		if(this.safe) {
+			try {
+				TimeoutOutputStream.write(this.out, this.timeout, bytes, off, l);
+				return;
+			} catch(Throwable t) {
+				if(t instanceof IOException) {
+					throw (IOException) t;
 				}
-			};
-			
-		};
-		Object out = thread.run(new IOException("Timed out"));
-		if(out instanceof IOException) {
-			throw (IOException) out;
+				throw new IOException("Timed out (safe fail for " + t + ")");
+			}
 		}
+		TimeoutOutputStream.write(this.out, this.timeout, bytes, off, l);
 	}
 
 	@Override
@@ -112,6 +104,117 @@ public class TimeoutOutputStream extends OutputStream {
 	@Override
 	public void flush() throws IOException {
 		this.out.flush();
+	}
+	
+	
+	/*** STATIC ***/
+	
+	public static void write(final OutputStream out, final long timeout, final int obyte) throws IOException {
+		Object ret = null;
+		try {
+			TimeoutThread.run(new Runa<Object>() {
+				
+				@Override
+				public Object call() {
+					try {
+						out.write(obyte);
+						return Boolean.TRUE;
+					} catch(IOException t) {
+						return t;
+					}
+				};
+				
+			}, timeout);
+		} catch(Throwable t) {
+			if(t instanceof TimeoutException) {
+				throw new IOException("Timed out: " + t.getMessage());
+			} else {
+				if(t instanceof RuntimeException) {
+					throw (RuntimeException) t;
+				}
+				throw new RuntimeException(t);
+			}
+		}
+		if(ret instanceof IOException) {
+			throw (IOException) ret;
+		}
+		if(ret == Boolean.TRUE) {
+			return;
+		}
+		throw new IllegalStateException("Unknown returned value: " 
+				+ ((ret == null) ? null : ret.getClass().getName()) + " / " + ret);
+	}
+
+	public static void write(final OutputStream out, final long timeout, final byte[] byts) throws IOException {
+		Object ret = null;
+		try {
+			TimeoutThread.run(new Runa<Object>() {
+				
+				@Override
+				public Object call() {
+					try {
+						out.write(byts);
+						return Boolean.TRUE;
+					} catch(IOException t) {
+						return t;
+					}
+				};
+				
+			}, timeout);
+		} catch(Throwable t) {
+			if(t instanceof TimeoutException) {
+				throw new IOException("Timed out: " + t.getMessage());
+			} else {
+				if(t instanceof RuntimeException) {
+					throw (RuntimeException) t;
+				}
+				throw new RuntimeException(t);
+			}
+		}
+		if(ret instanceof IOException) {
+			throw (IOException) ret;
+		}
+		if(ret == Boolean.TRUE) {
+			return;
+		}
+		throw new IllegalStateException("Unknown returned value: " 
+				+ ((ret == null) ? null : ret.getClass().getName()) + " / " + ret);
+	}
+
+	public static void write(final OutputStream out, final long timeout, final byte[] byts, final int off, final int len) throws IOException {
+		Object ret = null;
+		try {
+			TimeoutThread.run(new Runa<Object>() {
+				
+				@Override
+				public Object call() {
+					try {
+						out.write(byts, off, len);
+						return Boolean.TRUE;
+					} catch(IOException t) {
+						return t;
+					}
+				};
+				
+			}, timeout);
+		} catch(Throwable t) {
+			if(t instanceof TimeoutException) {
+				throw new IOException("Timed out: " + t.getMessage());
+			} else {
+				if(t instanceof RuntimeException) {
+					throw (RuntimeException) t;
+				}
+				throw new RuntimeException(t);
+			}
+		}
+		if(ret instanceof IOException) {
+			throw (IOException) ret;
+		}
+		if(ret == Boolean.TRUE) {
+			return;
+		}
+		throw new IllegalStateException("Unknown returned value: " 
+				+ ((ret == null) ? null : ret.getClass().getName()) + " / " + ret);
 	}
 	
 }

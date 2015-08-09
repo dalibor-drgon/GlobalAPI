@@ -53,6 +53,48 @@ Set: [Hello!,123456,true,true,{Zero:0,One:1,Two:2,Three:3,Four:4},false,YES,[404
 
 
 
+### Timeouted threads (runnables)
+
+Useful for I/O and multithreading.
+
+```java
+package eu.wordnice.test;
+
+import eu.wordnice.api.threads.Runa;
+import eu.wordnice.api.threads.TimeoutThread;
+
+public class TimeoutedHelloWorld {
+	
+	public static void main(String... blah) throws Exception {
+		TimeoutThread.run(new Runa<Object>() {
+			@Override
+			public Object call() throws Exception{
+				while(true) {
+					System.out.println("Hello, world!");
+					Thread.sleep(200);
+				}
+			}
+		}, 500L);
+	}
+	
+}
+```
+
+Will output:
+
+```
+Hello, world!
+Hello, world!
+Hello, world!
+Exception in thread "main" java.util.concurrent.TimeoutException
+	at java.util.concurrent.FutureTask.get(FutureTask.java:201)
+	at eu.wordnice.api.threads.TimeoutThread.run(TimeoutThread.java:94)
+	at eu.wordnice.test.TimeoutedHelloWorld.main(TimeoutedHelloWorld.java:9)
+```
+
+
+
+
 ### Simple HTTP server
 
 Simple HTTP server at localhost:8192. Write headers and "Hello!" with date.
