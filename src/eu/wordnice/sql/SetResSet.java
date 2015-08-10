@@ -24,83 +24,59 @@
 
 package eu.wordnice.sql;
 
-import eu.wordnice.api.Map;
-import eu.wordnice.api.Set;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
 
 public class SetResSet extends SimpleResSet {
 
-	public Set<Map<String, Object>> set;
-	public Integer i;
+	public Collection<Map<String, Object>> set;
+	public Iterator<Map<String, Object>> it;
+	public Map<String, Object> cur;
 
 	public SetResSet() { }
 
-	public SetResSet(Set<Map<String, Object>> set) {
+	public SetResSet(Collection<Map<String, Object>> set) {
 		this.set = set;
+		this.it = set.iterator();
 	}
 	
-	
-	protected void checkSet() {}
-	
-	protected void checkIndex() {
-		if(this.i == null) {
-			this.i = 0;
-		}
-	}
-
-	protected Map<String, ? extends Object> getMap(int i) {
-		this.checkSet();
-		return this.set.get(i);
+	public Map<String, Object> getCurrent() {
+		return this.cur;
 	}
 
 	@Override
 	public Object getObject(String name) {
-		this.checkIndex();
-		Map<String, ? extends Object> map = this.getMap(this.i);
-		if (map != null) {
-			return map.get(name);
-		}
-		return null;
+		return this.getCurrent().get(name);
 	}
 
 	@Override
 	public Object getObject(int in) {
-		this.checkIndex();
-		Map<String, ? extends Object> map = this.getMap(this.i);
-		if (map != null) {
-			return map.getI(in);
-		}
-		return null;
+		throw new RuntimeException("Indexing thru Map is not allowed!");
 	}
 	
 	public int size() {
 		return this.set.size();
 	}
 	
-	public boolean setIndex(int i) {
-		this.checkSet();
-		if(i < 0 || i >= this.size()) {
-			return false;
-		}
-		this.i = i;
-		return true;
-	}
-	
 	@Override
-	public boolean first() {
-		return this.setIndex(0);
+	public void reset() {
+		this.it = this.set.iterator();
+		this.cur = null;
 	}
 
 	@Override
 	public boolean next() {
-		if(this.i == null) {
-			return this.first();
+		if(!this.it.hasNext()) {
+			this.cur = null;
+			return false;
 		}
-		return this.setIndex(this.i + 1);
+		this.cur = this.it.next();
+		return true;
 	}
 
 	@Override
 	public boolean close() {
-		//this.set.clear();
 		return true;
 	}
 

@@ -66,7 +66,7 @@ public interface ResSet {
 
 	public Double getDouble(int in);
 
-	public boolean first();
+	public void reset();
 
 	public boolean next();
 

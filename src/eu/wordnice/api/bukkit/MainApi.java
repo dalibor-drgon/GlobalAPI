@@ -24,8 +24,9 @@
 
 package eu.wordnice.api.bukkit;
 
+import java.util.Set;
+
 import eu.wordnice.api.Api;
-import eu.wordnice.api.Set;
 
 public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 	
@@ -51,7 +52,7 @@ public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 		try {
 			Set<String> clzs = Api.getClasses(Api.getClassesLocation(org.bukkit.Bukkit.class));
 			this.getLogger().info("Bukkit classes: " + clzs.size());
-			this.getLogger().info("Bukkit packages: " + Api.filterPackages(clzs, null).size());
+			this.getLogger().info("Bukkit packages: " + Api.filterPackagesString(clzs, null).size());
 		} catch(Throwable t) {}
 		
 		String cpkg = org.bukkit.Bukkit.getServer().getClass().getPackage().getName();

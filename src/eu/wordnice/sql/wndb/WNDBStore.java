@@ -1,17 +1,17 @@
 package eu.wordnice.sql.wndb;
 
 import java.io.File;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.InstanceMan;
-import eu.wordnice.api.Map;
-import eu.wordnice.api.Set;
 
 public abstract class WNDBStore {
 	
 	/*** INSTANCE FIELDS ***/
 	public File dir = null;
-	public long timeout = 2000;
 	
 	
 	/*** CONSTRUCTOR ***/
@@ -31,28 +31,26 @@ public abstract class WNDBStore {
 	
 	
 	public Map<String, WNDB> getDBs() {
-		return InstanceMan.getValues(this, WNDB.class);
+		return InstanceMan.getValues(this, this.getClass(), WNDB.class);
 	}
 	
 	public void loadDBs() {
-		Map<String, WNDB> dbs = this.getDBs();
-		int i = 0;
-		String name = null;
-		WNDB db = null;
-		for(; i < dbs.size(); i++) {
-			name = dbs.getNameI(i);
-			db = dbs.getI(i);
+		Iterator<Entry<String, WNDB>> dbs = this.getDBs().entrySet().iterator();
+		while(dbs.hasNext()) {
+			Entry<String, WNDB> ent = dbs.next();
+			WNDB db = ent.getValue();
+			String name = ent.getKey();
 			if(db == null) {
 				this.out("Loading database " + name + "!");
 			} else {
 				this.out("Loading (overwriting runtime data) database " + name + "!");
 			}
 			try {
-				if(!this.loadDB(name)) {
-					this.err("Types or names for " + name + " database are null! "
-							+ "Probably they do not exist, we are sorry for that bug.");
-				} else {
+				if(this.loadDB(name)) {
 					this.out("Database " + name +" loaded!");
+				} else {
+					this.err("BUG: Types or names for " + name + " database are null! "
+							+ "Probably they do not exist, we are sorry for that bug.");
 				}
 			} catch(Throwable t) {
 				this.err("We are really sorry, but we cannot load database " + name +"... Details:");
@@ -62,53 +60,49 @@ public abstract class WNDBStore {
 	}
 	
 	public void loadEmptyDBs() {
-		Map<String, WNDB> dbs = this.getDBs();
-		int i = 0;
-		String name = null;
-		this.out("Due to some fatal errors occured, we are simulating configs...");
-		for(; i < dbs.size(); i++) {
-			name = dbs.getNameI(i);
+		Iterator<Entry<String, WNDB>> dbs = this.getDBs().entrySet().iterator();
+		while(dbs.hasNext()) {
+			Entry<String, WNDB> ent = dbs.next();
+			//WNDB db = ent.getValue();
+			String name = ent.getKey();
 			this.out("Creating simulated config " + name + "!");
 			try {
-				loadEmptyDB(name);
-				this.out("Simulated config for " + name +" created!");
+				if(loadEmptyDB(name)) {
+					this.out("Simulated config for " + name +" created!");
+				} else {
+					this.err("BUG: Types or names for " + name + " database are null! "
+							+ "Probably they do not exist, we are sorry for that bug.");
+				}
 			} catch(Throwable t) {
+				this.err("We are really sorry, but we even cannot simulate database " + name +"... Details:");
 				this.exc(t);
 			}
 		}
 	}
 	
-	public void loadEmptyDB(String name) throws RuntimeException {
-		@SuppressWarnings("unchecked")
-		Set<WNDBVarTypes> set_types = (Set<WNDBVarTypes>) InstanceMan.getValue(
+	public boolean loadEmptyDB(String name) {
+		WNDBVarTypes[] set_types = (WNDBVarTypes[]) InstanceMan.getValue(
 				this, this.getClass(), name + "_types");
-		@SuppressWarnings("unchecked")
-		Set<String> set_names = (Set<String>) InstanceMan.getValue(this, this.getClass(), name + "_names");
+		String[] set_names = (String[]) InstanceMan.getValue(this, this.getClass(), name + "_names");
 		
 		if(set_types == null || set_names == null) {
-			throw new NullPointerException("Types or names for " + name + " database are null!"
-					+ " Probably they do not exist, we are sorry for that bug.");
+			return false;
 		}
 		
-		WNDB db = new WNDB();
-		db.values = new Set<Set<Object>>();
-		db.names = set_names;
-		db.types = set_types;
-		db.timeout = this.timeout;
+		WNDB db = WNDB.createEmptyWNDB(set_names, set_types);
 		
 		if(!InstanceMan.setValue(this, this.getClass(), name, db)) {
 			if(set_types == null || set_names == null) {
-				throw new NullPointerException("We cannot set database value, it probably does not exists...");
+				return false;
 			}
 		}
+		return true;
 	}
 	
 	public boolean loadDB(String name) {
-		@SuppressWarnings("unchecked")
-		Set<WNDBVarTypes> set_types = (Set<WNDBVarTypes>) InstanceMan.getValue(
+		WNDBVarTypes[] set_types = (WNDBVarTypes[]) InstanceMan.getValue(
 				this, this.getClass(), name + "_types");
-		@SuppressWarnings("unchecked")
-		Set<String> set_names = (Set<String>) InstanceMan.getValue(this, this.getClass(), name + "_names");
+		String[] set_names = (String[]) InstanceMan.getValue(this, this.getClass(), name + "_names");
 		
 		if(set_types == null || set_names == null) {
 			return false;
@@ -119,7 +113,6 @@ public abstract class WNDBStore {
 		if(file.exists()) {
 			try {
 				db = new WNDB(file);
-				db.timeout = this.timeout;
 				db.checkSet();
 			} catch(Throwable t) {
 				db = null;
@@ -137,28 +130,20 @@ public abstract class WNDBStore {
 					
 					this.err("Due this unexpected error, all settings will be saved to RAM "
 							+ "and after restart will be lost! Please, fix this problem.");
-					db = new WNDB();
-					db.values = new Set<Set<Object>>();
-					db.names = set_names;
-					db.types = set_types;
-					db.timeout = this.timeout;
+					db = WNDB.createEmptyWNDB(set_names, set_types);
 				}
 			}
 		}
 		if(db == null) {
 			try {
-				db = WNDB.createWNDB(file, set_names, set_types, this.timeout);
+				db = WNDB.createWNDB(file, set_names, set_types);
 			} catch (Throwable t) {
 				this.err("We cannot create the database " + name + "... Details: ");
 				this.exc(t);
 				
 				this.err("Due this unexpected error, all settings for database " + name +" will be "
 						+ "saved to RAM and after restart will be lost! Please, fix this problem.");
-				db = new WNDB();
-				db.values = new Set<Set<Object>>();
-				db.names = set_names;
-				db.types = set_types;
-				db.timeout = this.timeout;
+				db = WNDB.createEmptyWNDB(set_names, set_types);
 			}
 		}
 		if(!InstanceMan.setValue(this, this.getClass(), name, db)) {
@@ -218,17 +203,14 @@ public abstract class WNDBStore {
 	
 	
 	public void saveUnsavedDBs() {
-		Map<String, WNDB> dbs = this.getDBs();
-		File file = null;
-		int i = 0;
-		String name = null;
-		WNDB db = null;
-		for(; i < dbs.size(); i++) {
-			name = dbs.getNameI(i);
-			db = dbs.getI(i);
+		Iterator<Entry<String, WNDB>> dbs = this.getDBs().entrySet().iterator();
+		while(dbs.hasNext()) {
+			Entry<String, WNDB> ent = dbs.next();
+			WNDB db = ent.getValue();
+			String name = ent.getKey();
 			if(db != null) {
 				if(db.file == null) {
-					file = new File(this.dir, name + ".wndb");
+					File file = new File(this.dir, name + ".wndb");
 					this.out("Saving (unsaved yet) database " + name + "...");
 					if(file.exists()) {
 						try {
@@ -261,17 +243,14 @@ public abstract class WNDBStore {
 	}
 	
 	public void saveDBs() {
-		Map<String, WNDB> dbs = this.getDBs();
-		File file = null;
-		int i = 0;
-		String name = null;
-		WNDB db = null;
-		for(; i < dbs.size(); i++) {
-			name = dbs.getNameI(i);
-			db = dbs.getI(i);
+		Iterator<Entry<String, WNDB>> dbs = this.getDBs().entrySet().iterator();
+		while(dbs.hasNext()) {
+			Entry<String, WNDB> ent = dbs.next();
+			WNDB db = ent.getValue();
+			String name = ent.getKey();
 			if(db != null) {
 				if(db.file == null) {
-					file = new File(this.dir, name + ".wndb");
+					File file = new File(this.dir, name + ".wndb");
 					this.out("Saving (unsaved yet) database " + name + "...");
 					if(file.exists()) {
 						try {
@@ -309,7 +288,7 @@ public abstract class WNDBStore {
 						continue;
 					}
 					InstanceMan.setValue(this, name, db);
-					this.out("Database " + name + " successfuly saved to " + Api.getRealPath(file) + "!");
+					this.out("Database " + name + " successfuly saved to " + Api.getRealPath(db.file) + "!");
 				}
 			}
 		}

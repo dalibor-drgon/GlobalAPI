@@ -28,56 +28,55 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.Collection;
+import java.util.List;
+import java.util.Iterator;
+import java.util.Map;
 
-import eu.wordnice.api.Map;
 import eu.wordnice.api.OStream;
-import eu.wordnice.api.Set;
 import eu.wordnice.api.Val;
-import eu.wordnice.api.threads.TimeoutOutputStream;
 
 public class WNDBEncoder {
 
 	public static void writeFileData(File f, 
-			Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals, long timeout) throws Exception {
+			Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> vals) throws Exception {
 		if(vals == null || f == null) {
 			throw new NullPointerException("File or values are null!");
 		}
 		OutputStream fout = new FileOutputStream(f);
-		OStream out = new OStream(new TimeoutOutputStream(new BufferedOutputStream(fout), timeout));
+		OStream out = new OStream(new BufferedOutputStream(fout));
 		WNDBEncoder.writeOutputStreamData(out, vals);
 		out.close();
 		fout.close();
 	}
 	
 	public static void writeOutputStreamData(OStream out, 
-			Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals) throws Exception {
+			Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> vals) throws Exception {
 		if(out == null || vals == null || 
 				vals.one == null || vals.two == null || vals.three == null ||
-				vals.one.size() < 1 || vals.two.size() < 1 || (vals.one.size() != vals.two.size())) {
-			throw new NullPointerException("File or values are null!");
+				vals.one.length < 1 || vals.two.length < 1 || (vals.one.length != vals.two.length)) {
+			throw new NullPointerException("File or values are null, or the lengths "
+					+ "of names and types do not match!");
 		}
 		out.writeLong(WNDBDecoder.STATIC_DB_PREFIX);
-		int sz = vals.one.size();
+		int sz = vals.one.length;
 		out.writeInt(sz);
 		
 		for(int b = 0; b < sz; b++) {
-			out.writeString(vals.one.get(b));
-			out.writeByte(vals.two.get(b).b);
+			out.writeString(vals.one[b]);
+			out.writeByte(vals.two[b].b);
 		}
-			
-		int maxi = vals.three.size();
-		Set<Object> curset;
+		
+		Iterator<Object[]> it = vals.three.iterator();
 		int i = 0;
-		int i2 = 0;
-		for(; i < maxi; i++) {
-			curset = vals.three.get(i);
-			if(curset == null || curset.size() < sz) {
-				throw new Exception("value set at " + i + " is null or has invalid size");
-			}
+		while(it.hasNext()) {
+			Object[] cur = it.next();
 			out.writeBoolean(true);
-			for(i2 = 0; i2 < curset.size(); i2++) {
-				WNDBEncoder.writeObject(out, curset.get(i2), vals.two.get(i2), i, i2);
+			int i2 = 0;
+			for(; i2 < sz; i2++) {
+				WNDBEncoder.writeObject(out, cur[i2], vals.two[i2], i, i2);
 			}
+			i++;
 		}
 		out.writeBoolean(false);
 	}
@@ -156,10 +155,11 @@ public class WNDBEncoder {
 				}
 				return;
 			case SET:
+			case LIST:
 				if(obj == null) {
 					out.writeSet(null);
 				} else {
-					out.writeSet((Set<?>) obj);
+					out.writeSet((Collection<?>) obj);
 				}
 				return;
 			case MAP:

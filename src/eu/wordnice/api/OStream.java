@@ -26,7 +26,10 @@ package eu.wordnice.api;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Map;
 
+import eu.wordnice.api.serialize.WNSerializer;
 import eu.wordnice.sql.wndb.WNDBEncoder;
 import eu.wordnice.sql.wndb.WNDBVarTypes;
 
@@ -92,17 +95,12 @@ public class OStream extends OutputStream {
 		this.writeByte((byte) ((value == true) ? 1 : 0));
 	}
 	
-	public void writeSet(Set<?> set) throws Exception {
+	public void writeSet(Collection<?> set) throws Exception {
 		if(set == null) {
 			this.writeInt(-1);
 			return;
 		}
-		int size = set.size();
-		this.writeInt(size);
-		int i = 0;
-		for(; i < size; i++) {
-			this.writeObject(set.get(i), i, -1);
-		}
+		WNSerializer.coll2stream(this, set);
 	}
 	
 	public void writeMap(Map<?,?> map) throws Exception {
@@ -110,13 +108,7 @@ public class OStream extends OutputStream {
 			this.writeInt(-1);
 			return;
 		}
-		int size = map.size();
-		this.writeInt(size);
-		int i = 0;
-		for(; i < size; i++) {
-			this.writeObject(map.getNameI(i), i, -1);
-			this.writeObject(map.getI(i), i, -1);
-		}
+		WNSerializer.map2stream(this, map);
 	}
 	
 	public void writeObject(Object obj) throws Exception {

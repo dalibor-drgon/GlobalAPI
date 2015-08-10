@@ -25,20 +25,19 @@
 package eu.wordnice.sql.wndb;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import eu.wordnice.api.IStream;
 import eu.wordnice.api.OStream;
-import eu.wordnice.api.Set;
 import eu.wordnice.api.Val;
-import eu.wordnice.api.Val.ThreeVal;
 import eu.wordnice.sql.SetSetResSet;
 
 public class WNDB extends SetSetResSet {
 
 	public File file = null;
-	public Set<WNDBVarTypes> types = null;
+	public WNDBVarTypes[] types = null;
 	public boolean changed = false;
-	public long timeout = 2000;
 	
 	public WNDB() {
 		//For hackers
@@ -52,6 +51,7 @@ public class WNDB extends SetSetResSet {
 
 	public WNDB(File file) {
 		this.file = file;
+		this.checkSet();
 	}
 	
 	
@@ -60,17 +60,17 @@ public class WNDB extends SetSetResSet {
 		if(this.file == null) {
 			return;
 		}
-		WNDBEncoder.writeFileData(this.file, new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(this.names, this.types, this.values), this.timeout);
+		WNDBEncoder.writeFileData(this.file, new Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>>(this.names, this.types, this.values));
 		this.changed = false;
 	}
 	
 	public void save(OStream ost) throws Exception {
-		WNDBEncoder.writeOutputStreamData(ost, new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(this.names, this.types, this.values));
+		WNDBEncoder.writeOutputStreamData(ost, new Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>>(this.names, this.types, this.values));
 		this.changed = false;
 	}
 	
 	public void load(IStream ist) throws Exception {
-		ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals = WNDBDecoder.readInputStreamRawData(ist);
+		Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> vals = WNDBDecoder.readInputStreamRawData(ist);
 		this.names = vals.one;
 		this.types = vals.two;
 		this.values = vals.three;
@@ -89,7 +89,7 @@ public class WNDB extends SetSetResSet {
 		if(this.types == null) {
 			return null;
 		}
-		return this.types.get(i);
+		return this.types[i];
 	}
 	
 	public boolean getChanged() {
@@ -105,15 +105,15 @@ public class WNDB extends SetSetResSet {
 	}
 	
 	@Override
-	public boolean isSetOK(Set<Object> vals) {
+	public boolean isEntryOK(Object[] vals) {
 		int sz = this.sizeOfHeader();
-		if(vals == null || vals.size() < sz) {
+		if(vals == null || vals.length < sz) {
 			return false;
 		}
-		Object o;
-		for(int n = 0; n < sz; n++) {
-			o = vals.get(n);
-			if(WNDBVarTypes.isAssignable(this.types.get(n), o) == false) {
+		int n = 0;
+		for(; n < sz; n++) {
+			Object o = vals[n];
+			if(WNDBVarTypes.isAssignable(this.types[n], o) == false) {
 				return false;
 			}
 		}
@@ -135,10 +135,11 @@ public class WNDB extends SetSetResSet {
 				if(!this.file.exists()) {
 					this.file.createNewFile();
 				}
-				ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> vals = WNDBDecoder.readFileRawData(this.file, this.timeout);
+				Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> vals = WNDBDecoder.readFileRawData(this.file);
 				this.names = vals.one;
 				this.types = vals.two;
 				this.values = vals.three;
+				this.reset();
 			} catch(Throwable t) {
 				throw new RuntimeException(t);
 			}
@@ -149,53 +150,60 @@ public class WNDB extends SetSetResSet {
 	public int sizeOfHeader() {
 		this.checkSet();
 		if(this.names != null) {
-			return this.names.size();
+			return this.names.length;
 		}
-		if(this.types != null) {
-			return this.types.size();
-		}
-		if(this.values != null) {
-			Set<Object> set = this.values.get(0);
-			if(set != null) {
-				return set.size();
-			}
-		}
-		return 0;
+		return this.types.length;
 	}
 	
 	
 	/*** Static CREATE ***/
 	
-	public static WNDB createWNDB_(File f, Set<String> names, Set<Byte> types, long timeout) throws Exception {
-		return WNDB.createWNDB(f, names, WNDBDecoder.getBytesToVarTypes(types), timeout);
+	public static WNDB createWNDB_(File f, String[] names, Byte[] types) throws Exception {
+		return WNDB.createWNDB(f, names, WNDBDecoder.getBytesToVarTypes(types));
 	}
 	
-	public static WNDB createWNDB(File f, Set<String> names, Set<WNDBVarTypes> types, long timeout) throws Exception {
+	public static WNDB createWNDB(File f, String[] names, WNDBVarTypes[] types) throws Exception {
 		f.createNewFile();
-		Set<Set<Object>> vals = new Set<Set<Object>>();
-		Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> threevals = new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(names, types, vals);
-		WNDBEncoder.writeFileData(f, threevals, timeout);
+		List<Object[]> vals = new ArrayList<Object[]>();
+		Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> threevals = new Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>>(names, types, vals);
+		WNDBEncoder.writeFileData(f, threevals);
 		WNDB ret = new WNDB(f);
 		ret.names = names;
 		ret.types = types;
 		ret.values = vals;
+		ret.reset();
 		return ret;
 	}
 	
 	
-	public static WNDB createWNDB_(OStream out, Set<String> names, Set<Byte> types) throws Exception {
+	public static WNDB createWNDB_(OStream out, String[] names, Byte[] types) throws Exception {
 		return WNDB.createWNDB(out, names, WNDBDecoder.getBytesToVarTypes(types));
 	}
 	
-	public static WNDB createWNDB(OStream out, Set<String> names, Set<WNDBVarTypes> types) throws Exception {
-		Set<Set<Object>> vals = new Set<Set<Object>>();
-		Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> threevals = new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(names, types, vals);
+	public static WNDB createWNDB(OStream out, String[] names, WNDBVarTypes[] types) throws Exception {
+		List<Object[]> vals = new ArrayList<Object[]>();
+		Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> threevals = new Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>>(names, types, vals);
 		WNDBEncoder.writeOutputStreamData(out, threevals);
 		WNDB ret = new WNDB();
 		ret.file = null;
 		ret.names = names;
 		ret.types = types;
 		ret.values = vals;
+		ret.reset();
+		return ret;
+	}
+	
+	public static WNDB createEmptyWNDB_(String[] names, Byte[] types) {
+		return WNDB.createEmptyWNDB(names, WNDBDecoder.getBytesToVarTypes(types));
+	}
+	
+	public static WNDB createEmptyWNDB(String[] names, WNDBVarTypes[] types) {
+		WNDB ret = new WNDB();
+		ret.file = null;
+		ret.names = names;
+		ret.types = types;
+		ret.values = new ArrayList<Object[]>();
+		ret.reset();
 		return ret;
 	}
 

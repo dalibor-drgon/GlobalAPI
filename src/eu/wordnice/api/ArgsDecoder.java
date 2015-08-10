@@ -24,27 +24,32 @@
 
 package eu.wordnice.api;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ArgsDecoder {
 
 	public static Map<String, String> decodeString(String s, String valname,
 			String row) {
-		return ArgsDecoder.decodeString(new Map<String, String>(), s, valname,
-				row, null);
+		Map<String, String> map = new HashMap<String, String>();
+		ArgsDecoder.decodeString(map, s, valname, row, null);
+		return map;
 	}
 
 	public static Map<String, String> decodeString(String s, String valname,
 			String row,
 			Handler.OneVoidHandler<Val.TwoVal<String, String>> handler) {
-		return ArgsDecoder.decodeString(new Map<String, String>(), s, valname,
-				row, handler);
+		Map<String, String> map = new HashMap<String, String>();
+		ArgsDecoder.decodeString(map, s, valname, row, handler);
+		return map;
 	}
 
-	public static Map<String, String> decodeString(Map<String, String> map,
+	public static void decodeString(Map<String, String> map,
 			String s, String valname, String row) {
-		return ArgsDecoder.decodeString(map, s, valname, row, null);
+		ArgsDecoder.decodeString(map, s, valname, row, null);
 	}
 
-	public static Map<String, String> decodeString(Map<String, String> map,
+	public static void decodeString(Map<String, String> map,
 			String s, String valname, String row,
 			Handler.OneVoidHandler<Val.TwoVal<String, String>> handler) {
 
@@ -59,7 +64,7 @@ public class ArgsDecoder {
 			i2 = s.indexOf(row);
 			if (i2 < 0) {
 				if (s.length() == 0) {
-					return map;
+					return;
 				} else {
 					i2 = s.length() - 1;
 					can = false;
@@ -80,7 +85,7 @@ public class ArgsDecoder {
 					name = twoval.one;
 					val = twoval.two;
 				}
-				map.add(name, val);
+				map.put(name, val);
 			} else if(i3 > -1) {
 				name = s.substring(0, i3);
 				if(can) {
@@ -95,11 +100,10 @@ public class ArgsDecoder {
 					name = twoval.one;
 					val = twoval.two;
 				}
-				map.add(name, val);
+				map.put(name, val);
 			}
 			s = s.substring(i2 + row.length(), s.length());
 		}
-		return map;
 	}
 
 }

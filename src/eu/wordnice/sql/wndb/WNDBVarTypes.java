@@ -24,13 +24,14 @@
 
 package eu.wordnice.sql.wndb;
 
-import eu.wordnice.api.Map;
-import eu.wordnice.api.Set;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 public enum WNDBVarTypes {
 
 	BOOLEAN(1), BYTE(2), SHORT(3), INT(4), LONG(5), FLOAT(6), DOUBLE(7), STRING(8), BYTES(9),
-	SET(11), MAP(12);
+	SET(11), MAP(12), LIST(13);
 
 	public byte b;
 
@@ -58,27 +59,28 @@ public enum WNDBVarTypes {
 		Class<?> c = o.getClass();
 		switch(typ) {
 			case BOOLEAN:
-				return c.isAssignableFrom(Boolean.class);
+				return Boolean.class.isAssignableFrom(c);
 			case BYTE:
-				return c.isAssignableFrom(Byte.class);
+				return Byte.class.isAssignableFrom(c);
 			case SHORT:
-				return c.isAssignableFrom(Short.class);
+				return Short.class.isAssignableFrom(c);
 			case INT:
-				return c.isAssignableFrom(Integer.class);
+				return Integer.class.isAssignableFrom(c);
 			case LONG:
-				return c.isAssignableFrom(Long.class);
+				return Long.class.isAssignableFrom(c);
 			case FLOAT:
-				return c.isAssignableFrom(Float.class);
+				return Float.class.isAssignableFrom(c);
 			case DOUBLE:
-				return c.isAssignableFrom(Double.class);
+				return Double.class.isAssignableFrom(c);
 			case STRING:
-				return c.isAssignableFrom(String.class);
+				return String.class.isAssignableFrom(c);
 			case BYTES:
-				return (c.isAssignableFrom(byte[].class) || c.isAssignableFrom(Byte[].class));
+				return (byte[].class.isAssignableFrom(c) || Byte[].class.isAssignableFrom(c));
 			case SET:
-				return c.isAssignableFrom(Set.class);
+			case LIST:
+				return Collection.class.isAssignableFrom(c);
 			case MAP:
-				return c.isAssignableFrom(Map.class);
+				return Map.class.isAssignableFrom(c);
 		}
 		return false;
 	}
@@ -91,37 +93,40 @@ public enum WNDBVarTypes {
 	}
 	
 	public static WNDBVarTypes getByClass(Class<?> c) {
-		if(c.isAssignableFrom(Boolean.class)) {
+		if(Boolean.class.isAssignableFrom(c) || boolean.class.isAssignableFrom(c)) {
 			return BOOLEAN;
 		}
-		if(c.isAssignableFrom(Byte.class) || c.isAssignableFrom(byte.class)) {
+		if(Byte.class.isAssignableFrom(c) || byte.class.isAssignableFrom(c)) {
 			return BYTE;
 		}
-		if(c.isAssignableFrom(Short.class) || c.isAssignableFrom(short.class)) {
+		if(Short.class.isAssignableFrom(c) || short.class.isAssignableFrom(c)) {
 			return SHORT;
 		}
-		if(c.isAssignableFrom(Integer.class) || c.isAssignableFrom(int.class)) {
+		if(Integer.class.isAssignableFrom(c) || int.class.isAssignableFrom(c)) {
 			return INT;
 		}
-		if(c.isAssignableFrom(Long.class) || c.isAssignableFrom(long.class)) {
+		if(Long.class.isAssignableFrom(c) || long.class.isAssignableFrom(c)) {
 			return LONG;
 		}
-		if(c.isAssignableFrom(Float.class) || c.isAssignableFrom(float.class)) {
+		if(Float.class.isAssignableFrom(c) || float.class.isAssignableFrom(c)) {
 			return FLOAT;
 		}
-		if(c.isAssignableFrom(Double.class) || c.isAssignableFrom(double.class)) {
+		if(Double.class.isAssignableFrom(c) || double.class.isAssignableFrom(c)) {
 			return DOUBLE;
 		}
-		if(c.isAssignableFrom(String.class)) {
+		if(String.class.isAssignableFrom(c)) {
 			return STRING;
 		}
-		if(c.isAssignableFrom(Byte[].class) || c.isAssignableFrom(byte[].class)) {
+		if(Byte[].class.isAssignableFrom(c) || byte[].class.isAssignableFrom(c)) {
 			return BYTES;
 		}
-		if(c.isAssignableFrom(Set.class)) {
+		if(Set.class.isAssignableFrom(c)) {
 			return SET;
 		}
-		if(c.isAssignableFrom(Map.class)) {
+		if(Collection.class.isAssignableFrom(c)) {
+			return LIST;
+		}
+		if(Map.class.isAssignableFrom(c)) {
 			return MAP;
 		}
 		

@@ -27,6 +27,12 @@ package eu.wordnice.api;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 public class InstanceMan {
 	
@@ -112,8 +118,9 @@ public class InstanceMan {
 	}
 	
 	public static Val.OneVal<Object> callMethod(Object o, Class<?> c, String name, Object... args) {
-		Set<Class<?>> clzs_list = InstanceMan.getArgClasses(args);
-		return InstanceMan.callMethod(o, c, name, args, clzs_list.toArray(new Class<?>[clzs_list.size()]));
+		Class<?>[] clzs = new Class<?>[args.length];
+		InstanceMan.getArgClasses(clzs, args);
+		return InstanceMan.callMethod(o, c, name, args, clzs);
 	}
 	
 	public static Val.OneVal<Object> callMethod(Object o, String name, Object[] args, Class<?>[] clzs) {
@@ -179,19 +186,17 @@ public class InstanceMan {
 	}
 	
 	
-	public static <X> Map<String, X> getValues(Object o, Class<X> ext) {
-		return InstanceMan.getValues(o, o.getClass(), ext);
+	public static <X> Map<String, X> getValues(Object o, Class<?> c, Class<X> ext) {
+		Map<String, X> ret = new HashMap<String, X>();
+		InstanceMan.getValues(ret, o, o.getClass(), ext);
+		return ret;
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <X> Map<String, X> getValues(Object o, Class<?> c, Class<X> ext) {
-		Map<String, X> ret = new Map<String, X>();
-		
+	public static <X> void getValues(Map<String, X> ret, Object o, Class<?> c, Class<X> ext) {
 		Field[] f = null;
 		Object val = null;
 		if(ext == null) {
-			Object[] vals = new Object[1];
-			Object[] nams = new Object[1];
 			while(c != null) {
 				try {
 					f = c.getDeclaredFields();
@@ -200,9 +205,7 @@ public class InstanceMan {
 							fi.setAccessible(true);
 						} catch(Throwable t) {}
 						try {
-							vals[0] = fi.get(o);
-							nams[0] = fi.getName();
-							ret.addAllWC(nams, vals, 1);
+							ret.put(fi.getName(), (X) fi.get(o));
 						} catch(Throwable t) {}
 					}
 				} catch(Throwable t) {}
@@ -222,7 +225,7 @@ public class InstanceMan {
 						try {
 							val = fi.get(o);
 							if(ext.isAssignableFrom(fi.getType())) {
-								ret.addWC(fi.getName(), (X) val);
+								ret.put(fi.getName(), (X) val);
 							}
 						} catch(Throwable t) {}
 					}
@@ -230,12 +233,15 @@ public class InstanceMan {
 				c = c.getSuperclass();
 			}
 		}
-		return ret;
 	}
 	
 	public static Set<Field> getFields(Class<?> c) {
-		Set<Field> ret = new Set<Field>();
-		
+		Set<Field> out = new HashSet<Field>();
+		InstanceMan.getFields(out, c);
+		return out;
+	}
+	
+	public static void getFields(Collection<Field> ret, Class<?> c) {
 		Field[] f = null;
 		while(c != null) {
 			try {
@@ -247,17 +253,20 @@ public class InstanceMan {
 					try {
 						fi.setAccessible(true);
 					} catch(Throwable t) {}
-					ret.addWC(fi);
+					ret.add(fi);
 				}
 			} catch(Throwable t) {}
 			c = c.getSuperclass();
 		}
-		return ret;
 	}
 	
 	public static Set<Method> getMethods(Class<?> c) {
-		Set<Method> ret = new Set<Method>();
-		
+		Set<Method> out = new HashSet<Method>();
+		InstanceMan.getMethods(out, c);
+		return out;
+	}
+	
+	public static void getMethods(Collection<Method> ret, Class<?> c) {
 		Method[] m = null;
 		while(c != null) {
 			try {
@@ -266,31 +275,40 @@ public class InstanceMan {
 					try {
 						mc.setAccessible(true);
 					} catch(Throwable t) {}
-					ret.addWC(mc);
+					ret.add(mc);
 				}
 			} catch(Throwable t) {}
 			c = c.getSuperclass();
 		}
-		return ret;
 	}
 	
 	
 	
 	/*** API ***/
 	
-	public static Set<Class<?>> getArgClasses(Object... args) {
-		Set<Class<?>> set = new Set<Class<?>>();
+	public static void getArgClasses(Class<?>[] out, Object... args) {
 		int i = 0;
 		Object cur;
 		for(; i < args.length; i++) {
 			cur = args[i];
 			if(cur != null) {
-				set.addWC(InstanceMan.getOriginalClass(cur.getClass()));
+				out[i] = InstanceMan.getOriginalClass(cur.getClass());
 			} else {
-				set.addWC(null);
+				out[i] = null;
 			}
 		}
-		return set;
+	}
+	
+	public static void getArgClasses(Collection<Class<?>> set, Collection<Object> args) {
+		Iterator<Object> it = args.iterator();
+		while(it.hasNext()) {
+			Object cur = it.next();
+			if(cur != null) {
+				set.add(InstanceMan.getOriginalClass(cur.getClass()));
+			} else {
+				set.add(null);
+			}
+		}
 	}
 	
 	public static Class<?> getOriginalClass(Class<?> clz) {

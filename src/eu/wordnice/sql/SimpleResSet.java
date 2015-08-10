@@ -24,6 +24,8 @@
 
 package eu.wordnice.sql;
 
+import org.apache.commons.lang.ArrayUtils;
+
 public abstract class SimpleResSet implements ResSet {
 
 	@Override
@@ -34,34 +36,58 @@ public abstract class SimpleResSet implements ResSet {
 
 	@Override
 	public String getString(String name) {
-		try {
-			return (String) this.getObject(name);
-		} catch (Throwable t) {
+		Object obj = this.getObject(name);
+		if(obj instanceof CharSequence || obj instanceof Number) {
+			return obj.toString();
+		}
+		if(obj instanceof byte[]) {
+			return new String((byte[]) obj);
+		}
+		if(obj instanceof Byte[]) {
+			return new String(ArrayUtils.toPrimitive((Byte[]) obj));
 		}
 		return null;
 	}
 
 	@Override
 	public String getString(int in) {
-		try {
-			return (String) this.getObject(in);
-		} catch (Throwable t) {
+		Object obj = this.getObject(in);
+		if(obj instanceof CharSequence || obj instanceof Number) {
+			return obj.toString();
+		}
+		if(obj instanceof byte[]) {
+			return new String((byte[]) obj);
+		}
+		if(obj instanceof Byte[]) {
+			return new String(ArrayUtils.toPrimitive((Byte[]) obj));
 		}
 		return null;
 	}
 
 	public byte[] getBytes(String name) {
-		try {
-			return (byte[]) this.getObject(name);
-		} catch (Throwable t) {
+		Object obj = this.getObject(name);
+		if(obj instanceof CharSequence || obj instanceof Number) {
+			return obj.toString().getBytes();
+		}
+		if(obj instanceof byte[]) {
+			return (byte[]) obj;
+		}
+		if(obj instanceof Byte[]) {
+			return ArrayUtils.toPrimitive((Byte[]) obj);
 		}
 		return null;
 	}
 
 	public byte[] getBytes(int in) {
-		try {
-			return (byte[]) this.getObject(in);
-		} catch (Throwable t) {
+		Object obj = this.getObject(in);
+		if(obj instanceof CharSequence || obj instanceof Number) {
+			return obj.toString().getBytes();
+		}
+		if(obj instanceof byte[]) {
+			return (byte[]) obj;
+		}
+		if(obj instanceof Byte[]) {
+			return ArrayUtils.toPrimitive((Byte[]) obj);
 		}
 		return null;
 	}
@@ -71,12 +97,10 @@ public abstract class SimpleResSet implements ResSet {
 		Object o = this.getObject(name);
 		try {
 			return (Boolean) o;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		try {
-			return (Boolean) Boolean.parseBoolean(o.toString());
-		} catch (Throwable t) {
-		}
+			return (Boolean) Boolean.getBoolean(o.toString());
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -85,12 +109,10 @@ public abstract class SimpleResSet implements ResSet {
 		Object o = this.getObject(in);
 		try {
 			return (Boolean) o;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		try {
-			return (Boolean) Boolean.parseBoolean(o.toString());
-		} catch (Throwable t) {
-		}
+			return (Boolean) Boolean.getBoolean(o.toString());
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -99,12 +121,10 @@ public abstract class SimpleResSet implements ResSet {
 		Object o = this.getObject(name);
 		try {
 			return (Byte) o;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		try {
 			return (Byte) Byte.parseByte(o.toString());
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -113,12 +133,10 @@ public abstract class SimpleResSet implements ResSet {
 		Object o = this.getObject(in);
 		try {
 			return (Byte) o;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		try {
 			return (Byte) Byte.parseByte(o.toString());
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -127,12 +145,10 @@ public abstract class SimpleResSet implements ResSet {
 		Object o = this.getObject(name);
 		try {
 			return (Short) o;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		try {
 			return (Short) Short.parseShort(o.toString());
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -141,12 +157,10 @@ public abstract class SimpleResSet implements ResSet {
 		Object o = this.getObject(in);
 		try {
 			return (Short) o;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		try {
 			return (Short) Short.parseShort(o.toString());
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -155,12 +169,10 @@ public abstract class SimpleResSet implements ResSet {
 		Object o = this.getObject(name);
 		try {
 			return (Integer) o;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		try {
 			return (Integer) Integer.parseInt(o.toString());
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -169,12 +181,10 @@ public abstract class SimpleResSet implements ResSet {
 		Object o = this.getObject(in);
 		try {
 			return (Integer) o;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		try {
 			return (Integer) Integer.parseInt(o.toString());
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -183,12 +193,10 @@ public abstract class SimpleResSet implements ResSet {
 		Object o = this.getObject(name);
 		try {
 			return (Long) o;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		try {
 			return (Long) Long.parseLong(o.toString());
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -197,12 +205,10 @@ public abstract class SimpleResSet implements ResSet {
 		Object o = this.getObject(in);
 		try {
 			return (Long) o;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		try {
 			return (Long) Long.parseLong(o.toString());
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -211,12 +217,10 @@ public abstract class SimpleResSet implements ResSet {
 		Object o = this.getObject(name);
 		try {
 			return (Float) o;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		try {
 			return (Float) Float.parseFloat(o.toString());
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -225,12 +229,10 @@ public abstract class SimpleResSet implements ResSet {
 		Object o = this.getObject(in);
 		try {
 			return (Float) o;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		try {
 			return (Float) Float.parseFloat(o.toString());
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -239,12 +241,10 @@ public abstract class SimpleResSet implements ResSet {
 		Object o = this.getObject(name);
 		try {
 			return (Double) o;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		try {
 			return (Double) Double.parseDouble(o.toString());
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -253,17 +253,15 @@ public abstract class SimpleResSet implements ResSet {
 		Object o = this.getObject(in);
 		try {
 			return (Double) o;
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		try {
 			return (Double) Double.parseDouble(o.toString());
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
 	@Override
-	public abstract boolean first();
+	public abstract void reset();
 
 	@Override
 	public abstract boolean next();

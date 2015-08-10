@@ -15,16 +15,20 @@ Under MIT license.
 
 ### Serialize Set & read back
 
-Serialize Set with another Set, Map and random primitives to 131 bytes! And parse it back.
+Serialize List with Set, Map and random primitives and parse it back.
 
 ```java
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import eu.wordnice.api.OStream;
 import eu.wordnice.api.IStream;
-import eu.wordnice.api.Map;
-import eu.wordnice.api.Set;
 
 public class SerializeExample {
 	
@@ -32,23 +36,43 @@ public class SerializeExample {
 		// Write
 		ByteArrayOutputStream ot = new ByteArrayOutputStream();
 		OStream os = new OStream(ot);
-		os.writeSet(new Set<Object>("Hello!", 123456, true, true,
-				new Map<String, Integer>(new String[]{"Zero","One","Two","Three","Four"}, new Integer[] {0,1,2,3,4}),
-				false, "YES", new Set<Object>(404,"NotFound")));
+		os.writeSet(createList());
 		os.close();
 
 		// Read
 		IStream is = new IStream(new ByteArrayInputStream(ot.toByteArray()));
-		Set<Object> set = is.readSet();
-		System.out.println("Set: " + set);
+		List<Object> read = new ArrayList<Object>();
+		is.readSet(read);
+		System.out.println("Readed: " + read);
 		is.close();
+	}
+	
+	public static List<Object> createList() {
+		Map<Integer,String> exam_map = new HashMap<Integer, String>();
+		exam_map.put(1, "one");
+		exam_map.put(2, "two");
+		exam_map.put(3, "three");
+		
+		Set<String> exam_set = new HashSet<String>();
+		exam_set.add("Hello");
+		exam_set.add("World");
+		
+		List<Object> write_set = new ArrayList<Object>();
+		write_set.add("Welcome");
+		write_set.add(false);
+		write_set.add(exam_set);
+		write_set.add(-239.23);
+		write_set.add(exam_map);
+		write_set.add(null);
+		
+		return write_set;
 	}
 }
 ```
 
 Output:
 ```
-Set: [Hello!,123456,true,true,{Zero:0,One:1,Two:2,Three:3,Four:4},false,YES,[404,NotFound]]
+Readed: [Welcome, false, [World, Hello], -239.23, {1=one, 2=two, 3=three}, null]
 ```
 
 
@@ -58,8 +82,6 @@ Set: [Hello!,123456,true,true,{Zero:0,One:1,Two:2,Three:3,Four:4},false,YES,[404
 Useful for I/O and multithreading.
 
 ```java
-package eu.wordnice.test;
-
 import eu.wordnice.api.threads.Runa;
 import eu.wordnice.api.threads.TimeoutThread;
 
@@ -89,7 +111,7 @@ Hello, world!
 Exception in thread "main" java.util.concurrent.TimeoutException
 	at java.util.concurrent.FutureTask.get(FutureTask.java:201)
 	at eu.wordnice.api.threads.TimeoutThread.run(TimeoutThread.java:94)
-	at eu.wordnice.test.TimeoutedHelloWorld.main(TimeoutedHelloWorld.java:9)
+	at eu.wordnice.examples.TimeoutedHelloWorld.main(TimeoutedHelloWorld.java:9)
 ```
 
 
@@ -253,16 +275,13 @@ To get working example, just copy code from `Simple HTTP server` and replace con
 
 ### WNDB
 
-`WNDB` class is for easy tables serialization & deserialization, low-level inserting, querying and updating. For even easily work, there was created `WNDBStore` abstract class, and with its help there can be created very short and clean databases store class. Example, class with 2 databases is below. Run it twice, if everything is OK and no errors are displayed, you should get Outputs as under code.
+`WNDB` class is for easy tables serialization & deserialization, low-level inserting, querying and updating. For even easily work, there was created `WNDBStore` abstract class, and with its help there can be created very short and clean databases store class. Example, class with 2 databases is below. Run it twice, if everything will be OK and no errors will be displayed, after second run you should get printed database.
 
 
 ```java
-package eu.wordnice.test;
-
 import java.io.File;
 
 import eu.wordnice.api.Api;
-import eu.wordnice.api.Set;
 import eu.wordnice.sql.wndb.WNDB;
 import eu.wordnice.sql.wndb.WNDBStore;
 import eu.wordnice.sql.wndb.WNDBVarTypes;
@@ -272,21 +291,21 @@ public class WNDBStoreExample extends WNDBStore {
 	/*** DATABASES & DATAS ***/
 	
 	public WNDB users;
- 	Set<WNDBVarTypes> users_types = new Set<WNDBVarTypes>(
+ 	WNDBVarTypes[] users_types = new WNDBVarTypes[] {
  			WNDBVarTypes.STRING, WNDBVarTypes.INT
- 	);
- 	Set<String> users_names = new Set<String>(
+ 	};
+ 	String[] users_names = new String[] {
  			"name", "pass"
- 	);
+ 	};
  	
  	
  	public WNDB posts;
- 	Set<WNDBVarTypes> posts_types = new Set<WNDBVarTypes>(
+ 	WNDBVarTypes[] posts_types = new WNDBVarTypes[] {
  			WNDBVarTypes.STRING, WNDBVarTypes.STRING, WNDBVarTypes.STRING
- 	);
- 	Set<String> posts_names = new Set<String>(
- 			"name", "title", "text"
- 	);
+ 	};
+ 	String[] posts_names = new String[] {
+ 			"user", "title", "text"
+ 	};
 	
 	
 	/*** OVERRIDE ***/
@@ -301,8 +320,7 @@ public class WNDBStoreExample extends WNDBStore {
  				this.err("Error while creating database folder, details:");
  				this.exc(t);
  				this.err("Cancelling");
- 				
- 				//this.loadEmptyDBs();
+ 				this.loadEmptyDBs();
  				return;
  			}
  			this.loadDBs();
@@ -339,38 +357,39 @@ public class WNDBStoreExample extends WNDBStore {
 			String curusr = Api.genString(10);
 			int curusr_pass = Api.genString(12).hashCode();
 			System.out.println("Inserting user1: " + curusr + " with password hash " + curusr_pass);
-			if(!ws.users.insert(curusr, curusr_pass)) { System.out.println("Cannot insert new user..."); }
+			if(!ws.users.insert(curusr, curusr_pass)) {
+				System.out.println("Cannot insert new user...");
+			}
 			
 			curusr = Api.genString(10);
 			curusr_pass = Api.genString(12).hashCode();
 			System.out.println("Inserting user2: " + curusr + " with password hash " + curusr_pass);
-			if(!ws.users.insert(curusr, curusr_pass)) { System.out.println("Cannot insert new user..."); }
+			if(!ws.users.insert(curusr, curusr_pass)) {
+				System.out.println("Cannot insert new user...");
+			}
 			
 			String title = "How to decode " + Api.genString(12);
 			String text = "Blah blah blah, I really cannot say you how to do it, because it just random string.";
 			System.out.println("Inserting post1: from " + curusr + " with title " + title);
-			if(!ws.posts.insert(curusr, title, text)) { System.out.println("Cannot insert new post..."); }
+			if(!ws.posts.insert(curusr, title, text)) {
+				System.out.println("Cannot insert new post...");
+			}
 			
 			ws.saveDBs();
 			System.out.println("Databases should be saved. Run this program again to load and print data...");
 		} else {
 			System.out.println("Displaying saved users:");
-			int n = ws.users.size();
-			int i = 0;
-			Set<Object> vals = null;
-			for(i = 0; i < n; i++) {
-				vals = ws.users.getEntry(i);
-				System.out.println("\t- " + ((String) vals.get(0)) + " with password hash " + ((Integer) vals.get(1)));
+			while(ws.users.next()) {
+				Object[] vals = ws.users.getCurrent();
+				System.out.println("\t- " + vals[0] + " with password hash " + vals[1]);
 			}
 			System.out.println("");
 			
 			
 			System.out.println("Displaying saved posts:");
-			n = ws.posts.size();
-			for(i = 0; i < n; i++) {
-				vals = ws.posts.getEntry(i);
-				System.out.println("\t- " + ((String) vals.get(1)) + " from user " + ((String) vals.get(0)));
-				System.out.println("\t\t" + ((String) vals.get(2)));
+			while(ws.posts.next()) {
+				System.out.println("\t- " + ws.posts.getString("title") + " from user " + ws.posts.getString("user"));
+				System.out.println("\t\t" + ws.posts.getString("text"));
 			}
 			System.out.println("");
 		}

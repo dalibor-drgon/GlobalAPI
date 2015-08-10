@@ -27,20 +27,18 @@ package eu.wordnice.sockets;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.ArgsDecoder;
 import eu.wordnice.api.ByteString;
 import eu.wordnice.api.Handler;
 import eu.wordnice.api.IStream;
-import eu.wordnice.api.Map;
 import eu.wordnice.api.OStream;
 import eu.wordnice.api.Val;
 import eu.wordnice.api.Val.TwoVal;
-import eu.wordnice.api.threads.TimeoutInputStream;
 
 public class HIO implements Closeable {
 	
@@ -90,13 +88,13 @@ public class HIO implements Closeable {
 		boolean read = false;
 		try {
 			byte[] buff = new byte[1024 * 16];
-			int cur = TimeoutInputStream.read(this.in, to);
+			int cur = this.in.read();
 			if(cur == -1) {
 				throw new IOException("Cannot start reading from socket!");
 			}
 			bout.write(cur);
 			
-			while((cur = TimeoutInputStream.read(this.in, to, buff, 0, buff.length)) > 0) {
+			while((cur = this.in.read(buff, 0, buff.length)) > 0) {
 				bout.write(buff, 0, cur);
 				if(cur >= 2 && buff[cur - 2] == '\n' && buff[cur - 1] == '\n') {
 					break;
@@ -141,7 +139,7 @@ public class HIO implements Closeable {
 			if((!this.PATH.equals("/favicon.ico") || !HIO.BLOCK_FAVICON)) {
 				zeroi = this.PATH.indexOf('?');
 				if(zeroi > -1) {
-					this.GET = new Map<String,String>();
+					this.GET = new HashMap<String,String>();
 					ArgsDecoder.decodeString(this.GET, this.PATH.substring(zeroi + 1, this.PATH.length()), 
 							"=", "&", URL_DECODER);
 					this.PATH = this.PATH.substring(0, zeroi);
@@ -192,7 +190,7 @@ public class HIO implements Closeable {
 	}
 	
 	private void parseHead(String str) {
-		this.HEAD = new Map<String,String>();
+		this.HEAD = new HashMap<String,String>();
 		ArgsDecoder.decodeString(this.HEAD, str, ":", "\n",
 				new Handler.OneVoidHandler<Val.TwoVal<String, String>>() {
 					@Override
@@ -217,26 +215,6 @@ public class HIO implements Closeable {
 		this.sock.close();
 	}
 	
-	
-	/*** Static ***/
-	
-	protected static boolean readData(OutputStream out, InputStream in, long to) {
-		try {
-			byte[] buff = new byte[1024 * 16];
-			int cur = TimeoutInputStream.read(in, to);
-			if(cur == -1) {
-				throw new IOException("Cannot start reading from socket!");
-			}
-			out.write(cur);
-			
-			while((cur = TimeoutInputStream.read(in, to, buff, 0, buff.length)) > 0) {
-				out.write(buff, 0, cur);
-			}
-		} catch(Throwable t) {
-			return false;
-		}
-		return true;
-	}
 	
 	
 }

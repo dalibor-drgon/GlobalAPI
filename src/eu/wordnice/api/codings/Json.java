@@ -29,11 +29,9 @@
 
 package eu.wordnice.api.codings;
 
-import eu.wordnice.api.Map;
-
 public class Json {
 	
-	public static Map<String, Object> parseJson(byte[] in, int off, int len) {
+	public static Object parseJson(byte[] in, int off, int len) {
 		int i = off;
 		int mi = off + len;
 		for(; i < mi; i++) {

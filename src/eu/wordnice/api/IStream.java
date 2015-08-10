@@ -24,18 +24,19 @@
 
 package eu.wordnice.api;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.Map;
 
+import eu.wordnice.api.serialize.WNSerializer;
 import eu.wordnice.sql.wndb.WNDBDecoder;
 
 public class IStream extends InputStream {
 
 	public InputStream in;
 
-	public IStream() {
-	}
+	public IStream() {}
 
 	public IStream(InputStream in) {
 		this.in = in;
@@ -47,42 +48,24 @@ public class IStream extends InputStream {
 		if (all == 0) {
 			return new byte[0];
 		}
-		if (all < 0) {
-			return null;
+		if(all < 0) {
+			throw new java.lang.IllegalArgumentException("readFully request with invalid size " + all);
 		}
-		int lene = 1024 * 4;
-		int len = (lene > all) ? all : lene;
-		byte[] buffer = new byte[len];
-
-		int cur = this.in.read(buffer);
-		if (cur == 0) {
-			return null;
-		}
-		if (cur == all) {
-			return buffer;
-		}
-
-		int total = cur;
-		int left = all - total;
-		if (left > lene) {
-			left = lene;
-		}
-		int c_total;
-		ByteArrayOutputStream write = new ByteArrayOutputStream();
-
-		while (left > 0 && (cur = this.in.read(buffer, 0, left)) > 0) {
-			total = total + cur;
-			c_total = total + lene;
-			if (c_total > all) {
-				left = c_total - all;
-				if (left > lene) {
-					left = lene;
-				}
+		byte[] ret = new byte[all];
+		int left = all;
+		int cur = 0;
+		int total = 0;
+		while((cur = this.read(ret, total, left)) > 0) {
+			left -= cur;
+			total += cur;
+			if(left == 0) {
+				break;
 			}
-			write.write(buffer, 0, cur);
 		}
-		return write.toByteArray();
-
+		if(left != 0) {
+			throw new IOException("EOF, readFully readed " + total + " / " + all +" bytes!");
+		}
+		return ret;
 	}
 
 	public String readString() throws IOException {
@@ -137,29 +120,27 @@ public class IStream extends InputStream {
 	}
 	
 	
-	public Set<Object> readSet() throws Exception {
-		int size = this.readInt();
-		if(size < 0) {
+	public <X> Collection<X> readSet(Collection<X> col) throws Exception {
+		int ch = this.readInt();
+		if(ch == -1) {
 			return null;
 		}
-		Set<Object> set = new Set<Object>();
-		int i = 0;
-		for(; i < size; i++) {
-			set.addWC(this.readObject(i, -1));
+		if(ch != WNSerializer.SET_PREFIX) {
+			throw new Exception("Not SET!");
 		}
-		return set;
+		WNSerializer.stream2collWithoutPrefix(col, this);
+		return col;
 	}
 	
-	public Map<Object, Object> readMap() throws Exception {
-		int size = this.readInt();
-		if(size < 0) {
+	public <X, Y> Map<X, Y> readMap(Map<X, Y> map) throws Exception {
+		int ch = this.readInt();
+		if(ch == -1) {
 			return null;
 		}
-		Map<Object, Object> map = new Map<Object, Object>();
-		int i = 0;
-		for(; i < size; i++) {
-			map.addWC(this.readObject(), this.readObject());
+		if(ch != WNSerializer.MAP_PREFIX) {
+			throw new Exception("Not MAP!");
 		}
+		WNSerializer.stream2mapWithoutPrefix(map, this);
 		return map;
 	}
 	

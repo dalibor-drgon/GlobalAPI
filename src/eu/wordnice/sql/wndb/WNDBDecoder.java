@@ -28,90 +28,76 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 
 import eu.wordnice.api.IStream;
-import eu.wordnice.api.Set;
 import eu.wordnice.api.Val;
-import eu.wordnice.api.threads.TimeoutInputStream;
 
 public class WNDBDecoder { 
 
 	public static final long STATIC_DB_PREFIX = 0xDEADCAFEBEEFBABEL;
 	
-	public static Set<Byte> getVarTypesToBytes(Set<WNDBVarTypes> set) {
-		if(set == null) {
-			return null;
+	public static Byte[] getVarTypesToBytes(WNDBVarTypes[] set) {
+		Byte[] out = new Byte[set.length];
+		for(int i = 0; i < set.length; i++) {
+			out[i] = set[i].b;
 		}
-		Set<Byte> ret = new Set<Byte>();
-		if(set.size() < 1) {
-			return ret;
-		}
-		
-		for(int i = 0; i < set.size(); i++) {
-			ret.add(set.get(i).b);
-		}
-		
-		return ret;
+		return out;
 	}
 	
-	public static Set<WNDBVarTypes> getBytesToVarTypes(Set<Byte> set) {
-		if(set == null) {
-			return null;
+	public static WNDBVarTypes[] getBytesToVarTypes(Byte[] set) {
+		WNDBVarTypes[] out = new WNDBVarTypes[set.length];
+		for(int i = 0; i < set.length; i++) {
+			out[i] = WNDBVarTypes.getByByte(set[i]);
 		}
-		Set<WNDBVarTypes> ret = new Set<WNDBVarTypes>();
-		if(set.size() == 0) {
-			return ret;
-		}
-		
-		for(int i = 0; i < set.size(); i++) {
-			ret.add(WNDBVarTypes.getByByte(set.get(i)));
-		}
-		
-		return ret;
+		return out;
 	}
 
 	
-	public static Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> readFileRawData(File f, long tm) throws Exception {
+	public static Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> readFileRawData(File f) throws Exception {
 		InputStream fin = new FileInputStream(f);
-		IStream in = new IStream(new TimeoutInputStream(new BufferedInputStream(fin), tm));
-		Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> ret = WNDBDecoder.readInputStreamRawData(in);
+		IStream in = new IStream(new BufferedInputStream(fin));
+		Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> ret = WNDBDecoder.readInputStreamRawData(in);
 		in.close();
 		fin.close();
 		return ret;
 	}
 	
-	public static Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>> readInputStreamRawData(IStream in) throws Exception {
+	public static Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> readInputStreamRawData(IStream in) throws Exception {
 		long type = in.readLong();
 		if (type != WNDBDecoder.STATIC_DB_PREFIX) {
 			throw new Exception("Not WNDB format!");
 		}
 
 		int bt = in.readInt();
-		if (bt < 1) {
-			return null;
+		if(bt < 1) {
+			throw new NullPointerException("Invalid returned number of heads: " + bt);
 		}
 
-		Set<String> names = new Set<String>();
-		Set<WNDBVarTypes> types = new Set<WNDBVarTypes>();
-		for (int i = 0; i < bt; i++) {
-			names.addWC(in.readString());
-			types.addWC(WNDBVarTypes.getByByte(in.readByte()));
+		String[] names = new String[bt];
+		WNDBVarTypes[] types = new WNDBVarTypes[bt];
+		int i = 0;
+		for(i = 0; i < bt; i++) {
+			names[i] = in.readString();
+			types[i] = WNDBVarTypes.getByByte(in.readByte());
 		}
 			
 		int b = 0;
-		int i = 0;
-		Set<Set<Object>> data = new Set<Set<Object>>();
-		Set<Object> curset;
-		while (in.readByte() == 1) {
-			curset = new Set<Object>();
+		i = 0;
+		List<Object[]> data = new ArrayList<Object[]>();
+		while(in.readByte() == 1) {
+			Object[] cur = new Object[bt];
 			for(b = 0; b < bt; b++) {
-				curset.addWC(WNDBDecoder.readObject(in, types.get(b), i, b));
+				cur[b] = WNDBDecoder.readObject(in, types[b], i, b);
 			}
-			data.addWC(curset);
+			data.add(cur);
 			i++;
 		}
 		
-		return new Val.ThreeVal<Set<String>, Set<WNDBVarTypes>, Set<Set<Object>>>(names, types, data);
+		return new Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>>(names, types, data);
 	}
 	
 	public static Object readObject(IStream in, Byte type, int ri, int vi) throws Exception {
@@ -139,9 +125,11 @@ public class WNDBDecoder {
 			case BYTES:
 				return in.readBytes();
 			case SET:
-				return in.readSet();
+				return in.readSet(new HashSet<Object>());
+			case LIST:
+				return in.readSet(new ArrayList<Object>());
 			case MAP:
-				return in.readMap();
+				return in.readMap(new HashMap<Object, Object>());
 		}
 		throw new Exception("Cannot read object at " + ri + ":" + vi + " - unsupported type " + typ.name());
 	}

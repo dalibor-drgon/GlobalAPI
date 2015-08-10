@@ -26,9 +26,10 @@ package eu.wordnice.sql;
 
 import java.sql.ResultSet;
 
-public class ResultResSet implements ResSet {
+public class ResultResSet extends SimpleResSet {
 
 	public ResultSet rs;
+	public boolean pendingFirst = false;
 
 	public ResultResSet() {}
 
@@ -40,8 +41,7 @@ public class ResultResSet implements ResSet {
 	public Object getObject(String name) {
 		try {
 			return this.rs.getObject(name);
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -57,8 +57,7 @@ public class ResultResSet implements ResSet {
 	public String getString(String name) {
 		try {
 			return this.rs.getString(name);
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -66,8 +65,7 @@ public class ResultResSet implements ResSet {
 	public String getString(int in) {
 		try {
 			return this.rs.getString(in);
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -75,8 +73,7 @@ public class ResultResSet implements ResSet {
 	public byte[] getBytes(String name) {
 		try {
 			return this.rs.getBytes(name);
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -84,8 +81,7 @@ public class ResultResSet implements ResSet {
 	public byte[] getBytes(int in) {
 		try {
 			return this.rs.getBytes(in);
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -93,8 +89,7 @@ public class ResultResSet implements ResSet {
 	public Boolean getBoolean(String name) {
 		try {
 			return this.rs.getBoolean(name);
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		return null;
 	}
 
@@ -216,17 +211,17 @@ public class ResultResSet implements ResSet {
 	}
 
 	@Override
-	public boolean first() {
-		try {
-			return this.rs.first();
-		} catch (Throwable t) {
-		}
-		return false;
+	public void reset() {
+		this.pendingFirst = true;
 	}
 
 	@Override
 	public boolean next() {
 		try {
+			if(this.pendingFirst) {
+				this.pendingFirst = false;
+				return this.rs.first();
+			}
 			return this.rs.next();
 		} catch (Throwable t) {}
 		return false;
