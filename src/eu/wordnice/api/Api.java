@@ -660,13 +660,19 @@ public class Api {
 			InstanceMan im = null;
 			try {
 				im = new InstanceMan(Api.getClass("sun.misc.Unsafe"), null);
+				Map<String, ?> vals = im.getValues(im.c);
+				Iterator<? extends Entry<String, ?>> it = vals.entrySet().iterator();
+				while(it.hasNext()) {
+					Entry<String, ?> ent = it.next();
+					Object uns = ent.getValue();
+					if(uns != null) {
+						im.reinit(uns);
+						Api.unsafe = im;
+						return Api.unsafe;
+					}
+				}
 			} catch(Throwable t) {
-				im = new InstanceMan(new Object());
-			}
-			Object val = im.getValue("theUnsafe");
-			Api.unsafe = im;
-			if(val != null) {
-				im.reinit(val);
+				Api.unsafe = new InstanceMan(new Object());
 			}
 		}
 		return Api.unsafe;

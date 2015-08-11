@@ -312,7 +312,6 @@ public class WNDBStoreExample extends WNDBStore {
  	
  	public WNDBStoreExample(File dir) {
  		super(dir);
- 		this.timeout = 5000;
  		if(dir.exists() == false) {
  			try {
  				dir.mkdirs();
