@@ -27,7 +27,6 @@ package eu.wordnice.api.serialize;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -82,8 +81,8 @@ public class JSONEncoder {
 				out.write(new byte[] { 'f', 'a', 'l', 's', 'e' });
 			} else if(val instanceof Number) {
 				out.write(((Number) val).toString().getBytes());
-			} else if(val instanceof Collection<?>) {
-				Collection<?> col = (Collection<?>) val;
+			} else if(val instanceof Iterable<?>) {
+				Iterable<?> col = (Iterable<?>) val;
 				Iterator<?> it = col.iterator();
 				out.write((byte) '[');
 				if(it.hasNext()) {

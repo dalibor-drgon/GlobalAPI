@@ -260,7 +260,7 @@ Is CN=git.priklad.eu, OU=Services, O=Priklad s.r.o., L=Spacince 1, ST=Spacince 1
 
 ```
 
-Let's say we generated password with KP="s1mul4t0r" and SP="goodnight" with output file ".keystore", we will costruct `HIOServer` with folowing arguments:
+Let's say we generated self-signed certificate stored in file ".keystore" with KP="s1mul4t0r" and SP="goodnight", we will costruct `HIOServer` with folowing arguments:
 
 ```
 		HIOServer server = new HIOServer("localhost", 8192, "s1mul4t0r", "goodnight", ".keystore");
@@ -275,7 +275,7 @@ To get working example, just copy code from `Simple HTTP server` and replace con
 
 ### WNDB
 
-`WNDB` class is for easy tables serialization & deserialization, low-level inserting, querying and updating. For even easily work, there was created `WNDBStore` abstract class, and with its help there can be created very short and clean databases store class. Example, class with 2 databases is below. Run it twice, if everything will be OK and no errors will be displayed, after second run you should get printed database.
+`WNDB` class is for easy tables serialization & deserialization, low-level inserting, querying and updating. For even easily work, there was created `WNDBStore` abstract class, and with its help there can be created very short and clean databases store class. Example, class with 2 databases is below. Run it twice, if everything will be OK and no errors will be displayed, after second run you should get printed database data.
 
 
 ```java

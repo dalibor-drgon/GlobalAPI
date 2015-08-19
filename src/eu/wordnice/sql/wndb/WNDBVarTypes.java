@@ -123,7 +123,7 @@ public enum WNDBVarTypes {
 		if(Set.class.isAssignableFrom(c)) {
 			return SET;
 		}
-		if(Collection.class.isAssignableFrom(c)) {
+		if(Iterable.class.isAssignableFrom(c)) {
 			return LIST;
 		}
 		if(Map.class.isAssignableFrom(c)) {

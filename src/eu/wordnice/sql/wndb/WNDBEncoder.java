@@ -28,8 +28,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.util.Collection;
-import java.util.List;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -39,7 +37,7 @@ import eu.wordnice.api.Val;
 public class WNDBEncoder {
 
 	public static void writeFileData(File f, 
-			Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> vals) throws Exception {
+			Val.ThreeVal<String[], WNDBVarTypes[], Iterable<Object[]>> vals) throws Exception {
 		if(vals == null || f == null) {
 			throw new NullPointerException("File or values are null!");
 		}
@@ -51,7 +49,7 @@ public class WNDBEncoder {
 	}
 	
 	public static void writeOutputStreamData(OStream out, 
-			Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> vals) throws Exception {
+			Val.ThreeVal<String[], WNDBVarTypes[], Iterable<Object[]>> vals) throws Exception {
 		if(out == null || vals == null || 
 				vals.one == null || vals.two == null || vals.three == null ||
 				vals.one.length < 1 || vals.two.length < 1 || (vals.one.length != vals.two.length)) {
@@ -159,7 +157,7 @@ public class WNDBEncoder {
 				if(obj == null) {
 					out.writeSet(null);
 				} else {
-					out.writeSet((Collection<?>) obj);
+					out.writeSet((Iterable<?>) obj);
 				}
 				return;
 			case MAP:

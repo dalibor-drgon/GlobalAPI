@@ -27,6 +27,7 @@ package eu.wordnice.api;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -612,6 +613,79 @@ public class Api {
 	}
 	
 	
+	public static void deleteFolder(File fold) throws IOException {
+		File[] files = fold.listFiles();
+		int i = 0;
+		for(; i < files.length; i++) {
+			File cur = files[i];
+			if(cur.isDirectory()) {
+				Api.deleteFolder(cur);
+			} else {
+				cur.delete();
+			}
+		}
+		fold.delete();
+	}
+	
+	public static void copyFolder(File to, File from) throws IOException {
+		boolean hasNio = false;
+		try {
+			java.nio.file.Files.class.getCanonicalName();
+			hasNio = true;
+		} catch(Throwable t) {}
+		if(hasNio) {
+			Api.copyFolderNio(to, from);
+		} else {
+			Api.copyFolderRaw(to, from);
+		}
+	}
+	
+	private static void copyFolderRaw(File to, File from) throws IOException {
+		if(!to.exists()) {
+			to.mkdirs();
+		}
+		File[] files = from.listFiles();
+		int i = 0;
+		for(; i < files.length; i++) {
+			File cur = files[i];
+			File target = new File(to, cur.getName());
+			if(cur.isDirectory()) {
+				Api.copyFolderRaw(target, cur);
+			} else {
+				target.createNewFile();
+				FileInputStream in = new FileInputStream(cur);
+				FileOutputStream out = new FileOutputStream(target);
+				byte[] buff = new byte[8192];
+				int red = 0;
+				while((red = in.read(buff)) > 0) {
+					out.write(buff, 0, red);
+				}
+				out.close();
+				in.close();
+			}
+		}
+	}
+	
+	private static void copyFolderNio(File to, File from) throws IOException {
+		if(!to.exists()) {
+			java.nio.file.Files.copy(java.nio.file.Paths.get(from.getAbsolutePath()), 
+					java.nio.file.Paths.get(to.getAbsolutePath()));
+		}
+		File[] files = from.listFiles();
+		int i = 0;
+		for(; i < files.length; i++) {
+			File cur = files[i];
+			File target = new File(to, cur.getName());
+			if(cur.isDirectory()) {
+				Api.copyFolderNio(target, cur);
+			} else {
+				java.nio.file.Files.copy(java.nio.file.Paths.get(cur.getAbsolutePath()), 
+						java.nio.file.Paths.get(target.getAbsolutePath()));
+			}
+		}
+	}
+	
+	
 	/*** RANDOM ***/
 	
 	public static byte[] genBytes(int length) {
@@ -777,6 +851,68 @@ public class Api {
 			}
 		}
 		return 0;
+	}
+	
+	
+	
+	/*** ROUND & FLOOR & CEIL ***/
+	
+	public static int fastround(double num) {
+		return (int) ((num > 0.0) ? (num + 0.5) : (num - 0.5));
+	}
+
+	public static int fastroundf(float num) {
+		return (int) ((num > 0.0F) ? (num + 0.5F) : (num - 0.5F));
+	}
+
+	public static int fastfloor(double num) {
+		int lnum = (int) num;
+		return ((lnum > 0) ? (lnum) : (lnum - 1));
+	}
+
+	public static int fastfloorf(float num) {
+		int lnum = (int) num;
+		return ((lnum > 0) ? (lnum) : (lnum - 1));
+	}
+
+	public static int fastceil(double num) {
+		int lnum = (int) num;
+		return ((lnum > 0) ? (lnum + 1) : (lnum));
+	}
+
+	public static int fastceilf(float num) {
+		int lnum = (int) num;
+		return ((lnum > 0) ? (lnum + 1) : (lnum));
+	}
+	
+	
+	
+	public static long fastroundl(double num) {
+		return (long) ((num > 0.0) ? (num + 0.5) : (num - 0.5));
+	}
+
+	public static long fastroundfl(float num) {
+		return (long) ((num > 0.0F) ? (num + 0.5F) : (num - 0.5F));
+	}
+
+	public static long fastfloorl(double num) {
+		long lnum = (long) num;
+		return ((lnum > 0) ? (lnum) : (lnum - 1));
+	}
+
+	public static long fastfloorfl(float num) {
+		long lnum = (long) num;
+		return ((lnum > 0) ? (lnum) : (lnum - 1));
+	}
+
+	public static long fastceill(double num) {
+		long lnum = (long) num;
+		return ((lnum > 0) ? (lnum + 1) : (lnum));
+	}
+
+	public static long fastceilfl(float num) {
+		long lnum = (long) num;
+		return ((lnum > 0) ? (lnum + 1) : (lnum));
 	}
 	
 }

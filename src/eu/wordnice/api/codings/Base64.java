@@ -31,6 +31,12 @@ package eu.wordnice.api.codings;
 
 public class Base64 {
 	
+	/*
+	 * Tables
+	 * * Characters (Bytes) returned on encode()
+	 * * Bytes returned on decode()
+	 */
+	
 	public static byte[] TRN_BASE64_CHARS = 
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/".getBytes();
 
@@ -57,22 +63,20 @@ public class Base64 {
 	};
 	
 	
-	public static byte[] decode(byte[] in) throws Exception {
-		return Base64.decode(in, 0, in.length);
+	
+	
+	/*
+	 * Decode
+	 */
+	
+	public static byte[] decode(byte[] in) throws InvalidSyntaxException {
+		return Base64.decode(in, 0, in.length, Base64.TRN_BASE64_BYTES);
 	}
 	
-	public static byte[] decode(byte[] in, int off, int len) throws Exception {
-		return Base64.decode(in, off, len, Base64.TRN_BASE64_BYTES);
-	}
-	
-	public static byte[] decode(byte[] in, int off, int len, byte[] filter) throws Exception {
+	public static byte[] decode(byte[] in, int off, int len, byte[] filter) throws InvalidSyntaxException {
 		while(in[off + len - 1] == (byte) '=') {
 			len--;
 		}
-		int i = off;
-		int rl = off + (len & 0xFFFFFFFC);
-		int oi = 0;
-		int curv = 0;
 		int outsz = (len / 4) * 3;
 		switch(len & 0x03) {
 			case 3:
@@ -81,19 +85,23 @@ public class Base64 {
 				outsz++;
 		}
 		byte[] out = new byte[outsz];
+		int i = off;
+		int rl = off + (len & 0xFFFFFFFC);
+		int oi = 0;
+		int curv = 0;
 		while(i < rl) {
-			byte b1 = filter[in[i++]];
-			byte b2 = filter[in[i++]];
-			byte b3 = filter[in[i++]];
-			byte b4 = filter[in[i++]];
+			byte b1 = filter[(int) (in[i++] & 0xFF)];
+			byte b2 = filter[(int) (in[i++] & 0xFF)];
+			byte b3 = filter[(int) (in[i++] & 0xFF)];
+			byte b4 = filter[(int) (in[i++] & 0xFF)];
 			if(b1 == 64 || b2 == 64 || b3 == 64 || b4 == 64) {
-				throw new Exception("Unknow character near indexes " + (i - 4) + " - " + (i - 1));
+				throw new InvalidSyntaxException((i - 4), (i - 1));
 			}
 			
-			curv  = (b1 << 18);
-			curv |= (b2 << 12);
-			curv |= (b3 << 6 );
-			curv |= (b4      );
+			curv  = (b1 << 18)
+					| (b2 << 12)
+					| (b3 << 6 )
+					| (b4      );
 
 			out[oi++] = (byte) ((curv >> 16) & 0xFF);
 			out[oi++] = (byte) ((curv >> 8 ) & 0xFF);
@@ -102,15 +110,15 @@ public class Base64 {
 		rl = (len & 0x03);
 		if(rl > 0) {
 			if(rl == 1) {
-				throw new Exception("Unknown base64 strings length");
+				throw new InvalidSyntaxException("Unknown base64 strings length");
 			}
 
-			byte b1 = filter[in[i++]];
-			byte b2 = filter[in[i++]];
+			byte b1 = filter[(int) (in[i++] & 0xFF)];
+			byte b2 = filter[(int) (in[i++] & 0xFF)];
 			byte b3;
 
 			if(b1 == 64 || b2 == 64) {
-				throw new Exception("Unknow character at the end after " + (i - 2));
+				throw new InvalidSyntaxException((i - 2), (i - 1));
 			}
 
 			curv  = (b1 << 18);
@@ -122,7 +130,7 @@ public class Base64 {
 			if(rl == 3) {
 				b3 = filter[in[i++]];
 				if(b3 == 64) {
-					throw new Exception("Unknow character at the end at index " + (i - 1));
+					throw new InvalidSyntaxException(i - 1);
 				}
 
 				curv |= (b3 << 6);
@@ -132,16 +140,7 @@ public class Base64 {
 		return out;
 	}
 	
-	
-	public static byte[] decodeFast(byte[] in) {
-		return Base64.decodeFast(in, 0, in.length);
-	}
-	
-	public static byte[] decodeFast(byte[] in, int off, int len) {
-		return Base64.decodeFast(in, off, len, Base64.TRN_BASE64_BYTES);
-	}
-	
-	public static byte[] decodeFast(byte[] in, int off, int len, byte[] filter) {
+	public static int decode(byte[] out, byte[] in, int off, int len, byte[] filter) throws InvalidSyntaxException {
 		while(in[off + len - 1] == (byte) '=') {
 			len--;
 		}
@@ -149,6 +148,72 @@ public class Base64 {
 		int rl = off + (len & 0xFFFFFFFC);
 		int oi = 0;
 		int curv = 0;
+		while(i < rl) {
+			byte b1 = filter[(int) (in[i++] & 0xFF)];
+			byte b2 = filter[(int) (in[i++] & 0xFF)];
+			byte b3 = filter[(int) (in[i++] & 0xFF)];
+			byte b4 = filter[(int) (in[i++] & 0xFF)];
+			if(b1 == 64 || b2 == 64 || b3 == 64 || b4 == 64) {
+				throw new InvalidSyntaxException((i - 4), (i - 1));
+			}
+			
+			curv  = (b1 << 18)
+					| (b2 << 12)
+					| (b3 << 6 )
+					| (b4      );
+
+			out[oi++] = (byte) ((curv >> 16) & 0xFF);
+			out[oi++] = (byte) ((curv >> 8 ) & 0xFF);
+			out[oi++] = (byte) ((curv      ) & 0xFF);
+		}
+		rl = (len & 0x03);
+		if(rl > 0) {
+			if(rl == 1) {
+				throw new InvalidSyntaxException("Unknown base64 strings length");
+			}
+
+			byte b1 = filter[(int) (in[i++] & 0xFF)];
+			byte b2 = filter[(int) (in[i++] & 0xFF)];
+			byte b3;
+
+			if(b1 == 64 || b2 == 64) {
+				throw new InvalidSyntaxException((i - 2), (i - 1));
+			}
+
+			curv  = (b1 << 18);
+			curv |= (b2 << 12);
+
+			out[oi++] = (byte) ((curv >> 16) & 0xFF);
+
+
+			if(rl == 3) {
+				b3 = filter[in[i++]];
+				if(b3 == 64) {
+					throw new InvalidSyntaxException(i - 1);
+				}
+
+				curv |= (b3 << 6);
+				out[oi++] = (byte) ((curv >> 8) & 0xFF);
+			}
+		}
+		return oi;
+	}
+	
+	
+	
+	
+	/*
+	 * Fast Decode (could return invalid data)
+	 */
+	
+	public static byte[] decodeFast(byte[] in) {
+		return Base64.decodeFast(in, 0, in.length, Base64.TRN_BASE64_BYTES);
+	}
+	
+	public static byte[] decodeFast(byte[] in, int off, int len, byte[] filter) {
+		while(in[off + len - 1] == (byte) '=') {
+			len--;
+		}
 		int outsz = (len / 4) * 3;
 		switch(len & 0x03) {
 			case 3:
@@ -157,11 +222,15 @@ public class Base64 {
 				outsz++;
 		}
 		byte[] out = new byte[outsz];
+		int i = off;
+		int rl = off + (len & 0xFFFFFFFC);
+		int oi = 0;
+		int curv = 0;
 		while(i < rl) {
-			curv  = (filter[in[i++]] << 18);
-			curv |= (filter[in[i++]] << 12);
-			curv |= (filter[in[i++]] << 6 );
-			curv |= (filter[in[i++]]      );
+			curv  = (filter[in[i++] & 0xFF] << 18)
+					| (filter[in[i++] & 0xFF] << 12)
+					| (filter[in[i++] & 0xFF] << 6 )
+					| (filter[in[i++] & 0xFF]      );
 
 			out[oi++] = (byte) ((curv >> 16) & 0xFF);
 			out[oi++] = (byte) ((curv >> 8 ) & 0xFF);
@@ -182,30 +251,64 @@ public class Base64 {
 		return out;
 	}
 	
-	
-	public static byte[] encode(byte[] in) {
-		return Base64.encode(in, 0, in.length);
+	public static int decodeFast(byte[]out, byte[] in, int off, int len, byte[] filter) {
+		while(in[off + len - 1] == (byte) '=') {
+			len--;
+		}
+		int i = off;
+		int rl = off + (len & 0xFFFFFFFC);
+		int oi = 0;
+		int curv = 0;
+		while(i < rl) {
+			curv  = (filter[in[i++] & 0xFF] << 18)
+					| (filter[in[i++] & 0xFF] << 12)
+					| (filter[in[i++] & 0xFF] << 6 )
+					| (filter[in[i++] & 0xFF]      );
+
+			out[oi++] = (byte) ((curv >> 16) & 0xFF);
+			out[oi++] = (byte) ((curv >> 8 ) & 0xFF);
+			out[oi++] = (byte) ((curv      ) & 0xFF);
+		}
+		rl = (len & 0x03);
+		if(rl > 0) {
+			curv  = (filter[in[i++]] << 18);
+			curv |= (filter[in[i++]] << 12);
+
+			out[oi++] = (byte) ((curv >> 16) & 0xFF);
+
+			if(rl == 3) {
+				curv |= (filter[in[i++]] << 6);
+				out[oi++] = (byte) ((curv >> 8) & 0xFF);
+			}
+		}
+		return oi;
 	}
 	
-	public static byte[] encode(byte[] in, int off, int len) {
-		return Base64.encode(in, off, len, Base64.TRN_BASE64_CHARS);
+	
+	
+	/*
+	 * Encode
+	 */
+	
+	public static byte[] encode(byte[] in) {
+		return Base64.encode(in, 0, in.length, Base64.TRN_BASE64_CHARS);
 	}
 	
 	public static byte[] encode(byte[] in, int off, int len, byte[] filter) {
+		byte[] out = new byte[((len + 2) / 3) * 4];
 		int i = off;
 		int rl = off + ((len / 3) * 3);
 		int cur = 0;
 		int oi = 0;
-		byte[] out = new byte[((len + 2) / 3) * 4];
 		while(i < rl) {
-			cur  = ((in[i++]) << 16);
-			cur |= ((in[i++]) << 8 );
-			cur |= ((in[i++])      );
+			cur =	  ((in[i++]) << 16)
+					| ((in[i++]) << 8 )
+					| ((in[i++])      );
 	
-			out[oi++] = filter[((cur >> 18) & 0x3F)];
-			out[oi++] = filter[((cur >> 12) & 0x3F)];
-			out[oi++] = filter[((cur >> 6 ) & 0x3F)];
-			out[oi++] = filter[((cur      ) & 0x3F)];
+			out[oi++] = (byte) filter[((cur >> 18) & 0x3F)];
+			out[oi++] = (byte) filter[((cur >> 12) & 0x3F)];
+			out[oi++] = (byte) filter[((cur >> 6 ) & 0x3F)];
+			out[oi++] = (byte) filter[((cur      ) & 0x3F)];
 		}
 		
 		rl = len % 3;
@@ -215,11 +318,11 @@ public class Base64 {
 			if(rl == 2) {
 				cur |= ((in[i++]) << 8);
 			}
-			out[oi++] = filter[((cur >> 18) & 0x3F)];
-			out[oi++] = filter[((cur >> 12) & 0x3F)];
+			out[oi++] = (byte) filter[((cur >> 18) & 0x3F)];
+			out[oi++] = (byte) filter[((cur >> 12) & 0x3F)];
 	
 			if(rl == 2) {
-				out[oi++] = filter[((cur >> 6) & 0x3F)];
+				out[oi++] = (byte) filter[((cur >> 6) & 0x3F)];
 			} else {
 				out[oi++] = '=';
 			}
@@ -227,6 +330,77 @@ public class Base64 {
 			out[oi++] = '=';
 		}
 		return out;
+	}
+	
+	public static int encode(byte[] out, byte[] in, int off, int len, byte[] filter) {
+		int i = off;
+		int rl = off + ((len / 3) * 3);
+		int cur = 0;
+		int oi = 0;
+		while(i < rl) {
+			cur =	  ((in[i++]) << 16)
+					| ((in[i++]) << 8 )
+					| ((in[i++])      );
+	
+			out[oi++] = (byte) filter[((cur >> 18) & 0x3F)];
+			out[oi++] = (byte) filter[((cur >> 12) & 0x3F)];
+			out[oi++] = (byte) filter[((cur >> 6 ) & 0x3F)];
+			out[oi++] = (byte) filter[((cur      ) & 0x3F)];
+		}
+		
+		rl = len % 3;
+		if(rl != 0) {
+			cur = ((in[i++]) << 16);
+	
+			if(rl == 2) {
+				cur |= ((in[i++]) << 8);
+			}
+			out[oi++] = (byte) filter[((cur >> 18) & 0x3F)];
+			out[oi++] = (byte) filter[((cur >> 12) & 0x3F)];
+	
+			if(rl == 2) {
+				out[oi++] = (byte) filter[((cur >> 6) & 0x3F)];
+			} else {
+				out[oi++] = '=';
+			}
+	
+			out[oi++] = '=';
+		}
+		return oi;
+	}
+	
+	
+	/*
+	 * Length
+	 */
+	
+	public static int decodeLength(int len) {
+		int outsz = (len / 4) * 3;
+		switch(len & 0x03) {
+			case 3:
+				outsz++;
+			case 2:
+				outsz++;
+		}
+		return outsz;
+	}
+	
+	public static int encodeLength(int len) {
+		return ((len + 2) / 3) * 4;
+	}
+	
+	public static int decodeLength(byte[] in, int off, int len) {
+		while(in[off + len - 1] == (byte) '=') {
+			len--;
+		}
+		int outsz = (len / 4) * 3;
+		switch(len & 0x03) {
+			case 3:
+				outsz++;
+			case 2:
+				outsz++;
+		}
+		return outsz;
 	}
 	
 	

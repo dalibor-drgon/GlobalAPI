@@ -73,7 +73,7 @@ public class WNSerializer {
 	
 	/*** Collection ***/
 	
-	public static void coll2file(File f, Collection<?> set) throws Exception {
+	public static void coll2file(File f, Iterable<?> set) throws Exception {
 		OutputStream out = new FileOutputStream(f);
 		OStream ost = new OStream(new BufferedOutputStream(out));
 		WNSerializer.coll2stream(ost, set);
@@ -83,12 +83,12 @@ public class WNSerializer {
 		} catch(Throwable t) {}
 	}
 	
-	public static void coll2stream(OStream o, Collection<?> set) throws Exception {
+	public static void coll2stream(OStream o, Iterable<?> set) throws Exception {
 		o.writeInt(WNSerializer.SET_PREFIX);
 		WNSerializer.coll2streamWithoutPrefix(o, set);
 	}
 	
-	public static void coll2streamWithoutPrefix(OStream o, Collection<?> set) throws Exception {
+	public static void coll2streamWithoutPrefix(OStream o, Iterable<?> set) throws Exception {
 		Iterator<?> it = set.iterator();
 		while(it.hasNext()) {
 			o.writeObject(it.next());

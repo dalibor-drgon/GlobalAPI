@@ -60,12 +60,12 @@ public class WNDB extends SetSetResSet {
 		if(this.file == null) {
 			return;
 		}
-		WNDBEncoder.writeFileData(this.file, new Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>>(this.names, this.types, this.values));
+		WNDBEncoder.writeFileData(this.file, new Val.ThreeVal<String[], WNDBVarTypes[], Iterable<Object[]>>(this.names, this.types, this.values));
 		this.changed = false;
 	}
 	
 	public void save(OStream ost) throws Exception {
-		WNDBEncoder.writeOutputStreamData(ost, new Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>>(this.names, this.types, this.values));
+		WNDBEncoder.writeOutputStreamData(ost, new Val.ThreeVal<String[], WNDBVarTypes[], Iterable<Object[]>>(this.names, this.types, this.values));
 		this.changed = false;
 	}
 	
@@ -165,7 +165,7 @@ public class WNDB extends SetSetResSet {
 	public static WNDB createWNDB(File f, String[] names, WNDBVarTypes[] types) throws Exception {
 		f.createNewFile();
 		List<Object[]> vals = new ArrayList<Object[]>();
-		Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> threevals = new Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>>(names, types, vals);
+		Val.ThreeVal<String[], WNDBVarTypes[], Iterable<Object[]>> threevals = new Val.ThreeVal<String[], WNDBVarTypes[], Iterable<Object[]>>(names, types, vals);
 		WNDBEncoder.writeFileData(f, threevals);
 		WNDB ret = new WNDB(f);
 		ret.names = names;
@@ -182,7 +182,7 @@ public class WNDB extends SetSetResSet {
 	
 	public static WNDB createWNDB(OStream out, String[] names, WNDBVarTypes[] types) throws Exception {
 		List<Object[]> vals = new ArrayList<Object[]>();
-		Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> threevals = new Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>>(names, types, vals);
+		Val.ThreeVal<String[], WNDBVarTypes[], Iterable<Object[]>> threevals = new Val.ThreeVal<String[], WNDBVarTypes[], Iterable<Object[]>>(names, types, vals);
 		WNDBEncoder.writeOutputStreamData(out, threevals);
 		WNDB ret = new WNDB();
 		ret.file = null;

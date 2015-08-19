@@ -26,7 +26,6 @@ package eu.wordnice.api;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Collection;
 import java.util.Map;
 
 import eu.wordnice.api.serialize.WNSerializer;
@@ -37,8 +36,7 @@ public class OStream extends OutputStream {
 
 	public OutputStream out;
 
-	public OStream() {
-	}
+	public OStream() {}
 
 	public OStream(OutputStream out) {
 		this.out = out;
@@ -95,7 +93,7 @@ public class OStream extends OutputStream {
 		this.writeByte((byte) ((value == true) ? 1 : 0));
 	}
 	
-	public void writeSet(Collection<?> set) throws Exception {
+	public void writeSet(Iterable<?> set) throws Exception {
 		if(set == null) {
 			this.writeInt(-1);
 			return;
