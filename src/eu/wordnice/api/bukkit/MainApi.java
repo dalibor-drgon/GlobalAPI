@@ -30,22 +30,35 @@ import eu.wordnice.api.Api;
 
 public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 	
-	/*
-	 * Bukkit only utils
+	/**
+	 * Bukkit-only utilities
 	 */
 	public static String NMS = null;
 	
+	/**
+	 * Get net.minecraft.server.v___.* class name
+	 * 
+	 * @param clz Class name
+	 * 
+	 * @return Class name
+	 */
 	public static String getNMS(String clz) {
 		return "net.minecraft.server." + MainApi.NMS + "." + clz;
 	}
 	
+	/**
+	 * Get org.bukkit.craftbukkit.v___ class name
+	 * 
+	 * @param clz Class name
+	 * 
+	 * @return Class name
+	 */
 	public static String getCB(String clz) {
 		return "org.bukkit.craftbukkit." + MainApi.NMS + "." + clz;
 	}
 	
-	
-	/*
-	 * Enable, Disable
+	/**
+	 * @see org.bukkit.plugin.java.JavaPlugin#onEnable()
 	 */
 	@Override
 	public void onEnable() {
@@ -62,6 +75,9 @@ public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 		this.getLogger().info("MainAPI by wordnice for Bukkit was enabled! Hello!");
 	}
 	
+	/**
+	 * @see org.bukkit.plugin.java.JavaPlugin#onDisable()
+	 */
 	@Override
 	public void onDisable() {
 		this.getLogger().info("MainAPI by wordnice was disabled! Bye!");

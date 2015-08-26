@@ -57,6 +57,10 @@ public class Api {
 	protected static InstanceMan unsafe;
 	
 	
+	public static Random getRandom() {
+		return RANDOM;
+	}
+	
 	public static Thread[] getThreads() {
 		Object gt = InstanceMan.getValue(null, Thread.class, "getThreads");
 		if(gt instanceof Thread[]) {
@@ -93,7 +97,7 @@ public class Api {
 	
 	public static String getIPv4(int ip) {
 		return String.format("%d.%d.%d.%d",
-				 (ip >> 24 & 0xff),   
+				 (ip >> 24 & 0xff),	
 				 (ip >> 16 & 0xff),			 
 				 (ip >> 8 & 0xff),	
 				 (ip & 0xff));
@@ -700,14 +704,6 @@ public class Api {
 		return out;
 	}
 	
-	public static String genString(int length) {
-		return new String(Api.genBytes(length));
-	}
-	
-	public static String genString(int length, byte[] chars) {
-		return new String(Api.genBytes(length, chars));
-	}
-	
 	public static int genInt(int length) {
 		int nevi = 0;
 		for (int i = 0; i < length; i++) {
@@ -724,6 +720,123 @@ public class Api {
 			nevi += Api.RANDOM.nextInt(9);
 		}
 		return nevi;
+	}
+	
+	/**
+	 * Fast equals without substringing
+	 * 
+	 * @param str1 String one
+	 * @param off1 Offset of string one
+	 * @param str2 String two
+	 * @param off2 Offset of string two
+	 * @param len Length
+	 * 
+	 * @return `true` If strings are same, otherwise `false`
+	 */
+	public static boolean equals(String str1, int off1, String str2, int off2, int len) {
+		len += off1;
+		for(; off1 < len; off1++, off2++) {
+			if(str1.charAt(off1) != str2.charAt(off2)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Fast case insensitive equals without substringing
+	 * 
+	 * @param str1 String one
+	 * @param off1 Offset of string one
+	 * @param str2 String two
+	 * @param off2 Offset of string two
+	 * @param len Length
+	 * 
+	 * @return `true` If strings are same, otherwise `false`
+	 */
+	public static boolean equalsIgnoreCase(String str1, int off1, String str2, int off2, int len) {
+		len += off1;
+		for(; off1 < len; off1++, off2++) {
+			if(Character.toUpperCase(str1.charAt(off1)) != Character.toUpperCase(str2.charAt(off2))) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Fast {@link String#replace(CharSequence, CharSequence)}
+	 * 
+	 * @param str Original string to process
+	 * @param findtxt String to find
+	 * @param replacetxt String to replace
+	 * @param sensitive Match findtxt parameter case sensitive
+	 * 
+	 * @return Final processed string
+	 */
+	public static String replace(String str, String findtxt, String replacetxt, boolean sensitive) {
+		if (str == null) {
+			return null;
+		}
+		if (findtxt == null || findtxt.length() == 0 || replacetxt == null) {
+			return str;
+		}
+		if (findtxt.length() > str.length()) {
+			return str;
+		}
+		int counter = 0;
+		if(sensitive) {
+			int ftxt_len = findtxt.length();
+			int str_len = str.length();
+			while(counter <= (str_len - ftxt_len) && ftxt_len <= (str_len - counter)) {
+	 			if(Api.equals(str, counter, findtxt, 0, ftxt_len)) {
+	 				str = str.substring(0, counter) + replacetxt 
+	 						+ str.substring(counter + findtxt.length());
+	 				counter += replacetxt.length();
+	 				
+	 				ftxt_len = findtxt.length();
+	 				str_len = str.length();
+	 			} else {
+	 				counter++;
+	 			}
+			}
+		} else {
+			int ftxt_len = findtxt.length();
+			int str_len = str.length();
+			while(counter <= (str_len - ftxt_len) && ftxt_len <= (str_len - counter)) {
+	 			if(Api.equalsIgnoreCase(str, counter, findtxt, 0, ftxt_len)) {
+	 				str = str.substring(0, counter) + replacetxt 
+	 						+ str.substring(counter + findtxt.length());
+	 				counter += replacetxt.length();
+	 				
+	 				ftxt_len = findtxt.length();
+	 				str_len = str.length();
+	 			} else {
+	 				counter++;
+	 			}
+			}
+		}
+		return str;
+	}
+	
+	/**
+	 * Replace multiple 
+	 * 
+	 * @param str Original string to process
+	 * @param args Array of strings to find & replace{"find", "replace", "find2", "replace2", ...}
+	 * @param sensitive Math case sensitive
+	 * 
+	 * @return Final processed string
+	 */
+	public static String replace(String str, Object[] args, boolean sensitive) {
+		int len = args.length;
+		if((len & 0x01) == 0x01) {
+			len--;
+		}
+		for(int i = 0; i < len; i += 2) {
+			str = Api.replace(str, ("" + args[i]), ("" + args[i + 1]), sensitive);
+		}
+		return str;
 	}
 	
 	
