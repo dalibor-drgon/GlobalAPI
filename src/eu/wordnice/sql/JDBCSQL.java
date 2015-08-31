@@ -25,6 +25,7 @@
 package eu.wordnice.sql;
 
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 import eu.wordnice.api.Api;
 
@@ -80,20 +81,14 @@ public class JDBCSQL extends ConnectionSQL {
 	}
 
 	@Override
-	public boolean connect() {
-		try {
-			if (this.single == true) {
-				this.con = DriverManager.getConnection(this.getDBUrl());
-			} else {
-				this.con = DriverManager.getConnection(this.getDBUrl(),
-						this.getUser(), this.getPass());
-			}
-			this.stm = this.con.createStatement();
-			return true;
-		} catch (Throwable t) {
-			// t.printStackTrace();
+	public void connect() throws SQLException {
+		if (this.single == true) {
+			this.con = DriverManager.getConnection(this.getDBUrl());
+		} else {
+			this.con = DriverManager.getConnection(this.getDBUrl(),
+					this.getUser(), this.getPass());
 		}
-		return false;
+		this.stm = this.con.createStatement();
 	}
 
 	protected String getDBUrl() {

@@ -24,29 +24,36 @@
 
 package eu.wordnice.sql;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
 
 import eu.wordnice.api.Api;
 
-public class SetSetResSet extends SimpleResSet {
+public class SetSetResSet extends SimpleResSet implements ResSetDB {
 
 	public List<Object[]> values;
 	public String[] names;
 	public ListIterator<Object[]> it;
 	public Object[] cur;
+	public int cols;
 
 	public SetSetResSet() {}
 
-	public SetSetResSet(List<Object[]> values) {
-		this(values, null);
+	public SetSetResSet(List<Object[]> values, int size) {
+		this(values, null, size);
 	}
 	
 	public SetSetResSet(List<Object[]> values, String[] names) {
+		this(values, names, names.length);
+	}
+	
+	public SetSetResSet(List<Object[]> values, String[] names, int cols) {
 		this.values = values;
 		this.names = names;
 		this.it = values.listIterator();
 		this.cur = null;
+		this.cols = cols;
 	}
 	
 	
@@ -59,22 +66,16 @@ public class SetSetResSet extends SimpleResSet {
 	}
 	
 	public boolean isEntryOK(Object[] vals) {
-		return (vals != null && vals.length >= this.sizeOfHeader());
+		return (vals != null && vals.length >= this.cols());
 	}
 	
+
 	
-	public int indexOfHeader(String s) {
-		if(s == null) {
-			return -1;
-		}
-		this.checkSet();
-		return Api.indexOfSafe(s, this.names);
-	}
-	
-	public Object[] getCurrent() {
+	private Object[] getCurrent() {
 		return this.cur;
 	}
 	
+	@Override
 	public void remove() {
 		this.it.remove();
 	}
@@ -88,7 +89,7 @@ public class SetSetResSet extends SimpleResSet {
 		return true;
 	}
 	
-	public boolean insert(Object... vals) {
+	public boolean insert(Object[] vals) {
 		this.checkSet();
 		if(!this.isEntryOK(vals)) {
 			return false;
@@ -98,11 +99,11 @@ public class SetSetResSet extends SimpleResSet {
 	}
 	
 	public boolean insert(String[] names, Object[] data) {
-		Object[] nev = new Object[this.sizeOfHeader()];
+		Object[] nev = new Object[this.cols()];
 		int i = 0;
 		for(; i < names.length; i++) {
 			String name = this.names[i];
-			int ind = this.indexOfHeader(name);
+			int ind = this.indexOfCol(name);
 			if(ind > -1) {
 				nev[ind] = data[i];
 			}
@@ -116,7 +117,7 @@ public class SetSetResSet extends SimpleResSet {
 		if(this.names == null) {
 			return null;
 		}
-		return this.getCurrent()[this.indexOfHeader(name)];
+		return this.getCurrent()[this.getColumnIndex(name)];
 	}
 
 	@Override
@@ -125,14 +126,13 @@ public class SetSetResSet extends SimpleResSet {
 		return this.getCurrent()[in];
 	}
 
-	public int sizeOfHeader() {
+	@Override
+	public int cols() {
 		this.checkSet();
-		if(this.names != null) {
-			return this.names.length;
-		}
-		return this.values.get(0).length;
+		return this.cols;
 	}
 	
+	@Override
 	public int size() {
 		this.checkSet();
 		if(this.values == null) {
@@ -158,8 +158,79 @@ public class SetSetResSet extends SimpleResSet {
 	}
 
 	@Override
-	public boolean close() {
+	public void close() {}
+
+	@Override
+	public boolean hasByName() {
+		return this.names != null;
+	}
+
+	@Override
+	public boolean hasByIndex() {
 		return true;
+	}
+
+	@Override
+	public boolean isTable() {
+		return true;
+	}
+
+	@Override
+	public Collection<String> getKeys() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int getColumnIndex(String name) {
+		if(name == null || this.names == null) {
+			return -1;
+		}
+		this.checkSet();
+		return Api.indexOfSafe(name, this.names);
+	}
+
+	@Override
+	public boolean checkRow(Object[] pair) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean isRaw() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Collection<Object> getRawValue() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isRawValueOK(Object val, int i) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean isRawValueOK(Object val, String name) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void updateRaw(Object[] values) throws IllegalStateException,
+			RuntimeException, Exception {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void insertRaw(Object[] values) throws IllegalStateException,
+			RuntimeException, Exception {
+		throw new IllegalStateException("Unsupported")
 	}
 
 }

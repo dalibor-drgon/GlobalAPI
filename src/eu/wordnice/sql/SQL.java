@@ -24,16 +24,67 @@
 
 package eu.wordnice.sql;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+
 public interface SQL {
 
-	public ResSet getQuery(String query);
+	/**
+	 * Query database (SELECT)
+	 * 
+	 * @param query String to query
+	 * 
+	 * @return ResSet with results
+	 * @throws SQLException
+	 */
+	public ResSet query(String query) throws SQLException;
+	
+	/**
+	 * Query database (SELECT)
+	 * 
+	 * @param query Query string
+	 * 
+	 * @return PreparedStatement
+	 * @throws SQLException
+	 */
+	public PreparedStatement prepareQuery(String query) throws SQLException;
 
-	public boolean getCommand(String cmd);
+	/**
+	 * Update database (INSERT, UPDATE, CREATE ...)
+	 * 
+	 * @param cmd Update command
+	 * 
+	 * @throws SQLException
+	 */
+	public void command(String cmd) throws SQLException;
+	
+	/**
+	 * Update database (INSERT, UPDATE, CREATE ...)
+	 * 
+	 * @param cmd Update command
+	 * 
+	 * @return PreparedStatement
+	 * @throws SQLException
+	 */
+	public PreparedStatement prepareCommand(String cmd) throws SQLException;
 
-	public boolean close();
-
+	/**
+	 * @return `true` If database was closed
+	 */
 	public boolean isClosed();
 
-	public boolean connect();
+	/**
+	 * Connect to dabase (and allow auto-connect when connection is lost)
+	 * 
+	 * @throws SQLException
+	 */
+	public void connect() throws SQLException;
+	
+	/**
+	 * Close database and disable auto-connect
+	 * 
+	 * @throws SQLException
+	 */
+	public void close() throws SQLException;
 
 }

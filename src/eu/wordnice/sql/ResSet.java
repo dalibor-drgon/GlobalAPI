@@ -24,10 +24,45 @@
 
 package eu.wordnice.sql;
 
-public interface ResSet {
+import java.sql.SQLException;
 
+public interface ResSet {
+	
+	/**
+	 * @return `true` if results are from table-based database
+	 */
+	public boolean isTable();
+	
+	/**
+	 * @see {@link ResSet#getObject(String)}
+	 * @return `true` if getting by name is supported
+	 */
+	public boolean hasByName();
+	
+	/**
+	 * @see {@link ResSet#getObject(int)}
+	 * @return `true` if getting by index is supported
+	 */
+	public boolean hasByIndex();
+
+	/**
+	 * Get object by name
+	 * Always check if getting by name is supported by {@link ResSet#hasByName()}
+	 * 
+	 * @param name Key for requested value
+	 * 
+	 * @return Object, or `null`
+	 */
 	public Object getObject(String name);
 
+	/**
+	 * Get object by name
+	 * Always check if getting by index is supported by {@link ResSet#hasByIndex()}
+	 * 
+	 * @param in Index for requested value
+	 * 
+	 * @return Object, or `null`
+	 */
 	public Object getObject(int in);
 
 	public String getString(String name);
@@ -38,38 +73,54 @@ public interface ResSet {
 
 	public byte[] getBytes(int in);
 
-	public Boolean getBoolean(String name);
+	public boolean getBoolean(String name);
 
-	public Boolean getBoolean(int in);
+	public boolean getBoolean(int in);
 
-	public Byte getByte(String name);
+	public byte getByte(String name);
 
-	public Byte getByte(int in);
+	public byte getByte(int in);
 
-	public Short getShort(String name);
+	public short getShort(String name);
 
-	public Short getShort(int in);
+	public short getShort(int in);
 
-	public Integer getInt(String name);
+	public int getInt(String name);
 
-	public Integer getInt(int in);
+	public int getInt(int in);
 
-	public Long getLong(String name);
+	public long getLong(String name);
 
-	public Long getLong(int in);
+	public long getLong(int in);
 
-	public Float getFloat(String name);
+	public float getFloat(String name);
 
-	public Float getFloat(int in);
+	public float getFloat(int in);
 
-	public Double getDouble(String name);
+	public double getDouble(String name);
 
-	public Double getDouble(int in);
+	public double getDouble(int in);
 
+	/**
+	 * Go to first value
+	 */
 	public void reset();
 
+	/**
+	 * @return `true` If got next entry, otherwise `false`
+	 */
 	public boolean next();
+	
+	/**
+	 * Remove current entry
+	 * 
+	 * @throws SQLException When error occured
+	 */
+	public void remove() throws SQLException;
 
-	public boolean close();
+	/**
+	 * Close & destroy this result set
+	 */
+	public void close() throws SQLException;
 
 }

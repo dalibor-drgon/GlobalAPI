@@ -39,19 +39,24 @@ public class WNDB extends SetSetResSet {
 	public WNDBVarTypes[] types = null;
 	public boolean changed = false;
 	
+	/**
+	 * For hackers
+	 */
 	public WNDB() {
-		//For hackers
 		this.changed = false;
 		this.file = null;
 	}
 
-	public WNDB(String file) {
-		this(new File(file));
-	}
-
-	public WNDB(File file) {
+	/**
+	 * Create & load database for entered file
+	 * 
+	 * @param file File where is database saved
+	 * 
+	 * @throws Exception When error occured while reading or parsing file
+	 */
+	public WNDB(File file) throws Exception {
 		this.file = file;
-		this.checkSet();
+		this.load();
 	}
 	
 	
@@ -126,28 +131,23 @@ public class WNDB extends SetSetResSet {
 	}
 	
 	@Override
-	public void checkSet() {
+	public void checkSet() {}
+	
+	public void load() throws Exception {
 		if(this.values == null || this.names == null || this.types == null) {
 			if(this.file == null) {
 				throw new NullPointerException("File is null");
 			}
-			try {
-				if(!this.file.exists()) {
-					this.file.createNewFile();
-				}
-				Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> vals = WNDBDecoder.readFileRawData(this.file);
-				this.names = vals.one;
-				this.types = vals.two;
-				this.values = vals.three;
-				this.reset();
-			} catch(Throwable t) {
-				throw new RuntimeException(t);
-			}
+			Val.ThreeVal<String[], WNDBVarTypes[], List<Object[]>> vals = WNDBDecoder.readFileRawData(this.file);
+			this.names = vals.one;
+			this.types = vals.two;
+			this.values = vals.three;
+			this.reset();
 		}
 	}
 	
 	@Override
-	public int sizeOfHeader() {
+	public int cols() {
 		this.checkSet();
 		if(this.names != null) {
 			return this.names.length;

@@ -25,6 +25,8 @@
 package eu.wordnice.sql;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Statement;
 
 public abstract class ConnectionSQL implements SQL {
@@ -32,10 +34,9 @@ public abstract class ConnectionSQL implements SQL {
 	public Connection con;
 	public Statement stm;
 
-	protected ConnectionSQL() {
-	}
+	public ConnectionSQL() {}
 
-	protected ConnectionSQL(Connection con) {
+	public ConnectionSQL(Connection con) {
 		this.con = con;
 		this.stm = null;
 		try {
@@ -45,41 +46,43 @@ public abstract class ConnectionSQL implements SQL {
 		}
 	}
 
-	protected ConnectionSQL(Connection con, Statement stm) {
+	public ConnectionSQL(Connection con, Statement stm) {
 		this.con = con;
 		this.stm = stm;
 	}
 
 	@Override
-	public ResSet getQuery(String query) {
+	public ResSet query(String query) throws SQLException {
 		this.checkConnection();
-		try {
-			return new ResultResSet(this.stm.executeQuery(query));
-		} catch (Throwable t) {
-		}
-		return null;
+		return new ResultResSet(this.stm.executeQuery(query));
 	}
 
 	@Override
-	public boolean getCommand(String cmd) {
+	public void command(String cmd) throws SQLException {
 		this.checkConnection();
-		try {
-			this.stm.executeUpdate(cmd);
-			return true;
-		} catch (Throwable t) {
-		}
-		return false;
+		this.stm.executeUpdate(cmd);
+	}
+	
+	@Override
+	public PreparedStatement prepareQuery(String query) throws SQLException {
+		this.checkConnection();
+		return this.con.prepareStatement(query);
 	}
 
 	@Override
-	public boolean close() {
-		try {
+	public PreparedStatement prepareCommand(String cmd) throws SQLException {
+		this.checkConnection();
+		return this.con.prepareStatement(cmd);
+	}
+
+	@Override
+	public void close() throws SQLException {
+		if(this.stm != null) {
 			this.stm.close();
-			this.con.close();
-			return true;
-		} catch (Throwable t) {
 		}
-		return false;
+		if(this.con != null) {
+			this.con.close();
+		}
 	}
 
 	@Override
@@ -91,34 +94,20 @@ public abstract class ConnectionSQL implements SQL {
 		boolean conc = true;
 		try {
 			stmc = this.stm.isClosed();
-		} catch (Throwable t) {
-		}
+		} catch (Throwable t) {}
 		if (stmc == false) {
 			try {
 				conc = this.con.isClosed();
-			} catch (Throwable t) {
-			}
+			} catch (Throwable t) {}
 		}
 		return (stmc == true || conc == true);
 	}
 
-	public void checkConnection() {
-		/*
-		 * boolean stmc = true; boolean conc = true; try { stmc =
-		 * this.stm.isClosed(); } catch(Throwable t) {} try { conc =
-		 * this.con.isClosed(); } catch(Throwable t) {}
-		 */
-
-		if (this.isClosed()) {
-			boolean con = this.connect();
-			if (con == false) {
-				new Exception("Cant reconnect! CON == FALSE!")
-						.printStackTrace();
-			}
-		}
+	public void checkConnection() throws SQLException {
+		this.connect();
 	}
 
 	@Override
-	public abstract boolean connect();
+	public abstract void connect() throws SQLException;
 
 }

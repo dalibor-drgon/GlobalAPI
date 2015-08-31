@@ -241,7 +241,7 @@ public class WNBukkit {
 	}
 	
 	/**
-	 * Replace server placeholders
+	 * Replace placeholders
 	 * 
 	 * @param sender Command sender to process (may be null)
 	 * @param nev String to process
@@ -300,8 +300,29 @@ public class WNBukkit {
 		if(sender != null) {
 			nev = Api.replace(nev, new Object[] {
 					"{player_name}",            sender.getName(),
-					"{player_op}", sender.isOp()
+					"{player_op}",              sender.isOp(),
 			}, true);
+			if(sender instanceof Player) {
+				Player p = (Player) sender;
+				nev = Api.replace(nev, new Object[] {
+						"{player_displayname}",     p.getDisplayName(),
+						"{player_health}",          p.getHealth(),
+						"{player_xp}",              p.getExp(),
+						"{player_xptolevel}",       p.getExpToLevel(),
+						"{player_xplevel}",         p.getLevel(),
+						"{player_ip}",              p.getAddress().getAddress().getHostAddress(),
+						"{player_host}",            p.getAddress().getAddress().getHostName()
+				}, true);
+			}
+		}
+		if(place_api) {
+			try {
+				Player p = null;
+				if(sender instanceof Player) {
+					p = (Player) sender;
+				}
+				nev = me.clip.placeholderapi.PlaceholderAPI.setBracketPlaceholders(p, nev);
+			} catch(Throwable t) {}
 		}
 		return nev;
 	}

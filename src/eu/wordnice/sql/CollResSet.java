@@ -24,19 +24,20 @@
 
 package eu.wordnice.sql;
 
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-public class SetResSet extends SimpleResSet {
+public class CollResSet extends SimpleResSet implements ResSetDB {
 
 	public Collection<Map<String, Object>> set;
 	public Iterator<Map<String, Object>> it;
 	public Map<String, Object> cur;
 
-	public SetResSet() { }
+	public CollResSet() { }
 
-	public SetResSet(Collection<Map<String, Object>> set) {
+	public CollResSet(Collection<Map<String, Object>> set) {
 		this.set = set;
 		this.it = set.iterator();
 	}
@@ -52,9 +53,10 @@ public class SetResSet extends SimpleResSet {
 
 	@Override
 	public Object getObject(int in) {
-		throw new RuntimeException("Indexing thru Map is not allowed!");
+		throw new RuntimeException("Indexing is not allowed!");
 	}
 	
+	@Override
 	public int size() {
 		return this.set.size();
 	}
@@ -76,8 +78,22 @@ public class SetResSet extends SimpleResSet {
 	}
 
 	@Override
-	public boolean close() {
+	public void close() {}
+
+	@Override
+	public boolean hasByName() {
 		return true;
 	}
+
+	@Override
+	public boolean hasByIndex() {
+		return false;
+	}
+
+	@Override
+	public int cols() {
+		return 0;
+	}
+
 
 }

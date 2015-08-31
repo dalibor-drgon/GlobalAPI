@@ -24,10 +24,18 @@
 
 package eu.wordnice.sql;
 
+import java.sql.SQLException;
+
 import org.apache.commons.lang.ArrayUtils;
 
 public abstract class SimpleResSet implements ResSet {
 
+	@Override
+	public abstract boolean hasByName();
+	
+	@Override
+	public abstract boolean hasByIndex();
+	
 	@Override
 	public abstract Object getObject(String name);
 
@@ -93,171 +101,171 @@ public abstract class SimpleResSet implements ResSet {
 	}
 
 	@Override
-	public Boolean getBoolean(String name) {
+	public boolean getBoolean(String name) {
 		Object o = this.getObject(name);
 		try {
-			return (Boolean) o;
+			return (boolean) o;
 		} catch (Throwable t) {}
 		try {
-			return (Boolean) Boolean.getBoolean(o.toString());
+			return Boolean.getBoolean(o.toString());
 		} catch (Throwable t) {}
-		return null;
+		return false;
 	}
 
 	@Override
-	public Boolean getBoolean(int in) {
+	public boolean getBoolean(int in) {
 		Object o = this.getObject(in);
 		try {
-			return (Boolean) o;
+			return (boolean) o;
 		} catch (Throwable t) {}
 		try {
-			return (Boolean) Boolean.getBoolean(o.toString());
+			return Boolean.getBoolean(o.toString());
 		} catch (Throwable t) {}
-		return null;
+		return false;
 	}
 
 	@Override
-	public Byte getByte(String name) {
+	public byte getByte(String name) {
 		Object o = this.getObject(name);
 		try {
-			return (Byte) o;
+			return (byte) o;
 		} catch (Throwable t) {}
 		try {
-			return (Byte) Byte.parseByte(o.toString());
+			return Byte.parseByte(o.toString());
 		} catch (Throwable t) {}
-		return null;
+		return 0;
 	}
 
 	@Override
-	public Byte getByte(int in) {
+	public byte getByte(int in) {
 		Object o = this.getObject(in);
 		try {
-			return (Byte) o;
+			return (byte) o;
 		} catch (Throwable t) {}
 		try {
-			return (Byte) Byte.parseByte(o.toString());
+			return Byte.parseByte(o.toString());
 		} catch (Throwable t) {}
-		return null;
+		return 0;
 	}
 
 	@Override
-	public Short getShort(String name) {
+	public short getShort(String name) {
 		Object o = this.getObject(name);
 		try {
-			return (Short) o;
+			return (short) o;
 		} catch (Throwable t) {}
 		try {
-			return (Short) Short.parseShort(o.toString());
+			return Short.parseShort(o.toString());
 		} catch (Throwable t) {}
-		return null;
+		return 0;
 	}
 
 	@Override
-	public Short getShort(int in) {
+	public short getShort(int in) {
 		Object o = this.getObject(in);
 		try {
-			return (Short) o;
+			return (short) o;
 		} catch (Throwable t) {}
 		try {
-			return (Short) Short.parseShort(o.toString());
+			return Short.parseShort(o.toString());
 		} catch (Throwable t) {}
-		return null;
+		return 0;
 	}
 
 	@Override
-	public Integer getInt(String name) {
+	public int getInt(String name) {
 		Object o = this.getObject(name);
 		try {
-			return (Integer) o;
+			return (int) o;
 		} catch (Throwable t) {}
 		try {
-			return (Integer) Integer.parseInt(o.toString());
+			return Integer.parseInt(o.toString());
 		} catch (Throwable t) {}
-		return null;
+		return 0;
 	}
 
 	@Override
-	public Integer getInt(int in) {
+	public int getInt(int in) {
 		Object o = this.getObject(in);
 		try {
-			return (Integer) o;
+			return (int) o;
 		} catch (Throwable t) {}
 		try {
-			return (Integer) Integer.parseInt(o.toString());
+			return Integer.parseInt(o.toString());
 		} catch (Throwable t) {}
-		return null;
+		return 0;
 	}
 
 	@Override
-	public Long getLong(String name) {
+	public long getLong(String name) {
 		Object o = this.getObject(name);
 		try {
-			return (Long) o;
+			return (long) o;
 		} catch (Throwable t) {}
 		try {
-			return (Long) Long.parseLong(o.toString());
+			return Long.parseLong(o.toString());
 		} catch (Throwable t) {}
-		return null;
+		return 0;
 	}
 
 	@Override
-	public Long getLong(int in) {
+	public long getLong(int in) {
 		Object o = this.getObject(in);
 		try {
-			return (Long) o;
+			return (long) o;
 		} catch (Throwable t) {}
 		try {
-			return (Long) Long.parseLong(o.toString());
+			return Long.parseLong(o.toString());
 		} catch (Throwable t) {}
-		return null;
+		return 0;
 	}
 
 	@Override
-	public Float getFloat(String name) {
+	public float getFloat(String name) {
 		Object o = this.getObject(name);
 		try {
-			return (Float) o;
+			return (float) o;
 		} catch (Throwable t) {}
 		try {
-			return (Float) Float.parseFloat(o.toString());
+			return Float.parseFloat(o.toString());
 		} catch (Throwable t) {}
-		return null;
+		return 0;
 	}
 
 	@Override
-	public Float getFloat(int in) {
+	public float getFloat(int in) {
 		Object o = this.getObject(in);
 		try {
-			return (Float) o;
+			return (float) o;
 		} catch (Throwable t) {}
 		try {
-			return (Float) Float.parseFloat(o.toString());
+			return Float.parseFloat(o.toString());
 		} catch (Throwable t) {}
-		return null;
+		return 0;
 	}
 
 	@Override
-	public Double getDouble(String name) {
+	public double getDouble(String name) {
 		Object o = this.getObject(name);
 		try {
-			return (Double) o;
+			return (double) o;
 		} catch (Throwable t) {}
 		try {
-			return (Double) Double.parseDouble(o.toString());
+			return Double.parseDouble(o.toString());
 		} catch (Throwable t) {}
-		return null;
+		return 0;
 	}
 
 	@Override
-	public Double getDouble(int in) {
+	public double getDouble(int in) {
 		Object o = this.getObject(in);
 		try {
-			return (Double) o;
+			return (double) o;
 		} catch (Throwable t) {}
 		try {
-			return (Double) Double.parseDouble(o.toString());
+			return Double.parseDouble(o.toString());
 		} catch (Throwable t) {}
-		return null;
+		return 0;
 	}
 
 	@Override
@@ -267,6 +275,12 @@ public abstract class SimpleResSet implements ResSet {
 	public abstract boolean next();
 
 	@Override
-	public abstract boolean close();
+	public abstract void close() throws SQLException;
+
+	@Override
+	public abstract void remove() throws SQLException;
+
+	@Override
+	public abstract boolean isTable();
 
 }

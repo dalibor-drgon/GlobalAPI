@@ -113,7 +113,6 @@ public abstract class WNDBStore {
 		if(file.exists()) {
 			try {
 				db = new WNDB(file);
-				db.checkSet();
 			} catch(Throwable t) {
 				db = null;
 				File movedto = Api.getFreeName(Api.getRealPath(file) + ".invalid");
@@ -138,7 +137,7 @@ public abstract class WNDBStore {
 			try {
 				db = WNDB.createWNDB(file, set_names, set_types);
 			} catch (Throwable t) {
-				this.err("We cannot create the database " + name + "... Details: ");
+				this.err("We cannot even create the database " + name + "... Details: ");
 				this.exc(t);
 				
 				this.err("Due this unexpected error, all settings for database " + name +" will be "

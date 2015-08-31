@@ -25,8 +25,9 @@
 package eu.wordnice.sql;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
-public class ResultResSet extends SimpleResSet {
+public class ResultResSet implements ResSet {
 
 	public ResultSet rs;
 	public boolean pendingFirst = false;
@@ -86,128 +87,115 @@ public class ResultResSet extends SimpleResSet {
 	}
 
 	@Override
-	public Boolean getBoolean(String name) {
+	public boolean getBoolean(String name) {
 		try {
 			return this.rs.getBoolean(name);
 		} catch (Throwable t) {}
-		return null;
+		return false;
 	}
 
 	@Override
-	public Boolean getBoolean(int in) {
+	public boolean getBoolean(int in) {
 		try {
 			return this.rs.getBoolean(in);
-		} catch (Throwable t) {
-		}
-		return null;
+		} catch (Throwable t) {}
+		return false;
 	}
 
 	@Override
-	public Byte getByte(String name) {
+	public byte getByte(String name) {
 		try {
 			return this.rs.getByte(name);
-		} catch (Throwable t) {
-		}
-		return null;
+		} catch (Throwable t) {}
+		return 0;
 	}
 
 	@Override
-	public Byte getByte(int in) {
+	public byte getByte(int in) {
 		try {
 			return this.rs.getByte(in);
-		} catch (Throwable t) {
-		}
-		return null;
+		} catch (Throwable t) {}
+		return 0;
 	}
 
 	@Override
-	public Short getShort(String name) {
+	public short getShort(String name) {
 		try {
 			return this.rs.getShort(name);
-		} catch (Throwable t) {
-		}
-		return null;
+		} catch (Throwable t) {}
+		return 0;
 	}
 
 	@Override
-	public Short getShort(int in) {
+	public short getShort(int in) {
 		try {
 			return this.rs.getShort(in);
-		} catch (Throwable t) {
-		}
-		return null;
+		} catch (Throwable t) {}
+		return 0;
 	}
 
 	@Override
-	public Integer getInt(String name) {
+	public int getInt(String name) {
 		try {
 			return this.rs.getInt(name);
-		} catch (Throwable t) {
-		}
-		return null;
+		} catch (Throwable t) {}
+		return 0;
 	}
 
 	@Override
-	public Integer getInt(int in) {
+	public int getInt(int in) {
 		try {
 			return this.rs.getInt(in);
-		} catch (Throwable t) {
-		}
-		return null;
+		} catch (Throwable t) {}
+		return 0;
 	}
 
 	@Override
-	public Long getLong(String name) {
+	public long getLong(String name) {
 		try {
 			return this.rs.getLong(name);
-		} catch (Throwable t) {
-		}
-		return null;
+		} catch (Throwable t) {}
+		return 0;
 	}
 
 	@Override
-	public Long getLong(int in) {
+	public long getLong(int in) {
 		try {
 			return this.rs.getLong(in);
-		} catch (Throwable t) {
-		}
-		return null;
+		} catch (Throwable t) {}
+		return 0;
 	}
 
 	@Override
-	public Float getFloat(String name) {
+	public float getFloat(String name) {
 		try {
 			return this.rs.getFloat(name);
-		} catch (Throwable t) {
-		}
-		return null;
+		} catch (Throwable t) {}
+		return 0;
 	}
 
 	@Override
-	public Float getFloat(int in) {
+	public float getFloat(int in) {
 		try {
 			return this.rs.getFloat(in);
-		} catch (Throwable t) {
-		}
-		return null;
+		} catch (Throwable t) {}
+		return 0;
 	}
 
 	@Override
-	public Double getDouble(String name) {
+	public double getDouble(String name) {
 		try {
 			return this.rs.getDouble(name);
-		} catch (Throwable t) {
-		}
-		return null;
+		} catch (Throwable t) {}
+		return 0;
 	}
 
 	@Override
-	public Double getDouble(int in) {
+	public double getDouble(int in) {
 		try {
 			return this.rs.getDouble(in);
-		} catch (Throwable t) {
-		}
-		return null;
+		} catch (Throwable t) {}
+		return 0;
 	}
 
 	@Override
@@ -228,17 +216,28 @@ public class ResultResSet extends SimpleResSet {
 	}
 
 	@Override
-	public boolean close() {
-		try {
-			this.rs.close();
-			return true;
-		} catch (Throwable t) {}
-		return false;
+	public void close() throws SQLException {
+		this.rs.close();
 	}
 	
 	
 	public ResultSet getResultSet() {
 		return this.rs;
+	}
+
+	@Override
+	public boolean hasByName() {
+		return true;
+	}
+
+	@Override
+	public boolean hasByIndex() {
+		return true;
+	}
+
+	@Override
+	public void remove() throws SQLException {
+		this.rs.deleteRow();
 	}
 
 }
