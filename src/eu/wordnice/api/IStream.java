@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import eu.wordnice.api.serialize.WNSerializer;
-import eu.wordnice.sql.wndb.WNDBDecoder;
+import eu.wordnice.db.wndb.WNDBDecoder;
 
 public class IStream extends InputStream {
 

@@ -16,7 +16,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import eu.wordnice.api.Api;
-import eu.wordnice.api.ArrayCollection;
+import eu.wordnice.api.Array;
 import eu.wordnice.api.Handler;
 
 public class WNBukkit {
@@ -35,7 +35,7 @@ public class WNBukkit {
 			m.setAccessible(true);
 			Object ret = m.invoke(null);
 			if(ret instanceof Player[]) {
-				return new ArrayCollection<Player>((Player[]) ret);
+				return new Array<Player>((Player[]) ret);
 			} else if(ret instanceof Collection<?>) {
 				return (Collection<Player>) ret;
 			}
@@ -104,7 +104,7 @@ public class WNBukkit {
 			m.setAccessible(true);
 			Object ret = m.invoke(null);
 			if(ret instanceof World[]) {
-				return new ArrayCollection<World>((World[]) ret);
+				return new Array<World>((World[]) ret);
 			} else if(ret instanceof Collection<?>) {
 				return (Collection<World>) ret;
 			}
@@ -183,7 +183,7 @@ public class WNBukkit {
 				clz = clz.getSuperclass();
 			}
 			if(ret instanceof Plugin[]) {
-				return new ArrayCollection<Plugin>((Plugin[]) ret);
+				return new Array<Plugin>((Plugin[]) ret);
 			} else if(ret instanceof Collection<?>) {
 				return (Collection<Plugin>) ret;
 			}

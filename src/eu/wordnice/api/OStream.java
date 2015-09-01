@@ -29,8 +29,8 @@ import java.io.OutputStream;
 import java.util.Map;
 
 import eu.wordnice.api.serialize.WNSerializer;
-import eu.wordnice.sql.wndb.WNDBEncoder;
-import eu.wordnice.sql.wndb.WNDBVarTypes;
+import eu.wordnice.db.DBType;
+import eu.wordnice.db.wndb.WNDBEncoder;
 
 public class OStream extends OutputStream {
 
@@ -115,10 +115,10 @@ public class OStream extends OutputStream {
 	
 	public void writeObject(Object obj, int ri, int vi) throws Exception {
 		if(obj == null) {
-			this.writeByte(WNDBVarTypes.BYTES.b);
+			this.writeByte(DBType.BYTES.b);
 			this.writeInt(-1);
 		} else {
-			WNDBVarTypes typ = WNDBVarTypes.getByObject(obj);
+			DBType typ = DBType.getByObject(obj);
 			this.writeByte(typ.b);
 			WNDBEncoder.writeObject(this, obj, typ, ri, vi);
 		}

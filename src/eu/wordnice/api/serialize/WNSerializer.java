@@ -44,7 +44,7 @@ import java.util.Map.Entry;
 
 import eu.wordnice.api.IStream;
 import eu.wordnice.api.OStream;
-import eu.wordnice.sql.wndb.WNDBDecoder;
+import eu.wordnice.db.wndb.WNDBDecoder;
 
 public class WNSerializer {
 	

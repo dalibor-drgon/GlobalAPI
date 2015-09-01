@@ -117,33 +117,47 @@ public class Api {
 		}
 	}
 	
-	public static <X, Y> void copyMap(Map<X, Y> out, Map<X, Y> map) {
-		Iterator<Entry<X, Y>> it = map.entrySet().iterator();
+	@SuppressWarnings("unchecked")
+	public static <X, Y, T, V> void copyMap(Map<X, Y> out, Map<T, V> map) {
+		Iterator<Entry<T, V>> it = map.entrySet().iterator();
 		while(it.hasNext()) {
-			Entry<X, Y> ent = it.next();
-			out.put(ent.getKey(), ent.getValue());
+			Entry<T, V> ent = it.next();
+			out.put((X) ent.getKey(), (Y) ent.getValue());
 		}
 	}
 	
 	public static <X> void toStringColl(Collection<String> out, Collection<X> set) {
 		Iterator<X> it = set.iterator();
 		while(it.hasNext()) {
-			out.add(("" + it.next()));
+			Object next = it.next();
+			if(next == null) {
+				out.add(null);
+			} else {
+				out.add(next.toString());
+			}
 		}
 	}
 	
-	public static <X> void copyColl(Collection<X> out, Collection<X> set) {
-		Iterator<X> it = set.iterator();
+	@SuppressWarnings("unchecked")
+	public static <X, Y> void copyColl(Collection<X> out, Collection<Y> set) {
+		Iterator<Y> it = set.iterator();
 		while(it.hasNext()) {
-			out.add(it.next());
+			out.add((X) it.next());
 		}
 	}
 
-	public static int indexOfObject(Object o, Object... vals) {
+	/***********
+	 * INDEX OF
+	 */
+	
+	public static int indexOf(Object o, Object[] vals) {
+		return Api.indexOf(o, vals, 0);
+	}
+	
+	public static int indexOf(Object o, Object[] vals, int i) {
 		if(vals == null || vals.length == 0) {
 			return -1;
 		}
-		int i = 0;
 		int size = vals.length;
 		if(o == null) {
 			for(; i < size; i++) {
@@ -161,11 +175,14 @@ public class Api {
 		return -1;
 	}
 	
-	public static int indexOfStringIgnoreCase(String o, String... vals) {
+	public static int indexOfInsensitive(String o, String[] vals) {
+		return Api.indexOfInsensitive(o, vals, 0);
+	}
+	
+	public static int indexOfInsensitive(String o, String[] vals, int i) {
 		if(vals == null || vals.length == 0) {
 			return -1;
 		}
-		int i = 0;
 		int size = vals.length;
 		if(o == null) {
 			for(; i < size; i++) {
@@ -183,21 +200,30 @@ public class Api {
 		return -1;
 	}
 	
-	@SafeVarargs
-	public static <X> int indexOfSafe(X o, X... vals) {
+	
+	/****************
+	 * LAST INDEX OF
+	 */
+	
+	public static int lastIndexOf(Object o, Object[] vals) {
+		return Api.lastIndexOf(o, vals, 0);
+	}
+	
+	public static int lastIndexOf(Object o, Object[] vals, int i) {
 		if(vals == null || vals.length == 0) {
 			return -1;
 		}
-		int i = 0;
-		int size = vals.length;
+		if(i >= vals.length) {
+			i = vals.length - 1;
+		}
 		if(o == null) {
-			for(; i < size; i++) {
+			for(; i >= 0; i--) {
 				if(vals[i] == null) {
 					return i;
 				}
 			}
 		} else {
-			for(; i < size; i++) {
+			for(; i >= 0; i--) {
 				if(o.equals(vals[i])) {
 					return i;
 				}
@@ -206,28 +232,40 @@ public class Api {
 		return -1;
 	}
 	
-	@SuppressWarnings("unchecked")
-	public static <X> int indexOfUnsafe(X o, X... vals) {
+	public static int lastIndexOfInsensitive(String o, String[] vals) {
+		return Api.lastIndexOfInsensitive(o, vals, 0);
+	}
+	
+	public static int lastIndexOfInsensitive(String o, String[] vals, int i) {
 		if(vals == null || vals.length == 0) {
 			return -1;
 		}
-		int i = 0;
-		int size = vals.length;
+		if(i >= vals.length) {
+			i = vals.length - 1;
+		}
 		if(o == null) {
-			for(; i < size; i++) {
+			for(; i >= 0; i--) {
 				if(vals[i] == null) {
 					return i;
 				}
 			}
 		} else {
-			for(; i < size; i++) {
-				if(o.equals(vals[i])) {
+			for(; i >= 0; i--) {
+				if(o.equalsIgnoreCase(vals[i])) {
 					return i;
 				}
 			}
 		}
 		return -1;
 	}
+	
+	
+	
+	
+	/**********
+	 * CLASSES
+	 * PACKAGES
+	 */
 	
 	public static boolean loadClass(String cls) {
 		try {
@@ -892,12 +930,12 @@ public class Api {
 	
 	/*** MEMORY ***/
 	
-	public static boolean memcpy(Object to, int posto, Object from, int posfrom, int size) {
-		try {
-			System.arraycopy(from, posfrom, to, posto, size);
-			return true;
-		} catch(Throwable t) {}
-		return false;
+	public static void memcpy(Object to, Object from, int size) {
+		System.arraycopy(from, 0, to, 0, size);
+	}
+	
+	public static void memcpy(Object to, int posto, Object from, int posfrom, int size) {
+		System.arraycopy(from, posfrom, to, posto, size);
 	}
 	
 	public static boolean memcpy(long to, long from, long sz) {
