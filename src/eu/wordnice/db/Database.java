@@ -1,8 +1,10 @@
 package eu.wordnice.db;
 
 import java.io.File;
+import java.sql.SQLException;
 import java.util.Map;
 
+import eu.wordnice.db.operator.Where;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.sql.MySQL;
 import eu.wordnice.db.sql.SQL;
@@ -19,8 +21,15 @@ public class Database {
 	
 	/**
 	 * Set when MySQL, SQLite or any other SQL-based database is used
+	 * Pair with sql_table
 	 */
 	public SQL sql;
+	
+	/**
+	 * SQL table name
+	 * Part with sql
+	 */
+	public String sql_table;
 	
 	/**
 	 * Set when WNDB, FLATFILE, JSON or any other ResSet-based database is used
@@ -54,6 +63,7 @@ public class Database {
 	 * Formats:
 	 * - type: sqlite
 	 * - file: ./test.sql
+	 * - table: test_table
 	 * 
 	 * - type: wndb
 	 * - file: ./test.wndb
@@ -69,6 +79,7 @@ public class Database {
 	 * - db: testdb
 	 * - user: admin
 	 * - pass: Passw0rd!
+	 * - table: test_table
 	 * 
 	 * 
 	 * @param data Info
@@ -124,8 +135,10 @@ public class Database {
 	 * 
 	 * @param sql SQL instance
 	 */
-	public void init(SQL sql) {
+	public void init(SQL sql, String table) {
+		this.rs = null;
 		this.sql = sql;
+		this.sql_table = table;
 	}
 	
 	/**
@@ -134,9 +147,44 @@ public class Database {
 	 * @param rs ResSet instance
 	 */
 	public void init(ResSet rs) {
+		this.sql = null;
+		this.sql_table = null;
 		this.rs = rs;
 	}
 	
+	/**
+	 * @param columns Columns to get. If not table-based database, columns are ignored.
+	 *                Returned value can also contain more or all available columns
+	 *                If null, then there are selected all available columns
+	 * @param wheres Filter flags
+	 * 
+	 * @throws Exception Implementation specific exception
+	 * @return Results
+	 */
+	public ResSet get(String[] columns, Where[] wheres) throws Exception {
+		if(this.sql != null) {
+			if(columns == null && wheres == null) {
+				return sql.query("SELECT * FROM " + this.sql_table);
+			}
+			String cols = null;
+			if(columns == null) {
+				cols = "*";
+			} else {
+				for(int i = 0, n = columns.length; i < n; i++) {
+					if(i != 0) {
+						cols += ", ";
+					}
+					cols += columns[i];
+				}
+			}
+			String whre = null;
+			if(wheres == null) {
+				return this.sql.query("SELECT " + cols);
+			} else {
+				return wheres.query(this.sql, cols);
+			}
+		}
+	}
 	
 	
 }
