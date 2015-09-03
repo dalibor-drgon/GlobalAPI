@@ -40,19 +40,9 @@ public interface SQL {
 	 * @throws SQLException
 	 */
 	public ResSet query(String query) throws SQLException;
-	
-	/**
-	 * Query database (SELECT)
-	 * 
-	 * @param query Query string
-	 * 
-	 * @return PreparedStatement
-	 * @throws SQLException
-	 */
-	public PreparedStatement prepareQuery(String query) throws SQLException;
 
 	/**
-	 * Update database (INSERT, UPDATE, CREATE ...)
+	 * Update database (INSERT, UPDATE, CREATE, DELETE ...)
 	 * 
 	 * @param cmd Update command
 	 * 
@@ -61,14 +51,14 @@ public interface SQL {
 	public void command(String cmd) throws SQLException;
 	
 	/**
-	 * Update database (INSERT, UPDATE, CREATE ...)
+	 * Prepare command (SELECT, INSERT, UPDATE, CREATE, DELETE ...)
 	 * 
 	 * @param cmd Update command
 	 * 
 	 * @return PreparedStatement
 	 * @throws SQLException
 	 */
-	public PreparedStatement prepareCommand(String cmd) throws SQLException;
+	public PreparedStatement prepare(String cmd) throws SQLException;
 
 	/**
 	 * @return `true` If database was closed

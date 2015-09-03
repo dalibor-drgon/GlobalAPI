@@ -857,6 +857,10 @@ public class Api {
 		return str;
 	}
 	
+	public static String replace(String str, String findtxt, String replacetxt) {
+		return Api.replace(str, findtxt, replacetxt, true);
+	}
+	
 	/**
 	 * Replace multiple 
 	 * 
@@ -871,10 +875,71 @@ public class Api {
 		if((len & 0x01) == 0x01) {
 			len--;
 		}
-		for(int i = 0; i < len; i += 2) {
-			str = Api.replace(str, ("" + args[i]), ("" + args[i + 1]), sensitive);
+		for(int i = 0; i < len;) {
+			str = Api.replace(str, args[i++].toString(), args[i++].toString(), sensitive);
 		}
 		return str;
+	}
+	
+	public static String replace(String str, Object[] args) {
+		return Api.replace(str,  args, true);
+	}
+	
+	
+	
+	
+	public static String join(Object[] vals, String jch) {
+		return Api.join(vals,  jch);
+	}
+	
+	public static String join(Object[] vals, String jch, String start, String end) {
+		StringBuilder sb = new StringBuilder();
+		if(start != null) {
+			sb.append(start);
+		}
+		if(jch == null || jch.length() == 0) {
+			jch = null;
+		}
+		for(int i = 0, n = vals.length; i < n; i++) {
+			if(i != 0 && jch != null) {
+				sb.append(jch);
+			}
+			sb.append("" + vals[i]);
+		}
+		if(end != null) {
+			sb.append(end);
+		}
+		return sb.toString();
+	}
+	
+	public static String join(Iterator<?> it, String jch) {
+		return Api.join(it,  jch);
+	}
+	
+	public static String join(Iterator<?> it, String jch, String start, String end) {
+		StringBuilder sb = new StringBuilder();
+		if(start != null) {
+			sb.append(start);
+		}
+		if(jch == null || jch.length() == 0) {
+			jch = null;
+		}
+		if(it.hasNext()) {
+			while(it.hasNext()) {
+				sb.append("" + it.next());
+				if(it.hasNext()) {
+					if(jch != null) {
+						sb.append(jch);
+					}
+				} else {
+					break;
+				}
+			}
+		}
+		if(end != null) {
+			sb.append(end);
+		}
+		return sb.toString();
 	}
 	
 	

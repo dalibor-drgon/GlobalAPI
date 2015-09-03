@@ -1,11 +1,17 @@
 package eu.wordnice.db;
 
 import java.io.File;
-import java.sql.SQLException;
+import java.sql.PreparedStatement;
+import java.util.List;
 import java.util.Map;
 
+import eu.wordnice.api.Api;
+import eu.wordnice.api.Val;
+import eu.wordnice.db.operator.Sort;
 import eu.wordnice.db.operator.Where;
 import eu.wordnice.db.results.ResSet;
+import eu.wordnice.db.results.ResSetDB;
+import eu.wordnice.db.results.ResultResSet;
 import eu.wordnice.db.sql.MySQL;
 import eu.wordnice.db.sql.SQL;
 import eu.wordnice.db.sql.SQLite;
@@ -34,7 +40,7 @@ public class Database {
 	/**
 	 * Set when WNDB, FLATFILE, JSON or any other ResSet-based database is used
 	 */
-	public ResSet rs;
+	public ResSetDB rs;
 	
 	/**
 	 * @see {@link Database#init(Map)}
@@ -46,14 +52,14 @@ public class Database {
 	/**
 	 * @see {@link Database#init(SQL)}
 	 */
-	public Database(SQL sql) {
-		this.init(sql);
+	public Database(SQL sql, String table) {
+		this.init(sql, table);
 	}
 	
 	/**
 	 * @see {@link Database#init(ResSet)}
 	 */
-	public Database(ResSet rs) {
+	public Database(ResSetDB rs) {
 		this.init(rs);
 	}
 	
@@ -68,8 +74,11 @@ public class Database {
 	 * - type: wndb
 	 * - file: ./test.wndb
 	 * 
-	 * - type: flatfile
+	 * - type: flatfile (todo)
 	 * - file: ./test.txt
+	 * 
+	 * - type: yaml (todo)
+	 * - file: ./test.yml
 	 * 
 	 * - type: json
 	 * - file: ./test.json
@@ -99,7 +108,11 @@ public class Database {
 			if(file == null) {
 				throw new IllegalArgumentException("SQLite file is null!");
 			}
-			this.init(new SQLite(new File(file)));
+			String table = data.get("table");
+			if(table == null) {
+				throw new IllegalArgumentException("SQLite table is null!");
+			}
+			this.init(new SQLite(new File(file)), table);
 			this.sql.connect();
 		} else if(type.equals("mysql")) {
 			String host = data.get("host");
@@ -118,8 +131,12 @@ public class Database {
 			if(pass == null) {
 				throw new IllegalArgumentException("MySQL pass is null!");
 			}
+			String table = data.get("table");
+			if(table == null) {
+				throw new IllegalArgumentException("MySQL table is null!");
+			}
 
-			this.init(new MySQL(host, db, user, pass));
+			this.init(new MySQL(host, db, user, pass), table);
 			this.sql.connect();
 		} else if(type.equals("wndb")) {
 			String file = data.get("file");
@@ -134,6 +151,7 @@ public class Database {
 	 * Set database type to SQL
 	 * 
 	 * @param sql SQL instance
+	 * @param Table name
 	 */
 	public void init(SQL sql, String table) {
 		this.rs = null;
@@ -146,7 +164,7 @@ public class Database {
 	 * 
 	 * @param rs ResSet instance
 	 */
-	public void init(ResSet rs) {
+	public void init(ResSetDB rs) {
 		this.sql = null;
 		this.sql_table = null;
 		this.rs = rs;
@@ -158,33 +176,71 @@ public class Database {
 	 *                If null, then there are selected all available columns
 	 * @param wheres Filter flags
 	 * 
+	 * @throws IllegalArgumentException Where (off != null && off < 0) or (limit != null && limit <= 0)
 	 * @throws Exception Implementation specific exception
 	 * @return Results
 	 */
-	public ResSet get(String[] columns, Where[] wheres) throws Exception {
+	public ResSet get(String[] columns, Where[] wheres, Integer off, Integer limit, Sort[] sort) throws IllegalArgumentException, Exception {
 		if(this.sql != null) {
+			StringBuilder suf = new StringBuilder();
+			if(sort != null && sort.length != 0) {
+				suf.append(" ORDER BY ");
+				for(int i = 0, n = sort.length; i < n; i++) {
+					if(i != 0) {
+						suf.append(", ");
+					}
+					suf.append(sort[i].toSQL());
+				}
+			}
+			if(off != null) {
+				if(off < 0) {
+					throw new IllegalArgumentException("Invalid offset " + off);
+				} else if(off > 0) {
+					suf.append(" OFFSET ");
+					suf.append(off.toString());
+				}
+			}
+			if(limit != null) {
+				if(limit <= 0) {
+					throw new IllegalArgumentException("Invalid limit " + limit);
+				} else {
+					suf.append(" LIMIT ");
+					suf.append(limit.toString());
+				}
+			}
+			System.out.println("SELECT * FROM " + this.sql_table + suf.toString());
 			if(columns == null && wheres == null) {
-				return sql.query("SELECT * FROM " + this.sql_table);
+				return sql.query("SELECT * FROM " + this.sql_table + suf.toString());
 			}
 			String cols = null;
 			if(columns == null) {
 				cols = "*";
 			} else {
-				for(int i = 0, n = columns.length; i < n; i++) {
-					if(i != 0) {
-						cols += ", ";
-					}
-					cols += columns[i];
-				}
+				cols = Api.join(columns, ", ");
 			}
-			String whre = null;
+			String cmd = "SELECT " + cols + " FROM " + this.sql_table;
 			if(wheres == null) {
-				return this.sql.query("SELECT " + cols);
-			} else {
-				return wheres.query(this.sql, cols);
+				return this.sql.query(cmd + suf.toString());
 			}
+			Val.TwoVal<String, List<Object>> whproc = Where.toSQL(wheres, " AND ");
+			System.out.println(cmd + " WHERE " + whproc.one + suf.toString());
+			PreparedStatement ps = this.sql.prepare(cmd + " WHERE " + whproc.one + suf.toString());
+			List<Object> list = whproc.two;
+			for(int i = 0, n = list.size(); i < n;) {
+				Object v = list.get(i++);
+				ps.setObject(i, v);
+			}
+			return new ResultResSet(ps.executeQuery());
+		} else {
+			if(wheres == null) {
+				return this.rs.getSnapshot();
+			}
+			//TODO
+			return null;
 		}
 	}
+	
+	
 	
 	
 }

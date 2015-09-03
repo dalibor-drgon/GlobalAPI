@@ -67,13 +67,7 @@ public abstract class ConnectionSQL implements SQL {
 	}
 	
 	@Override
-	public PreparedStatement prepareQuery(String query) throws SQLException {
-		this.checkConnection();
-		return this.con.prepareStatement(query);
-	}
-
-	@Override
-	public PreparedStatement prepareCommand(String cmd) throws SQLException {
+	public PreparedStatement prepare(String cmd) throws SQLException {
 		this.checkConnection();
 		return this.con.prepareStatement(cmd);
 	}

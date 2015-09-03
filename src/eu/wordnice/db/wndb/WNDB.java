@@ -47,6 +47,15 @@ public class WNDB extends SetSetResSet {
 		this.changed = false;
 		this.file = null;
 	}
+	
+	/**
+	 * For hackers
+	 */
+	public WNDB(IStream in) throws Exception {
+		this.changed = false;
+		this.file = null;
+		this.load(in);
+	}
 
 	/**
 	 * Create & load database for entered file
@@ -58,8 +67,7 @@ public class WNDB extends SetSetResSet {
 	public WNDB(File file) throws Exception {
 		this.file = file;
 		this.load();
-	}
-	
+	}	
 	
 	
 	public void save() throws Exception {
