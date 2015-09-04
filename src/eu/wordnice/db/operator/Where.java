@@ -1,10 +1,8 @@
 package eu.wordnice.db.operator;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
 import eu.wordnice.api.Api;
-import eu.wordnice.api.Val;
 import eu.wordnice.db.Database;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.sql.MySQL;
@@ -102,22 +100,46 @@ public class Where {
 	}
 	
 	/**
-	 * @return SQL string with objects needed for PreparedStatement
+	 * @param rs ResSet with values to compare
+	 * @return `true` if values match with this AndOr
 	 */
-	public static Val.TwoVal<String, List<Object>> toSQL(Where[] wheres, String join) {
-		StringBuilder sb = new StringBuilder();
-		List<Object> vals = new ArrayList<Object>();
-		
-		for(int i = 0, n = wheres.length; i < n; i++) {
-			if(i != 0) {
-				sb.append(join);
-			}
-			Where wh = wheres[i];
-			sb.append(wh.toSQL());
-			vals.add(wh.val);
+	public boolean match(ResSet rs) {
+		switch(this.flag) {
+			case BIGGER:
+				return rs.getDouble(this.key) > ((Number) this.val).doubleValue();
+				
+			case BIGGER_EQUAL:
+				return rs.getDouble(this.key) >= ((Number) this.val).doubleValue();
+				
+			case SMALLER:
+				return rs.getDouble(this.key) < ((Number) this.val).doubleValue();
+				
+			case SMALLER_EQUAL:
+				return rs.getDouble(this.key) <= ((Number) this.val).doubleValue();
+			
+			case NOT_EQUAL:
+				if(this.val instanceof Number) {
+					return rs.getDouble(this.key) != ((Number) this.val).doubleValue();
+				} else if(this.val instanceof byte[]) {
+					return !Arrays.equals((byte[]) rs.getBytes(this.key), (byte[]) this.val);
+				} else if(this.val == null) {
+					return rs.getObject(this.key) != null;
+				} else {
+					return !this.val.equals(rs.getObject(this.key));
+				}
+				
+			case EQUAL:
+			default:
+				if(this.val instanceof Number) {
+					return rs.getDouble(this.key) == ((Number) this.val).doubleValue();
+				} else if(this.val instanceof byte[]) {
+					return Arrays.equals((byte[]) rs.getBytes(this.key), (byte[]) this.val);
+				} else if(this.val == null) {
+					return rs.getObject(this.key) == null;
+				} else {
+					return this.val.equals(rs.getObject(this.key));
+				}
 		}
-		
-		return new Val.TwoVal<>(sb.toString(), vals);
 	}
 	
 	/**
@@ -138,6 +160,10 @@ public class Where {
 		}, null, null, new Sort[] {
 				new Sort("rekts", SType.ASC_SC, false)
 		});
+		while(rs.next()) {
+			System.out.println(rs.getString("rekts"));
+		}
+		rs.first();
 		while(rs.next()) {
 			System.out.println(rs.getString("rekts"));
 		}

@@ -50,7 +50,7 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 	public CollResSet(MapFactory factory, List<Map<String, Object>> list) {
 		this.factory = factory;
 		this.list = list;
-		this.reset();
+		this.first();
 	}
 	
 	protected Map<String, Object> getCurrent() {
@@ -87,7 +87,7 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 	}
 	
 	@Override
-	public void reset() {
+	public void first() {
 		this.it = this.list.listIterator();
 		this.cur = null;
 	}
@@ -243,7 +243,7 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 			}
 			list.addAll(CollResSet.this.list);
 			this.list = list;
-			this.reset();
+			this.first();
 		}
 		
 		@Override

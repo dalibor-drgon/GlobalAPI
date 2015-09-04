@@ -55,7 +55,7 @@ public class SetSetResSet extends SimpleResSet implements ResSetDB {
 		this.values = values;
 		this.names = names;
 		this.cols = cols;
-		this.reset();
+		this.first();
 	}
 	
 	
@@ -123,7 +123,7 @@ public class SetSetResSet extends SimpleResSet implements ResSetDB {
 	}
 	
 	@Override
-	public void reset() {
+	public void first() {
 		this.it = this.values.listIterator();
 		this.cur = null;
 	}
@@ -261,7 +261,7 @@ public class SetSetResSet extends SimpleResSet implements ResSetDB {
 			}
 			list.addAll(SetSetResSet.this.values);
 			this.values = list;
-			this.reset();
+			this.first();
 		}
 		
 		@Override

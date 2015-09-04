@@ -149,7 +149,7 @@ public class WNDB extends SetSetResSet {
 			this.names = vals.one;
 			this.types = vals.two;
 			this.values = vals.three;
-			this.reset();
+			this.first();
 		}
 	}
 	
@@ -179,7 +179,7 @@ public class WNDB extends SetSetResSet {
 		ret.types = types;
 		ret.values = vals;
 		ret.cols = names.length;
-		ret.reset();
+		ret.first();
 		return ret;
 	}
 	
@@ -198,7 +198,7 @@ public class WNDB extends SetSetResSet {
 		ret.types = types;
 		ret.values = vals;
 		ret.cols = names.length;
-		ret.reset();
+		ret.first();
 		return ret;
 	}
 	
@@ -213,7 +213,7 @@ public class WNDB extends SetSetResSet {
 		ret.types = types;
 		ret.values = new ArrayList<Object[]>();
 		ret.cols = names.length;
-		ret.reset();
+		ret.first();
 		return ret;
 	}
 

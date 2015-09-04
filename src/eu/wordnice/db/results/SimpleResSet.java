@@ -269,7 +269,7 @@ public abstract class SimpleResSet implements ResSet {
 	}
 
 	@Override
-	public abstract void reset();
+	public abstract void first();
 
 	@Override
 	public abstract boolean next();

@@ -102,7 +102,7 @@ public interface ResSet {
 	/**
 	 * Go to first value
 	 */
-	public void reset();
+	public void first();
 
 	/**
 	 * @return `true` If got next entry, otherwise `false`

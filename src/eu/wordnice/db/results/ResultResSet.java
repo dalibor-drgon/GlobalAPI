@@ -199,7 +199,7 @@ public class ResultResSet implements ResSet {
 	}
 
 	@Override
-	public void reset() {
+	public void first() {
 		this.pendingFirst = true;
 	}
 
