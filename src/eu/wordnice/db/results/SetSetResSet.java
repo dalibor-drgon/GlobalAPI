@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.ListIterator;
 
 import eu.wordnice.api.Api;
-import eu.wordnice.api.Array;
+import eu.wordnice.api.ImmArray;
 
 public class SetSetResSet extends SimpleResSet implements ResSetDB {
 
@@ -158,12 +158,12 @@ public class SetSetResSet extends SimpleResSet implements ResSetDB {
 
 	@Override
 	public Collection<String> getKeys() {
-		return new Array<String>(this.names);
+		return new ImmArray<String>(this.names);
 	}
 	
 	@Override
 	public Collection<Object> getValues() {
-		return new Array<Object>(this.getCurrent());
+		return new ImmArray<Object>(this.getCurrent());
 	}
 
 	@Override

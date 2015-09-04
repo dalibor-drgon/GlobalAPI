@@ -32,7 +32,7 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.RandomAccess;
 
-public class Array<T> implements List<T>, RandomAccess {
+public class ImmArray<T> implements List<T>, RandomAccess {
 	
 	/**
 	 * Array to iterate
@@ -43,7 +43,7 @@ public class Array<T> implements List<T>, RandomAccess {
 	 * Create immutable iterable
 	 * @param arr Array to iterate
 	 */
-	public Array(T[] arr) {
+	public ImmArray(T[] arr) {
 		this.arr = arr;
 	}
 
@@ -85,7 +85,7 @@ public class Array<T> implements List<T>, RandomAccess {
 		 * Create iterator
 		 */
 		protected SimpleIterator(int i) {
-			if(i < 0 || i >= Array.this.arr.length) {
+			if(i < 0 || i >= ImmArray.this.arr.length) {
 				throw new ArrayIndexOutOfBoundsException(i);
 			}
 			this.i = i - 1;
@@ -97,7 +97,7 @@ public class Array<T> implements List<T>, RandomAccess {
 		@Override
 		public boolean hasNext() {
 			int index = this.i + 1;
-			if(index < Array.this.arr.length) {
+			if(index < ImmArray.this.arr.length) {
 				this.i++;
 				return true;
 			}
@@ -113,10 +113,10 @@ public class Array<T> implements List<T>, RandomAccess {
 			if(index == -1) {
 				index = 0;
 			}
-			if(index >= Array.this.arr.length) {
+			if(index >= ImmArray.this.arr.length) {
 				throw new NoSuchElementException();
 			}
-			return Array.this.arr[index];
+			return ImmArray.this.arr[index];
 		}
 
 		/**
@@ -145,7 +145,7 @@ public class Array<T> implements List<T>, RandomAccess {
 		@Override
 		public int nextIndex() {
 			int index = this.i;
-			int max = Array.this.arr.length;
+			int max = ImmArray.this.arr.length;
 			if(index <= max) {
 				if(index < 0) {
 					return 0;
@@ -163,7 +163,7 @@ public class Array<T> implements List<T>, RandomAccess {
 		@Override
 		public int previousIndex() {
 			int index = this.i;
-			int max = Array.this.arr.length;
+			int max = ImmArray.this.arr.length;
 			if(index <= max) {
 				return index;
 			}
@@ -297,7 +297,7 @@ public class Array<T> implements List<T>, RandomAccess {
 
 	@Override
 	public List<T> subList(int from, int to) {
-		return new Array<T>(Arrays.copyOfRange(this.arr, from, to));
+		return new ImmArray<T>(Arrays.copyOfRange(this.arr, from, to));
 	}
 	
 	

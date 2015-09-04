@@ -2,6 +2,7 @@ package eu.wordnice.db;
 
 import java.io.File;
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
@@ -52,7 +53,7 @@ public class Database {
 	/**
 	 * @see {@link Database#init(SQL)}
 	 */
-	public Database(SQL sql, String table) {
+	public Database(SQL sql, String table) throws SQLException {
 		this.init(sql, table);
 	}
 	
@@ -153,9 +154,11 @@ public class Database {
 	 * @param sql SQL instance
 	 * @param Table name
 	 */
-	public void init(SQL sql, String table) {
+	public void init(SQL sql, String table) throws SQLException {
 		this.rs = null;
 		this.sql = sql;
+		//this.sql.command("SET NAMES 'UTF8'");
+		//this.sql.command("SET CHARSET 'utf8'");
 		this.sql_table = table;
 	}
 	
@@ -208,7 +211,6 @@ public class Database {
 					suf.append(limit.toString());
 				}
 			}
-			System.out.println("SELECT * FROM " + this.sql_table + suf.toString());
 			if(columns == null && wheres == null) {
 				return sql.query("SELECT * FROM " + this.sql_table + suf.toString());
 			}
@@ -223,7 +225,6 @@ public class Database {
 				return this.sql.query(cmd + suf.toString());
 			}
 			Val.TwoVal<String, List<Object>> whproc = Where.toSQL(wheres, " AND ");
-			System.out.println(cmd + " WHERE " + whproc.one + suf.toString());
 			PreparedStatement ps = this.sql.prepare(cmd + " WHERE " + whproc.one + suf.toString());
 			List<Object> list = whproc.two;
 			for(int i = 0, n = list.size(); i < n;) {

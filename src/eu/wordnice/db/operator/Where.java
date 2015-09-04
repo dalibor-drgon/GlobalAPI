@@ -1,18 +1,14 @@
 package eu.wordnice.db.operator;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import eu.wordnice.api.Api;
-import eu.wordnice.api.OStream;
 import eu.wordnice.api.Val;
-import eu.wordnice.db.DBType;
 import eu.wordnice.db.Database;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.sql.MySQL;
 import eu.wordnice.db.sql.SQL;
-import eu.wordnice.db.wndb.WNDB;
 
 public class Where {
 	
@@ -99,7 +95,7 @@ public class Where {
 		} else {
 			return Api.replace(str, new Object[]{
 					"1 ", "",
-					"2", (this.sens) ? "COLLATE latin1_bin" : "",
+					"2", (this.sens) ? "COLLATE utf8_bin" : "",
 					"$", this.key
 			});
 		}

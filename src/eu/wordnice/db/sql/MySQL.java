@@ -27,7 +27,7 @@ package eu.wordnice.db.sql;
 public class MySQL extends JDBCSQL {
 	
 	public MySQL(String url, String db, String user, String pass) {
-		super("com.mysql.jdbc.Driver", ("jdbc:mysql://" + url + "/" + db), user, pass);
+		super("com.mysql.jdbc.Driver", ("jdbc:mysql://" + url + "/" + db + "?useUnicode=true&characterEncoding=UTF-8"), user, pass);
 	}
 	
 }

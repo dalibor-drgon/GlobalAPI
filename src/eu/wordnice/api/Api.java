@@ -277,11 +277,16 @@ public class Api {
 	
 	public static boolean loadClassAndDebug(String cls) {
 		try {
+			if(Class.forName(cls, false, Api.class.getClassLoader()) != null) {
+				return true;
+			}
+		} catch(Throwable ign) {}
+		try {
 			Class.forName(cls);
-			System.out.println("Class loaded: '" + cls + "'");
+			System.out.println("[CLASSLOADER] Loaded class '" + cls + "'");
 			return true;
 		} catch (Throwable t) {
-			System.out.println("Cannot load class '" + cls + "', details:");
+			System.err.println("[CLASSLOADER] Loaded class '" + cls + "', details:");
 			t.printStackTrace();
 		}
 		return false;
@@ -306,22 +311,8 @@ public class Api {
 				.replace("\\b", "\b").replace("\\r", "\r");
 	}
 	
-	public static String getASCIString(String str) {
+	public static String getANSI(String str) {
 		return Normalizer.normalize(str, Normalizer.Form.NFD).replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
-	}
-	
-	public static Integer hash(String name) {
-		if(name == null) {
-			return 0;
-		}
-		return name.toLowerCase().hashCode();
-	}
-	
-	public static Integer hashNormal(String name) {
-		if(name == null) {
-			return 0;
-		}
-		return name.hashCode();
 	}
 	
 	
@@ -344,13 +335,6 @@ public class Api {
 	
 	/*** Files ***/
 	
-	public static String getRealPath(String file) {
-		if(file == null) {
-			return null;
-		}
-		return Api.getRealPath(new File(file));
-	}
-	
 	public static String getRealPath(File file) {
 		if(file == null) {
 			return null;
@@ -361,44 +345,35 @@ public class Api {
 		return file.getAbsolutePath();
 	}
 	
-	public static String getExtension(File file) {
-		if(file == null) {
-			return null;
-		}
-		return Api.getExtension(file.getName());
-	}
-	
 	public static String getExtension(String file) {
 		if(file == null) {
 			return null;
 		}
-		int i = file.indexOf('.');
-		if(i < 0 || (i + 2) > file.length()) {
+		int l = file.lastIndexOf('/');
+		if(l == -1) {
+			l = 0;
+		}
+		int i = file.indexOf('.', l);
+		if(i < 0 || (i + 1) == file.length()) {
 			return null;
 		}
 		return file.substring((i + 1), file.length());
-	}
-	
-	public static String getLastExtension(File file) {
-		if(file == null) {
-			return null;
-		}
-		return Api.getLastExtension(file.getName());
 	}
 	
 	public static String getLastExtension(String file) {
 		if(file == null) {
 			return null;
 		}
+		int l = file.lastIndexOf('/');
 		int i = file.lastIndexOf('.');
-		if(i < 0 || (i + 2) > file.length()) {
+		if(i < 0 || (i + 1) == file.length() || l > i) {
 			return null;
 		}
 		return file.substring((i + 1), file.length());
 	}
 	
 	public static File getFreeName(String old) {
-		long i = 1;
+		long i = 2;
 		File nev = null;
 		while(true) {
 			nev = new File(old + i);
@@ -436,6 +411,13 @@ public class Api {
 			return false;
 		}
 		return c.isAssignableFrom(o.getClass());
+	}
+	
+	public static boolean instanceOf(Class<?> o, Class<?> c) {
+		if(o == null || c == null) {
+			return false;
+		}
+		return c.isAssignableFrom(o);
 	}
 	
 	public static Class<?> getClass(String name) throws Throwable {
