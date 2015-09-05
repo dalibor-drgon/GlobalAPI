@@ -24,10 +24,15 @@
 
 package eu.wordnice.db.sql;
 
+import java.sql.SQLException;
+
 public class MySQL extends JDBCSQL {
 	
-	public MySQL(String url, String db, String user, String pass) {
+	public MySQL(String url, String db, String user, String pass) throws SQLException {
 		super("com.mysql.jdbc.Driver", ("jdbc:mysql://" + url + "/" + db + "?useUnicode=true&characterEncoding=UTF-8"), user, pass);
+		
+		this.command("SET CHARSET 'utf8'");
+		this.command("SET NAMES 'utf8' COLLATE 'utf8_unicode_ci'");
 	}
 	
 }

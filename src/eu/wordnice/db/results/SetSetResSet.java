@@ -32,6 +32,7 @@ import java.util.ListIterator;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.ImmArray;
+import eu.wordnice.db.operator.Sort;
 
 public class SetSetResSet extends SimpleResSet implements ResSetDB {
 
@@ -56,6 +57,14 @@ public class SetSetResSet extends SimpleResSet implements ResSetDB {
 		this.names = names;
 		this.cols = cols;
 		this.first();
+	}
+	
+	public SetSetResSet(String[] names) {
+		this(new ArrayList<Object[]>(), names, names.length);
+	}
+	
+	public SetSetResSet(String[] names, int cols) {
+		this(new ArrayList<Object[]>(), names, cols);
 	}
 	
 	
@@ -271,8 +280,14 @@ public class SetSetResSet extends SimpleResSet implements ResSetDB {
 		
 		@Override
 		public ResSetDBSnap getSnapshot() {
-			return this;
+			return this.getOriginal().getSnapshot();
 		}
+		
+	}
+
+	@Override
+	public void sort(Sort[] sorts) throws UnsupportedOperationException {
+		// TODO Auto-generated method stub
 		
 	}
 

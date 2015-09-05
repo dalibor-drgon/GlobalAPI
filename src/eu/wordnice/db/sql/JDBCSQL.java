@@ -35,6 +35,7 @@ public class JDBCSQL extends ConnectionSQL {
 	public String db_url;
 	public String user;
 	public String pass;
+	public String db_name;
 
 	public JDBCSQL() {}
 
@@ -82,7 +83,10 @@ public class JDBCSQL extends ConnectionSQL {
 
 	@Override
 	public void connect() throws SQLException {
-		if (this.single == true) {
+		try {
+			this.close();
+		} catch(SQLException exc) {}
+		if(this.single == true) {
 			this.con = DriverManager.getConnection(this.getDBUrl());
 		} else {
 			this.con = DriverManager.getConnection(this.getDBUrl(),

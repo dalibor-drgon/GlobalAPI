@@ -25,19 +25,30 @@
 package eu.wordnice.db.results;
 
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.Collection;
+
+import eu.wordnice.api.ImmArray;
 
 public class ResultResSet implements ResSet {
 
+	public String[] keys;
 	public ResultSet rs;
 	public boolean pendingFirst = false;
 
 	public ResultResSet() {}
 
-	public ResultResSet(ResultSet rs) {
+	public ResultResSet(ResultSet rs) throws SQLException {
 		this.rs = rs;
+		ResultSetMetaData md = rs.getMetaData();
+		int cols = md.getColumnCount();
+		this.keys = new String[cols];
+		for(int i = 0; i < cols; i++) {
+			this.keys[i] = md.getColumnName(i + 1);
+		}
 	}
-
+	
 	@Override
 	public Object getObject(String name) {
 		try {
@@ -243,6 +254,30 @@ public class ResultResSet implements ResSet {
 	@Override
 	public boolean isTable() {
 		return true;
+	}
+
+	@Override
+	public int cols() {
+		return this.keys.length;
+	}
+
+	@Override
+	public Collection<String> getKeys() {
+		return new ImmArray<String>(this.keys);
+	}
+
+	@Override
+	public Collection<Object> getValues() {
+		int n = this.cols();
+		Object[] vals = new Object[this.cols()];
+		try {
+			for(int i = 0; i < n; i++) {
+				vals[i] = this.rs.getObject(i + 1);
+			}
+		} catch(SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return new ImmArray<Object>(vals);
 	}
 
 }

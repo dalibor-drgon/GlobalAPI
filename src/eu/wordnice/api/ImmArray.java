@@ -37,7 +37,7 @@ public class ImmArray<T> implements List<T>, RandomAccess {
 	/**
 	 * Array to iterate
 	 */
-	protected T[] arr;
+	public T[] arr;
 	
 	/**
 	 * Create immutable iterable

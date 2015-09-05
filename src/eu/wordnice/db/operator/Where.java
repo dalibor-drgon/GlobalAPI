@@ -1,8 +1,9 @@
 package eu.wordnice.db.operator;
 
-import java.util.Arrays;
+import java.util.regex.Pattern;
 
 import eu.wordnice.api.Api;
+import eu.wordnice.api.ByteString;
 import eu.wordnice.db.Database;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.sql.MySQL;
@@ -116,15 +117,33 @@ public class Where {
 				
 			case SMALLER_EQUAL:
 				return rs.getDouble(this.key) <= ((Number) this.val).doubleValue();
+				
+			case REGEX:
+				if(this.sens) {
+					return Pattern.compile((String) this.val).matcher("" + rs.getObject(this.key)).find();
+				}
+				return Pattern.compile((String) this.val, Pattern.CASE_INSENSITIVE).matcher("" + rs.getObject(this.key)).find();
+				
+			case NOT_REGEX:
+				if(this.sens) {
+					return !Pattern.compile((String) this.val).matcher("" + rs.getObject(this.key)).find();
+				}
+				return !Pattern.compile((String) this.val, Pattern.CASE_INSENSITIVE).matcher("" + rs.getObject(this.key)).find();
 			
 			case NOT_EQUAL:
 				if(this.val instanceof Number) {
 					return rs.getDouble(this.key) != ((Number) this.val).doubleValue();
 				} else if(this.val instanceof byte[]) {
-					return !Arrays.equals((byte[]) rs.getBytes(this.key), (byte[]) this.val);
+					if(this.sens) {
+						return !ByteString.equals(rs.getBytes(this.key), (byte[]) this.val);
+					}
+					return !ByteString.equalsIgnoreCase(rs.getBytes(this.key), (byte[]) this.val);
 				} else if(this.val == null) {
 					return rs.getObject(this.key) != null;
 				} else {
+					if(!this.sens == this.val instanceof String) {
+						return !((String) this.val).equalsIgnoreCase(rs.getString(this.key));
+					}
 					return !this.val.equals(rs.getObject(this.key));
 				}
 				
@@ -133,10 +152,16 @@ public class Where {
 				if(this.val instanceof Number) {
 					return rs.getDouble(this.key) == ((Number) this.val).doubleValue();
 				} else if(this.val instanceof byte[]) {
-					return Arrays.equals((byte[]) rs.getBytes(this.key), (byte[]) this.val);
+					if(this.sens) {
+						return ByteString.equals(rs.getBytes(this.key), (byte[]) this.val);
+					}
+					return ByteString.equalsIgnoreCase(rs.getBytes(this.key), (byte[]) this.val);
 				} else if(this.val == null) {
 					return rs.getObject(this.key) == null;
 				} else {
+					if(!this.sens == this.val instanceof String) {
+						return ((String) this.val).equalsIgnoreCase(rs.getString(this.key));
+					}
 					return this.val.equals(rs.getObject(this.key));
 				}
 		}
@@ -151,19 +176,15 @@ public class Where {
 		Database db = new Database(w);*/
 		SQL sql = new MySQL("db.mysql-01.gsp-europe.net", "sql_1040", "sql_1040", "2qZ0h1e0nURTWbfiCQpHaz50Not8yuV");
 		Database db = new Database(sql, "shets");
-		ResSet rs = db.get(null, new Where[] {
+		ResSet rs = db.get(null, new And(
 				new Where("rekts", "SHREKT", WType.NOT_EQUAL),
 				new Where("rekts", "SHREKTy", WType.NOT_EQUAL, true),
 				new Where("rekts", "SHREKTy", WType.EQUAL, false),
 				new Where("rektb", new byte[] {}, WType.EQUAL, false),
-				new Where("rektd", 23.43, WType.SMALLER, false),
-		}, null, null, new Sort[] {
+				new Where("rektd", 23.43, WType.SMALLER, false)
+		), null, null, new Sort[] {
 				new Sort("rekts", SType.ASC_SC, false)
 		});
-		while(rs.next()) {
-			System.out.println(rs.getString("rekts"));
-		}
-		rs.first();
 		while(rs.next()) {
 			System.out.println(rs.getString("rekts"));
 		}

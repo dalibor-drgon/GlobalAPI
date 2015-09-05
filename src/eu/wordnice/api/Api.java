@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Array;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -59,6 +60,22 @@ public class Api {
 	
 	public static Random getRandom() {
 		return RANDOM;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <X, Y> X[] toArray(Collection<Y> col) {
+		if(col instanceof ImmArray) {
+			return ((ImmArray<X>) col).arr;
+		}
+		return ((Collection<X>) col).toArray((X[]) new Object[0]);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <X, Y> X[] toArray(Collection<Y> col, Class<?> c) {
+		if(col instanceof ImmArray) {
+			return ((ImmArray<X>) col).arr;
+		}
+		return ((Collection<X>) col).toArray((X[]) Array.newInstance(c, 0));
 	}
 	
 	public static Thread[] getThreads() {
@@ -1112,5 +1129,7 @@ public class Api {
 		long lnum = (long) num;
 		return ((lnum > 0) ? (lnum + 1) : (lnum));
 	}
+	
+	
 	
 }

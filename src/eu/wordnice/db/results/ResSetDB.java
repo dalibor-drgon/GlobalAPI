@@ -1,8 +1,7 @@
 package eu.wordnice.db.results;
 
-import java.util.Collection;
-
 import eu.wordnice.db.RawUnsupportedException;
+import eu.wordnice.db.operator.Sort;
 
 public interface ResSetDB extends ResSet {
 	
@@ -10,21 +9,6 @@ public interface ResSetDB extends ResSet {
 	 * @return Number of rows
 	 */
 	public int size();
-	
-	/**
-	 * @return If table-based database, return number of columns, otherwise 0
-	 */
-	public int cols();
-	
-	/**
-	 * @return Current keys. Do not modify, collection should be immutable
-	 */
-	public Collection<String> getKeys();
-	
-	/**
-	 * @return Current values. Do not modify, collection should be immutable
-	 */
-	public Collection<Object> getValues();
 	
 	/**
 	 * @param name
@@ -65,10 +49,23 @@ public interface ResSetDB extends ResSet {
 	 * All inserts and updates must be ignored by snapshot,
 	 * but inserted into original database
 	 * 
-	 * @return If `this instanceof ResSetDBSnap`, returns `this`.
-	 *         Otherwise create new snapshot
+	 * @return If calling for ResSetDBSnap, should return another copy
+	 *         of original database
 	 */
 	public ResSetDBSnap getSnapshot();
+	
+	/**
+	 * Sort values by given schema
+	 * 
+	 * @param sorts Schema for sorting
+	 * 
+	 * @throws UnsupportedOperationException
+	 *         If this operation is not supported. In this case
+	 *         there is got snapshot from this database, and data are
+	 *         copyied to SetSetResSet or CollResSet, depending
+	 *         on {@link ResSetDB#isTable()}                            
+	 */
+	public void sort(Sort[] sorts) throws UnsupportedOperationException;
 	
 	
 	/**

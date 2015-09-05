@@ -84,24 +84,22 @@ public abstract class ConnectionSQL implements SQL {
 
 	@Override
 	public boolean isClosed() {
-		if (this.stm == null || this.con == null) {
+		if(this.con == null) {
 			return true;
 		}
-		boolean stmc = true;
-		boolean conc = true;
 		try {
-			stmc = this.stm.isClosed();
+			return this.con.isClosed();
 		} catch (Throwable t) {}
-		if (stmc == false) {
-			try {
-				conc = this.con.isClosed();
-			} catch (Throwable t) {}
-		}
-		return (stmc == true || conc == true);
+		return true;
 	}
 
 	public void checkConnection() throws SQLException {
-		this.connect();
+		if(this.isClosed()) {
+			this.connect();
+		}
+		if(this.stm == null) {
+			this.stm = this.con.createStatement();
+		}
 	}
 
 	@Override

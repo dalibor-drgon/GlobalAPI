@@ -26,7 +26,7 @@ public class Sort {
 	 */
 	public Sort(String key, SType type, boolean bin) {
 		this.key = key;
-		this.type = type;
+		this.type = (type == null) ? SType.ASC : type;
 		this.bin = bin;
 	}
 	
@@ -38,7 +38,7 @@ public class Sort {
 	 */
 	public Sort(String key, SType type) {
 		this.key = key;
-		this.type = type;
+		this.type = (type == null) ? SType.ASC : type;
 		this.bin = false;
 	}
 	
@@ -49,7 +49,7 @@ public class Sort {
 	 */
 	public Sort(String key) {
 		this.key = key;
-		this.type = null;
+		this.type = SType.ASC;
 		this.bin = false;
 	}
 
@@ -58,7 +58,7 @@ public class Sort {
 	 * @return SQL string
 	 */
 	public String toSQL() {
-		return this.key + " " + ((this.type == null) ? SType.ASC.toSQL(this.bin) : this.type.toSQL(this.bin));
+		return this.key + " " + this.type.toSQL(this.bin);
 	}
 	
 }

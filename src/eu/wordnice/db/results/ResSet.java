@@ -24,7 +24,24 @@
 
 package eu.wordnice.db.results;
 
+import java.util.Collection;
+
 public interface ResSet {
+	
+	/**
+	 * @return If table-based database, return number of columns, otherwise 0
+	 */
+	public int cols();
+	
+	/**
+	 * @return Current keys. Do not modify, collection should be immutable
+	 */
+	public Collection<String> getKeys();
+	
+	/**
+	 * @return Current values. Do not modify, collection should be immutable
+	 */
+	public Collection<Object> getValues();
 	
 	/**
 	 * @return `true` if results are from table-based database

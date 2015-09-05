@@ -33,6 +33,7 @@ import java.util.ListIterator;
 import java.util.Map;
 
 import eu.wordnice.db.RawUnsupportedException;
+import eu.wordnice.db.operator.Sort;
 
 public class CollResSet extends SimpleResSet implements ResSetDB {
 
@@ -253,9 +254,15 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 		
 		@Override
 		public ResSetDBSnap getSnapshot() {
-			return this;
+			return this.getOriginal().getSnapshot();
 		}
 		
+	}
+
+
+	@Override
+	public void sort(Sort[] sorts) throws UnsupportedOperationException {
+		// TODO Auto-generated method stub		
 	}
 
 }
