@@ -1,25 +1,25 @@
 /*
- The MIT License (MIT)
-
- Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
-
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
-
- The above copyright notice and this permission notice shall be included in all
- copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package eu.wordnice.api;
@@ -50,6 +50,8 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import eu.wordnice.api.cols.ImmArray;
+
 public class Api {
 	
 	public static Random RANDOM = new Random();
@@ -65,7 +67,7 @@ public class Api {
 	@SuppressWarnings("unchecked")
 	public static <X, Y> X[] toArray(Collection<Y> col) {
 		if(col instanceof ImmArray) {
-			return ((ImmArray<X>) col).arr;
+			return (X[]) ((ImmArray<X>) col).arr;
 		}
 		return ((Collection<X>) col).toArray((X[]) new Object[0]);
 	}
@@ -73,7 +75,7 @@ public class Api {
 	@SuppressWarnings("unchecked")
 	public static <X, Y> X[] toArray(Collection<Y> col, Class<?> c) {
 		if(col instanceof ImmArray) {
-			return ((ImmArray<X>) col).arr;
+			return (X[]) ((ImmArray<X>) col).arr;
 		}
 		return ((Collection<X>) col).toArray((X[]) Array.newInstance(c, 0));
 	}

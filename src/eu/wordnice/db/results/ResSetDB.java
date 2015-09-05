@@ -1,4 +1,30 @@
+/*
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package eu.wordnice.db.results;
+
+import java.util.Map;
 
 import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.Sort;
@@ -20,29 +46,29 @@ public interface ResSetDB extends ResSet {
 	/**
 	 * Check if values can be inserted into database
 	 * 
-	 * @param pair {key, value, key2, value2, ...}
+	 * @param vals Values
 	 * 
 	 * @return `true` if data are valid
 	 */
-	public boolean checkRow(Object[] pair);
+	public boolean checkRow(Map<String, Object> vals);
 	
 	/**
 	 * Update current values
 	 * 
-	 * @param pair {key, value, key2, value2, ...}
+	 * @param vals Values
 	 * 
 	 * @throws Exception Implementation specific exception
 	 */
-	public void update(Object[] pair) throws Exception;
+	public void update(Map<String, Object> vals) throws Exception;
 	
 	/**
 	 * Insert values
 	 * 
-	 * @param pair {key, value, key2, value2, ...}
+	 * @param vals Values
 	 * 
 	 * @throws Exception Implementation specific exception
 	 */
-	public void insert(Object[] pair) throws Exception;
+	public void insert(Map<String, Object> vals) throws Exception;
 	
 	/**
 	 * Get current database snapshot
@@ -55,17 +81,36 @@ public interface ResSetDB extends ResSet {
 	public ResSetDBSnap getSnapshot();
 	
 	/**
+	 * @return `true` when methods {@link ResSetDB#sort(Sort[])} and
+	 *         {@link ResSetDB#cut(int, int)} are accessible
+	 */
+	public boolean hasSort();
+	
+	/**
 	 * Sort values by given schema
+	 * This action also calls {@link ResSetDB#first()}
 	 * 
 	 * @param sorts Schema for sorting
 	 * 
+	 * @see {@link java.util.Arrays#sort(Object[], java.util.Comparator)}
+	 * @see {@link java.util.Collections#sort(java.util.List, java.util.Comparator)}
+	 * 
 	 * @throws UnsupportedOperationException
-	 *         If this operation is not supported. In this case
-	 *         there is got snapshot from this database, and data are
-	 *         copyied to SetSetResSet or CollResSet, depending
-	 *         on {@link ResSetDB#isTable()}                            
+	 *         If {@link ResSetDB#hasSort()} returns `false`                        
 	 */
 	public void sort(Sort[] sorts) throws UnsupportedOperationException;
+	
+	/**
+	 * Cut results
+	 * This action also calls {@link ResSetDB#first()}
+	 * 
+	 * @param off Offset
+	 * @param len Length of new results
+	 * 
+	 * @throws UnsupportedOperationException
+	 *         If {@link ResSetDB#hasSort()} returns `false` 
+	 */
+	public void cut(int off, int len) throws UnsupportedOperationException;
 	
 	
 	/**

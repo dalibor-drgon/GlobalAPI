@@ -1,25 +1,25 @@
 /*
- The MIT License (MIT)
-
- Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
-
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
-
- The above copyright notice and this permission notice shall be included in all
- copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package eu.wordnice.db.results;
@@ -28,6 +28,8 @@ import java.lang.reflect.Constructor;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -54,10 +56,6 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 		this.first();
 	}
 	
-	protected Map<String, Object> getCurrent() {
-		return this.cur;
-	}
-	
 	protected Map<String, Object> createMap(Object[] pair) {
 		Map<String, Object> vals = this.factory.createMap(pair);
 		if(vals != null) {
@@ -74,7 +72,7 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 
 	@Override
 	public Object getObject(String name) {
-		return this.getCurrent().get(name);
+		return this.getEntries().get(name);
 	}
 
 	@Override
@@ -130,6 +128,11 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 	public Collection<Object> getValues() {
 		return this.cur.values();
 	}
+	
+	@Override
+	public Map<String, Object> getEntries() {
+		return this.cur;
+	}
 
 	@Override
 	public int getColumnIndex(String name) {
@@ -137,18 +140,18 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 	}
 
 	@Override
-	public boolean checkRow(Object[] pair) {
-		return true;
+	public boolean checkRow(Map<String, Object> vals) {
+		return vals != null;
 	}
 
 	@Override
-	public void update(Object[] pair) throws Exception {
-		this.it.set(this.createMap(pair));
+	public void update(Map<String, Object> vals) throws Exception {
+		this.it.set(vals);
 	}
 
 	@Override
-	public void insert(Object[] pair) throws Exception {
-		this.list.add(this.createMap(pair));
+	public void insert(Map<String, Object> vals) throws Exception {
+		this.list.add(vals);
 	}
 
 	@Override
@@ -199,6 +202,41 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 		throw new RawUnsupportedException();
 	}
 	
+	/**
+	 * Optional, but implemented sort
+	 * @see {@link ResSetDB#hasSort()}
+	 */
+	@Override
+	public boolean hasSort() {
+		return true;
+	}
+	
+	@Override
+	public void sort(final Sort[] sorts) throws UnsupportedOperationException {
+		Collections.sort(this.list, new Comparator<Map<String, Object>>() {
+
+			@Override
+			public int compare(Map<String, Object> m1, Map<String, Object> m2) {
+				for(int i = 0, n = sorts.length; i < n; i++) {
+					Sort cur = sorts[i];
+					int cmp = cur.type.comp.compare(m1.get(cur.key), m2.get(cur.key));
+					if(cmp != 0) {
+						return cmp;
+					}
+				}
+				return 0;
+			}
+			
+		});
+		this.first();
+	}
+
+	@Override
+	public void cut(int off, int len) throws UnsupportedOperationException {
+		this.list = this.list.subList(off, off + len);
+		this.first();
+	}
+	
 
 	/**
 	 * Map Factory
@@ -225,16 +263,24 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 
 	@Override
 	public ResSetDBSnap getSnapshot() {
-		return new CollResSetSnapshot();
+		return new CollResSetSnapshot(this);
 	}
 	
+	/**
+	 * Database snapshot
+	 * 
+	 * @author wordnice
+	 */
 	protected class CollResSetSnapshot extends CollResSet implements ResSetDBSnap {
 		
+		protected CollResSet orig;
+		
 		@SuppressWarnings("unchecked")
-		protected CollResSetSnapshot() {
+		protected CollResSetSnapshot(CollResSet orig) {
+			this.orig = orig;
 			List<Map<String, Object>> list = null;
 			try {
-				Class<?> c = CollResSet.this.list.getClass();
+				Class<?> c = orig.list.getClass();
 				Constructor<?> con = c.getDeclaredConstructor();
 				con.setAccessible(true);
 				list = (List<Map<String, Object>>) con.newInstance();
@@ -242,14 +288,15 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 			if(list == null) {
 				list = new ArrayList<Map<String, Object>>();
 			}
-			list.addAll(CollResSet.this.list);
+			list.addAll(orig.list);
 			this.list = list;
+			this.factory = orig.factory;
 			this.first();
 		}
 		
 		@Override
 		public ResSetDB getOriginal() {
-			return CollResSet.this;
+			return this.orig;
 		}
 		
 		@Override
@@ -257,12 +304,6 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 			return this.getOriginal().getSnapshot();
 		}
 		
-	}
-
-
-	@Override
-	public void sort(Sort[] sorts) throws UnsupportedOperationException {
-		// TODO Auto-generated method stub		
 	}
 
 }

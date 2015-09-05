@@ -22,8 +22,9 @@
  * SOFTWARE.
  */
 
-package eu.wordnice.api;
+package eu.wordnice.api.cols;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -31,20 +32,42 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.RandomAccess;
+import java.util.Set;
 
-public class ImmArray<T> implements List<T>, RandomAccess {
+import javax.annotation.concurrent.Immutable;
+
+import eu.wordnice.api.Api;
+
+@Immutable
+public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 	
 	/**
 	 * Array to iterate
 	 */
-	public T[] arr;
+	public Object[] arr;
 	
 	/**
-	 * Create immutable iterable
+	 * Size
+	 */
+	public int size;
+	
+	/**
+	 * Create immutable iterable randomaccess list & set
 	 * @param arr Array to iterate
 	 */
-	public ImmArray(T[] arr) {
+	public ImmArray(Object[] arr) {
 		this.arr = arr;
+		this.size = arr.length;
+	}
+	
+	/**
+	 * Create immutable iterable randomaccess list & set
+	 * @param arr Array to iterate
+	 * @param size Size of array
+	 */
+	public ImmArray(Object[] arr, int size) {
+		this.arr = arr;
+		this.size = size;
 	}
 
 	/**
@@ -74,7 +97,7 @@ public class ImmArray<T> implements List<T>, RandomAccess {
 		return new SimpleIterator(start);
 	}
 	
-	class SimpleIterator implements ListIterator<T> {
+	public class SimpleIterator implements ListIterator<T> {
 		
 		/**
 		 * Current index
@@ -85,7 +108,7 @@ public class ImmArray<T> implements List<T>, RandomAccess {
 		 * Create iterator
 		 */
 		protected SimpleIterator(int i) {
-			if(i < 0 || i >= ImmArray.this.arr.length) {
+			if(i < 0 || i >= ImmArray.this.size) {
 				throw new ArrayIndexOutOfBoundsException(i);
 			}
 			this.i = i - 1;
@@ -97,7 +120,7 @@ public class ImmArray<T> implements List<T>, RandomAccess {
 		@Override
 		public boolean hasNext() {
 			int index = this.i + 1;
-			if(index < ImmArray.this.arr.length) {
+			if(index < ImmArray.this.size) {
 				this.i++;
 				return true;
 			}
@@ -107,16 +130,17 @@ public class ImmArray<T> implements List<T>, RandomAccess {
 		/**
 		 * @see java.util.Iterator#next()
 		 */
+		@SuppressWarnings("unchecked")
 		@Override
 		public T next() {
 			int index = this.i;
 			if(index == -1) {
 				index = 0;
 			}
-			if(index >= ImmArray.this.arr.length) {
+			if(index >= ImmArray.this.size) {
 				throw new NoSuchElementException();
 			}
-			return ImmArray.this.arr[index];
+			return (T) ImmArray.this.arr[index];
 		}
 
 		/**
@@ -145,7 +169,7 @@ public class ImmArray<T> implements List<T>, RandomAccess {
 		@Override
 		public int nextIndex() {
 			int index = this.i;
-			int max = ImmArray.this.arr.length;
+			int max = ImmArray.this.size;
 			if(index <= max) {
 				if(index < 0) {
 					return 0;
@@ -163,7 +187,7 @@ public class ImmArray<T> implements List<T>, RandomAccess {
 		@Override
 		public int previousIndex() {
 			int index = this.i;
-			int max = ImmArray.this.arr.length;
+			int max = ImmArray.this.size;
 			if(index <= max) {
 				return index;
 			}
@@ -182,24 +206,24 @@ public class ImmArray<T> implements List<T>, RandomAccess {
 
 	@Override
 	public int size() {
-		return this.arr.length;
+		return this.size;
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return (this.arr.length == 0);
+		return (this.size == 0);
 	}
 
 	@Override
 	public boolean contains(Object o) {
 		if(o == null) {
-			for(int i = 0, n = this.arr.length; i < n; i++) {
+			for(int i = 0, n = this.size; i < n; i++) {
 				if(this.arr[i] == null) {
 					return true;
 				}
 			}
 		} else {
-			for(int i = 0, n = this.arr.length; i < n; i++) {
+			for(int i = 0, n = this.size; i < n; i++) {
 				if(o.equals(this.arr[i])) {
 					return true;
 				}
@@ -210,13 +234,19 @@ public class ImmArray<T> implements List<T>, RandomAccess {
 
 	@Override
 	public Object[] toArray() {
-		return Arrays.copyOf((Object[]) this.arr, this.arr.length);
+		return Arrays.copyOf((Object[]) this.arr, this.size);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <U> U[] toArray(U[] a) {
-		return (U[]) Arrays.copyOf(this.arr, this.arr.length);
+	public <U> U[] toArray(U[] ar) {
+		if(ar == null) {
+			ar = (U[]) new Object[this.size];
+		} else if(ar.length < this.size) {
+			ar = (U[]) Array.newInstance(ar.getClass().getComponentType(), this.size);
+		}
+		Api.memcpy(ar, this.arr, this.size);
+		return ar;
 	}
 
 	@Override
@@ -270,9 +300,10 @@ public class ImmArray<T> implements List<T>, RandomAccess {
 		throw new UnsupportedOperationException("Immutable collection!");
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public T get(int index) {
-		return this.arr[index];
+		return (T) this.arr[index];
 	}
 
 	@Override
@@ -300,5 +331,24 @@ public class ImmArray<T> implements List<T>, RandomAccess {
 		return new ImmArray<T>(Arrays.copyOfRange(this.arr, from, to));
 	}
 	
+	@Override
+	public String toString() {
+		int len = this.size;
+		if(len == 0) {
+			return "[]";
+		}
+
+		StringBuilder sb = new StringBuilder();
+		sb.append('[');
+		for(int i = 0; i < len;) {
+			Object key = this.arr[i++];
+			if(i != 1) {
+				sb.append(',').append(' ');
+			}
+			sb.append((key == this) ? "(this Collection)" : key);
+		}
+		sb.append(']');
+		return sb.toString();
+	}
 	
 }

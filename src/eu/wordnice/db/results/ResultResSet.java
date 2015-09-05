@@ -1,25 +1,25 @@
 /*
- The MIT License (MIT)
-
- Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
-
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
-
- The above copyright notice and this permission notice shall be included in all
- copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package eu.wordnice.db.results;
@@ -28,8 +28,10 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Map;
 
-import eu.wordnice.api.ImmArray;
+import eu.wordnice.api.cols.ImmArray;
+import eu.wordnice.api.cols.ImmMapArray;
 
 public class ResultResSet implements ResSet {
 
@@ -265,9 +267,8 @@ public class ResultResSet implements ResSet {
 	public Collection<String> getKeys() {
 		return new ImmArray<String>(this.keys);
 	}
-
-	@Override
-	public Collection<Object> getValues() {
+	
+	protected Object[] getValuesArray() {
 		int n = this.cols();
 		Object[] vals = new Object[this.cols()];
 		try {
@@ -277,7 +278,17 @@ public class ResultResSet implements ResSet {
 		} catch(SQLException e) {
 			throw new RuntimeException(e);
 		}
-		return new ImmArray<Object>(vals);
+		return vals;
+	}
+
+	@Override
+	public Collection<Object> getValues() {
+		return new ImmArray<Object>(this.getValuesArray());
+	}
+
+	@Override
+	public Map<String, Object> getEntries() {
+		return new ImmMapArray<String, Object>(this.keys, this.getValuesArray(), this.keys.length);
 	}
 
 }

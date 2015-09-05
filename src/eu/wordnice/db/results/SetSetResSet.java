@@ -1,25 +1,25 @@
 /*
- The MIT License (MIT)
-
- Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
-
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
-
- The above copyright notice and this permission notice shall be included in all
- copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package eu.wordnice.db.results;
@@ -27,11 +27,17 @@ package eu.wordnice.db.results;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import eu.wordnice.api.Api;
-import eu.wordnice.api.ImmArray;
+import eu.wordnice.api.cols.ImmArray;
+import eu.wordnice.api.cols.ImmMapPair;
 import eu.wordnice.db.operator.Sort;
 
 public class SetSetResSet extends SimpleResSet implements ResSetDB {
@@ -78,11 +84,13 @@ public class SetSetResSet extends SimpleResSet implements ResSetDB {
 		return this.cur;
 	}
 	
-	protected Object[] pair2raw(Object[] pair) throws IllegalArgumentException {
+	protected Object[] vals2raw(Map<String, Object> vals) throws IllegalArgumentException {
 		Object[] nev = new Object[this.cols()];
-		for(int i = 0, n = pair.length; i < n; i++) {
-			String key = (String) pair[i++];
-			Object val = pair[i++];
+		Iterator<Entry<String, Object>> it = vals.entrySet().iterator();
+		while(it.hasNext()) {
+			Entry<String, Object> ent =  it.next();
+			String key = ent.getKey();
+			Object val = ent.getValue();
 			int index = this.getColumnIndex(key);
 			if(index != -1 && this.isRawValueOK(key, index)) {
 				nev[index] = val;
@@ -113,6 +121,9 @@ public class SetSetResSet extends SimpleResSet implements ResSetDB {
 	@Override
 	public Object getObject(int in) {
 		this.checkSet();
+		if(in < 0 || in >= this.cols()) {
+			return null;
+		}
 		return this.getCurrent()[in];
 	}
 
@@ -174,6 +185,11 @@ public class SetSetResSet extends SimpleResSet implements ResSetDB {
 	public Collection<Object> getValues() {
 		return new ImmArray<Object>(this.getCurrent());
 	}
+	
+	@Override
+	public Map<String, Object> getEntries() {
+		return new ImmMapPair<String, Object>(this.names, this.getCurrent(), this.cols);
+	}
 
 	@Override
 	public int getColumnIndex(String name) {
@@ -185,10 +201,12 @@ public class SetSetResSet extends SimpleResSet implements ResSetDB {
 	}
 
 	@Override
-	public boolean checkRow(Object[] pair) {
-		for(int i = 0, n = pair.length; i < n; i++) {
-			String key = (String) pair[i++];
-			Object val = pair[i++];
+	public boolean checkRow(Map<String, Object> vals) {
+		Iterator<Entry<String, Object>> it = vals.entrySet().iterator();
+		while(it.hasNext()) {
+			Entry<String, Object> ent =  it.next();
+			String key = ent.getKey();
+			Object val = ent.getValue();
 			if(!this.isRawValueOK(key, val)) {
 				return false;
 			}
@@ -197,13 +215,13 @@ public class SetSetResSet extends SimpleResSet implements ResSetDB {
 	}
 	
 	@Override
-	public void update(Object[] pair) throws Exception {
-		this.updateRaw(this.pair2raw(pair));
+	public void update(Map<String, Object> vals) throws Exception {
+		this.updateRaw(this.vals2raw(vals));
 	}
 
 	@Override
-	public void insert(Object[] pair) throws Exception {
-		this.insertRaw(this.pair2raw(pair));
+	public void insert(Map<String, Object> vals) throws Exception {
+		this.insertRaw(this.vals2raw(vals));
 	}
 
 	@Override
@@ -248,19 +266,65 @@ public class SetSetResSet extends SimpleResSet implements ResSetDB {
 		}
 		this.values.add(values);
 	}
+	
+	/**
+	 * Optional, but implemented sort
+	 * @see {@link ResSetDB#hasSort()}
+	 */
+	@Override
+	public boolean hasSort() {
+		return true;
+	}
+	
+	@Override
+	public void sort(final Sort[] sorts) throws UnsupportedOperationException {
+		Collections.sort(this.values, new Comparator<Object[]>() {
+
+			@Override
+			public int compare(Object[] m1, Object[] m2) {
+				for(int i = 0, n = sorts.length; i < n; i++) {
+					Sort cur = sorts[i];
+					int index = SetSetResSet.this.getColumnIndex(cur.key);
+					if(index != -1) {
+						int cmp = cur.type.comp.compare(m1[index], m2[index]);
+						if(cmp != 0) {
+							return cmp;
+						}
+					}
+				}
+				return 0;
+			}
+			
+		});
+		this.first();
+	}
+	
+	@Override
+	public void cut(int off, int len) throws UnsupportedOperationException {
+		this.values = this.values.subList(off, off + len);
+		this.first();
+	}
 
 	@Override
 	public ResSetDBSnap getSnapshot() {
-		return new SetSetResSetSnapshot();
+		return new SetSetResSetSnapshot(this);
 	}
 	
+	/**
+	 * Database snapshot
+	 * 
+	 * @author wordnice
+	 */
 	protected class SetSetResSetSnapshot extends SetSetResSet implements ResSetDBSnap {
 		
+		protected SetSetResSet orig;
+		
 		@SuppressWarnings("unchecked")
-		protected SetSetResSetSnapshot() {
+		protected SetSetResSetSnapshot(SetSetResSet orig) {
+			this.orig = orig;
 			List<Object[]> list = null;
 			try {
-				Class<?> c = SetSetResSet.this.values.getClass();
+				Class<?> c = orig.values.getClass();
 				Constructor<?> con = c.getDeclaredConstructor();
 				con.setAccessible(true);
 				list = (List<Object[]>) con.newInstance();
@@ -268,26 +332,22 @@ public class SetSetResSet extends SimpleResSet implements ResSetDB {
 			if(list == null) {
 				list = new ArrayList<Object[]>();
 			}
-			list.addAll(SetSetResSet.this.values);
+			list.addAll(orig.values);
 			this.values = list;
+			this.names = orig.names;
+			this.cols = orig.cols;
 			this.first();
 		}
 		
 		@Override
 		public ResSetDB getOriginal() {
-			return SetSetResSet.this;
+			return this.orig;
 		}
 		
 		@Override
 		public ResSetDBSnap getSnapshot() {
 			return this.getOriginal().getSnapshot();
 		}
-		
-	}
-
-	@Override
-	public void sort(Sort[] sorts) throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
 		
 	}
 

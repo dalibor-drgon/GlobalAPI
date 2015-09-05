@@ -1,3 +1,27 @@
+/*
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package eu.wordnice.db;
 
 import java.io.File;
@@ -9,12 +33,12 @@ import java.util.Map;
 import eu.wordnice.api.Api;
 import eu.wordnice.api.Val;
 import eu.wordnice.db.operator.AndOr;
+import eu.wordnice.db.operator.Limit;
 import eu.wordnice.db.operator.Sort;
 import eu.wordnice.db.results.CollResSet;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.results.ResSetDB;
 import eu.wordnice.db.results.ResSetDBAdvanced;
-import eu.wordnice.db.results.ResSetDBSnap;
 import eu.wordnice.db.results.ResultResSet;
 import eu.wordnice.db.results.SetSetResSet;
 import eu.wordnice.db.sql.MySQL;
@@ -117,7 +141,7 @@ public class Database {
 			if(table == null) {
 				throw new IllegalArgumentException("SQLite table is null!");
 			}
-			this.init(new SQLite(new File(file)), table);
+			this.init(new SQLite(Api.getRealPath(new File(file))), table);
 			this.sql.connect();
 		} else if(type.equals("mysql")) {
 			String host = data.get("host");
@@ -176,11 +200,11 @@ public class Database {
 	}
 	
 	/**
-	 * @see {@link Database#get(String[], AndOr, Integer, Integer, Sort[])}
+	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
 	 * @return ResSet with all values
 	 */
 	public ResSet get() throws IllegalArgumentException, Exception {
-		return this.get(null, null, null, null, null);
+		return this.get(null, null, null, null);
 	}
 	
 	/**
@@ -188,15 +212,14 @@ public class Database {
 	 *                available columns.
 	 *                If null, then there are selected all available columns
 	 * @param where Filter values
-	 * @param off Offset
-	 * @param limit Limit
+	 * @param limit Offset + Limit
 	 * @param sort Sort by
 	 * 
-	 * @throws IllegalArgumentException Where (off != null && off < 0) or (limit != null && limit <= 0)
+	 * @throws IllegalArgumentException When limit != null and (limit.off < 0 or limit.len <= 0)
 	 * @throws Exception Implementation specific exception
 	 * @return Results
 	 */
-	public ResSet get(String[] columns, AndOr where, Integer off, Integer limit, Sort[] sort) throws IllegalArgumentException, Exception {
+	public ResSet get(String[] columns, AndOr where, Limit limit, Sort[] sort) throws IllegalArgumentException, Exception {
 		if(this.sql != null) {
 			StringBuilder suf = new StringBuilder();
 			if(sort != null && sort.length != 0) {
@@ -208,25 +231,25 @@ public class Database {
 					suf.append(sort[i].toSQL());
 				}
 			}
-			if(off != null) {
-				if(off < 0) {
-					throw new IllegalArgumentException("Invalid offset " + off);
-				} else if(off > 0) {
-					suf.append(" OFFSET ");
-					suf.append(off.toString());
-				}
-			}
 			if(limit != null) {
-				if(limit <= 0) {
+				if(limit.len <= 0) {
 					throw new IllegalArgumentException("Invalid limit " + limit);
 				} else {
 					suf.append(" LIMIT ");
-					suf.append(limit.toString());
+					suf.append(limit.len);
+				}
+					
+				if(limit.off < 0) {
+					throw new IllegalArgumentException("Invalid offset " + limit.off);
+				} else if(limit.off > 0) {
+					suf.append(" OFFSET ");
+					suf.append(limit.off);
 				}
 			}
 			if(columns == null && where == null) {
 				return sql.query("SELECT * FROM " + this.sql_table + suf.toString());
 			}
+			
 			String cols = null;
 			if(columns == null) {
 				cols = "*";
@@ -237,6 +260,7 @@ public class Database {
 			if(where == null) {
 				return this.sql.query(cmd + suf.toString());
 			}
+			
 			Val.TwoVal<String, List<Object>> whproc = where.toSQL();
 			PreparedStatement ps = this.sql.prepare(cmd + " WHERE " + whproc.one + suf.toString());
 			List<Object> list = whproc.two;
@@ -244,13 +268,12 @@ public class Database {
 				Object v = list.get(i++);
 				ps.setObject(i, v);
 			}
-			//ps.getConnection().setC
 			return new ResultResSet(ps.executeQuery());
 		} else {
 			if(this.rs instanceof ResSetDBAdvanced) {
-				return ((ResSetDBAdvanced) this.rs).get(columns, where, off, limit, sort);
+				return ((ResSetDBAdvanced) this.rs).get(columns, where, limit, sort);
 			}
-			ResSetDBSnap rs = this.rs.getSnapshot();
+			ResSetDB rs = this.rs.getSnapshot();
 			if(where != null) {
 				while(rs.next()) {
 					if(where.match(rs) == false) {
@@ -259,43 +282,41 @@ public class Database {
 				}
 			}
 			if(sort != null) {
+				if(rs.hasSort() == false) {
+					rs = Database.copy(rs);
+				}
 				rs.sort(sort);
+			}
+			if(limit != null) {
+				if(limit.len <= 0) {
+					throw new IllegalArgumentException("Invalid limit " + limit);
+				}
+				if(limit.off < 0) {
+					throw new IllegalArgumentException("Invalid offset " + limit.off);
+				}
+				if(rs.hasSort() == false) {
+					rs = Database.copy(rs);
+				}
+				rs.cut(limit.off, limit.len);
 			}
 			return rs;
 		}
 	}
 	
 	
-	public static ResSetDB copy(ResSetDBSnap rs) throws IllegalArgumentException, Exception {
+	public static ResSetDB copy(ResSet rs) throws IllegalArgumentException, Exception {
 		if(rs.isTable()) {
 			ResSetDB nev = new SetSetResSet(Api.<String, String>toArray(rs.getKeys()));
-			if(rs.isRaw()) {
-				while(rs.next()) {
-					nev.insertRaw(Api.toArray(rs.getValues()));
-				}
+			while(rs.next()) {
+				nev.insertRaw(Api.toArray(rs.getValues()));
 			}
-		} else {
-			ResSetDB nev = new CollResSet();
+			return nev;
 		}
-		return null;
-	}
-	
-	public static ResSetDB sort(ResSetDBSnap rs, Sort[] sort) throws IllegalArgumentException, Exception {
-		return Database.sortLimit(rs, null, null, sort);
-	}
-	
-	public static ResSetDB sortLimit(ResSetDBSnap rs, Integer off, Integer len, Sort[] sort) throws IllegalArgumentException, Exception {
-		if(rs.isTable()) {
-			ResSetDB nev = new SetSetResSet(Api.<String, String>toArray(rs.getKeys()));
-			if(rs.isRaw()) {
-				while(rs.next()) {
-					nev.insertRaw(Api.toArray(rs.getValues()));
-				}
-			}
-		} else {
-			ResSetDB nev = new CollResSet();
+		ResSetDB nev = new CollResSet();
+		while(rs.next()) {
+			nev.insert(rs.getEntries());
 		}
-		return null;
+		return nev;
 	}
 	
 }

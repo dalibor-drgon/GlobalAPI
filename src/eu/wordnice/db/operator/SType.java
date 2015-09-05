@@ -1,3 +1,27 @@
+/*
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package eu.wordnice.db.operator;
 
 import java.util.Comparator;
@@ -23,6 +47,8 @@ public enum SType {
 					char c1 = s1.charAt(i);
 					char c2 = s2.charAt(i);
 					if(c1 != c2) {
+						char h1 = c1;
+						char h2 = c2;
 						c1 = Character.toUpperCase(c1);
 						c2 = Character.toUpperCase(c2);
 						if(c1 != c2) {
@@ -31,6 +57,8 @@ public enum SType {
 							if(c1 != c2) {
 								return c1 - c2;
 							}
+						} else {
+							return h1 - h2;
 						}
 					}
 				}
@@ -46,10 +74,14 @@ public enum SType {
 					byte c1 = b1[i];
 					byte c2 = b2[i];
 					if(c1 != c2) {
+						byte h1 = c1;
+						byte h2 = c2;
 						c1 = ByteChar.toLower(c1);
 						c2 = ByteChar.toLower(c2);
 						if(c1 != c2) {
 							return c1 - c2;
+						} else {
+							return h1 - h2;
 						}
 					}
 				}
@@ -96,7 +128,7 @@ public enum SType {
 	 * Case-insensitive
 	 * Ascending = From the smallest to the biggest
 	 */
-	ASC_SC("COLLATE utf8_bin ASC", new Comparator<Object>() {
+	ASC_CS("COLLATE utf8_bin ASC", new Comparator<Object>() {
 
 		@Override
 		public int compare(Object o1, Object o2) {
@@ -159,11 +191,11 @@ public enum SType {
 	 * Case-insensitive
 	 * Descending = From the biggest to the smallest
 	 */
-	DESC_SC("COLLATE utf8_bin DESC", new Comparator<Object>() {
+	DESC_CS("COLLATE utf8_bin DESC", new Comparator<Object>() {
 
 		@Override
 		public int compare(Object o1, Object o2) {
-			return SType.ASC_SC.getComp().compare(o2, o1);
+			return SType.ASC_CS.getComp().compare(o2, o1);
 		}
 		
 	});

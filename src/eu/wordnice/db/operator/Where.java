@@ -1,13 +1,38 @@
+/*
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package eu.wordnice.db.operator;
 
 import java.util.regex.Pattern;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.ByteString;
+import eu.wordnice.db.DBType;
 import eu.wordnice.db.Database;
 import eu.wordnice.db.results.ResSet;
-import eu.wordnice.db.sql.MySQL;
-import eu.wordnice.db.sql.SQL;
+import eu.wordnice.db.results.ResSetDB;
+import eu.wordnice.db.wndb.WNDB;
 
 public class Where {
 	
@@ -118,6 +143,8 @@ public class Where {
 			case SMALLER_EQUAL:
 				return rs.getDouble(this.key) <= ((Number) this.val).doubleValue();
 				
+				//TODO
+				
 			case REGEX:
 				if(this.sens) {
 					return Pattern.compile((String) this.val).matcher("" + rs.getObject(this.key)).find();
@@ -174,16 +201,28 @@ public class Where {
 		/*ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		WNDB w = WNDB.createWNDB(new OStream(baos), new String[] {"yolo", "thug"}, new DBType[] {DBType.BOOLEAN, DBType.STRING});
 		Database db = new Database(w);*/
-		SQL sql = new MySQL("db.mysql-01.gsp-europe.net", "sql_1040", "sql_1040", "2qZ0h1e0nURTWbfiCQpHaz50Not8yuV");
-		Database db = new Database(sql, "shets");
+		//SQL sql = new MySQL("db.mysql-01.gsp-europe.net", "sql_1040", "sql_1040", "2qZ0h1e0nURTWbfiCQpHaz50Not8yuV");
+		
+		ResSetDB wdb = WNDB.createEmptyWNDB(new String[] {"rekts", "rektd", "rektb"}, new DBType[] {DBType.STRING, DBType.DOUBLE, DBType.BYTES});
+		wdb.insertRaw(new Object[] { "SHREKTB", 23.42, new byte[] {} });
+		wdb.insertRaw(new Object[] { "SHREKTa", 23.42, new byte[] {} });
+		wdb.insertRaw(new Object[] { "SHREKTA", 23.42, new byte[] {} });
+		Database db = new Database(wdb);
+		
+		wdb.first();
+		wdb = wdb.getSnapshot();
+		while(wdb.next()) {
+			System.out.println(wdb.getEntries());
+		}
+		
 		ResSet rs = db.get(null, new And(
 				new Where("rekts", "SHREKT", WType.NOT_EQUAL),
 				new Where("rekts", "SHREKTy", WType.NOT_EQUAL, true),
-				new Where("rekts", "SHREKTy", WType.EQUAL, false),
+				//new Where("rekts", "SHREKTy", WType.EQUAL, false),
 				new Where("rektb", new byte[] {}, WType.EQUAL, false),
 				new Where("rektd", 23.43, WType.SMALLER, false)
-		), null, null, new Sort[] {
-				new Sort("rekts", SType.ASC_SC, false)
+		), null, new Sort[] {
+				new Sort("rekts", SType.ASC, false)
 		});
 		while(rs.next()) {
 			System.out.println(rs.getString("rekts"));

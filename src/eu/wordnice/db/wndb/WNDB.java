@@ -1,30 +1,31 @@
 /*
- The MIT License (MIT)
-
- Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
-
- Permission is hereby granted, free of charge, to any person obtaining a copy
- of this software and associated documentation files (the "Software"), to deal
- in the Software without restriction, including without limitation the rights
- to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- copies of the Software, and to permit persons to whom the Software is
- furnished to do so, subject to the following conditions:
-
- The above copyright notice and this permission notice shall be included in all
- copies or substantial portions of the Software.
-
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- SOFTWARE.
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package eu.wordnice.db.wndb;
 
 import java.io.File;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +33,8 @@ import eu.wordnice.api.IStream;
 import eu.wordnice.api.OStream;
 import eu.wordnice.api.Val;
 import eu.wordnice.db.DBType;
+import eu.wordnice.db.results.ResSetDB;
+import eu.wordnice.db.results.ResSetDBSnap;
 import eu.wordnice.db.results.SetSetResSet;
 
 public class WNDB extends SetSetResSet {
@@ -154,14 +157,53 @@ public class WNDB extends SetSetResSet {
 	}
 	
 	@Override
-	public int cols() {
-		this.checkSet();
-		if(this.names != null) {
-			return this.names.length;
-		}
-		return this.types.length;
+	public ResSetDBSnap getSnapshot() {
+		return new WNDBSnapshot(this);
 	}
 	
+	/**
+	 * Database snapshot
+	 * 
+	 * @author wordnice
+	 */
+	protected class WNDBSnapshot extends WNDB implements ResSetDBSnap {
+		
+		protected WNDB orig;
+		
+		@SuppressWarnings("unchecked")
+		protected WNDBSnapshot(WNDB orig) {
+			this.orig = orig;
+			List<Object[]> list = null;
+			try {
+				Class<?> c = orig.values.getClass();
+				Constructor<?> con = c.getDeclaredConstructor();
+				con.setAccessible(true);
+				list = (List<Object[]>) con.newInstance();
+			} catch(Throwable t) {}
+			if(list == null) {
+				list = new ArrayList<Object[]>();
+			}
+			list.addAll(orig.values);
+			this.values = list;
+			this.names = orig.names;
+			this.cols = orig.cols;
+			this.changed = false;
+			this.types = orig.types;
+			this.file = null;
+			this.first();
+		}
+		
+		@Override
+		public ResSetDB getOriginal() {
+			return this.orig;
+		}
+		
+		@Override
+		public ResSetDBSnap getSnapshot() {
+			return this.getOriginal().getSnapshot();
+		}
+		
+	}
 	
 	/*** Static CREATE ***/
 	

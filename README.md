@@ -116,6 +116,79 @@ Exception in thread "main" java.util.concurrent.TimeoutException
 
 
 
+### Maps
+
+Create immutable `Map` from one array, two arrays, or two `Iterable`s (e.g. `List`, `Set`, any `Collection`).
+
+In following example is also created `ImmArray` from array.
+
+```java
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import eu.wordnice.api.cols.ImmArray;
+import eu.wordnice.api.cols.ImmMapArray;
+import eu.wordnice.api.cols.ImmMapIterPair;
+import eu.wordnice.api.cols.ImmMapPair;
+
+public class MapsPreview {
+	
+	public static void main(String[] blah) {
+		/************
+		 * One array
+		 */
+		Map<String, Integer> map = new ImmMapArray<String, Integer>(
+				"one", 1,
+				"two", 2,
+				"three", 3);
+		
+		System.out.println("Map: " + map + " / " + map.getClass().getName());
+		
+		Iterator<Entry<String, Integer>> it = map.entrySet().iterator();
+		while(it.hasNext()) {
+			System.out.println(it.next());
+		}
+		
+		
+		/*******
+		 * Pair
+		 */
+		map = new ImmMapPair<String, Integer>(new Object[] {
+				"one", "two", "three"
+		}, new Object[] {
+				1, 2, 3
+		}, 3);
+		
+		System.out.println("Map: " + map + " / " + map.getClass().getName());
+		
+		it = map.entrySet().iterator();
+		while(it.hasNext()) {
+			System.out.println(it.next());
+		}
+		
+		
+		/******************
+		 * Collection pair
+		 */
+		map = new ImmMapIterPair<String, Integer>(new ImmArray<String>(new Object[] {
+				"one", "two", "three"
+		}), new ImmArray<Integer>(new Object[] {
+				1, 2, 3
+		}), 3);
+		
+		System.out.println("Map: " + map + " / " + map.getClass().getName());
+		
+		it = map.entrySet().iterator();
+		while(it.hasNext()) {
+			System.out.println(it.next());
+		}
+	}
+	
+}
+```
+
+
 
 ### Simple HTTP server
 
@@ -271,28 +344,28 @@ To get working example, just copy code from `Simple HTTP server` and replace con
 
 
 
-
-
 ### WNDB
 
 `WNDB` class is for easy tables serialization & deserialization, low-level inserting, querying and updating. For even easily work, there was created `WNDBStore` abstract class, and with its help there can be created very short and clean databases store class. Example, class with 2 databases is below. Run it twice, if everything will be OK and no errors will be displayed, after second run you should get printed database data.
+
+Example below is for demonstrating low-level access (you can use `Database` class below).
 
 
 ```java
 import java.io.File;
 
 import eu.wordnice.api.Api;
-import eu.wordnice.sql.wndb.WNDB;
-import eu.wordnice.sql.wndb.WNDBStore;
-import eu.wordnice.sql.wndb.WNDBVarTypes;
+import eu.wordnice.db.wndb.WNDB;
+import eu.wordnice.db.wndb.WNDBStore;
+import eu.wordnice.db.DBType;
 
 public class WNDBStoreExample extends WNDBStore {
 	
 	/*** DATABASES & DATAS ***/
 	
 	public WNDB users;
- 	WNDBVarTypes[] users_types = new WNDBVarTypes[] {
- 			WNDBVarTypes.STRING, WNDBVarTypes.INT
+ 	DBType[] users_types = new DBType[] {
+ 			DBType.STRING, DBType.INT
  	};
  	String[] users_names = new String[] {
  			"name", "pass"
@@ -300,8 +373,8 @@ public class WNDBStoreExample extends WNDBStore {
  	
  	
  	public WNDB posts;
- 	WNDBVarTypes[] posts_types = new WNDBVarTypes[] {
- 			WNDBVarTypes.STRING, WNDBVarTypes.STRING, WNDBVarTypes.STRING
+ 	DBType[] posts_types = new DBType[] {
+ 			DBType.STRING, DBType.STRING, DBType.STRING
  	};
  	String[] posts_names = new String[] {
  			"user", "title", "text"
@@ -353,45 +426,75 @@ public class WNDBStoreExample extends WNDBStore {
 		if(ws.posts.size() == 0 || ws.users.size() == 0) {
 			System.out.println("Databases do not exist, inserting some data...");
 			
-			String curusr = Api.genString(10);
-			int curusr_pass = Api.genString(12).hashCode();
+			String curusr = new String(Api.genBytes(10));
+			int curusr_pass = new String(Api.genBytes(10)).hashCode();
 			System.out.println("Inserting user1: " + curusr + " with password hash " + curusr_pass);
-			if(!ws.users.insert(curusr, curusr_pass)) {
-				System.out.println("Cannot insert new user...");
-			}
+			ws.users.insertRaw(new Object[] {curusr, curusr_pass});
 			
-			curusr = Api.genString(10);
-			curusr_pass = Api.genString(12).hashCode();
+			curusr = new String(Api.genBytes(10));
+			curusr_pass = new String(Api.genBytes(10)).hashCode();
 			System.out.println("Inserting user2: " + curusr + " with password hash " + curusr_pass);
-			if(!ws.users.insert(curusr, curusr_pass)) {
-				System.out.println("Cannot insert new user...");
-			}
+			ws.users.insertRaw(new Object[] {curusr, curusr_pass});
 			
-			String title = "How to decode " + Api.genString(12);
-			String text = "Blah blah blah, I really cannot say you how to do it, because it just random string.";
+			String title = "How to decode " + new String(Api.genBytes(10));
+			String text = "It's just random string.";
 			System.out.println("Inserting post1: from " + curusr + " with title " + title);
-			if(!ws.posts.insert(curusr, title, text)) {
-				System.out.println("Cannot insert new post...");
-			}
+			ws.posts.insertRaw(new Object[] {curusr, title, text});
 			
 			ws.saveDBs();
 			System.out.println("Databases should be saved. Run this program again to load and print data...");
 		} else {
 			System.out.println("Displaying saved users:");
 			while(ws.users.next()) {
-				Object[] vals = ws.users.getCurrent();
-				System.out.println("\t- " + vals[0] + " with password hash " + vals[1]);
+				System.out.println("\t- " + ws.users.getString("name") + " with password hash " + ws.users.getInt("pass"));
 			}
 			System.out.println("");
 			
 			
 			System.out.println("Displaying saved posts:");
 			while(ws.posts.next()) {
-				System.out.println("\t- " + ws.posts.getString("title") + " from user " + ws.posts.getString("user"));
+				System.out.println("\t- " + ws.posts.getString("title") 
+						+ " from user " + ws.posts.getString("user"));
 				System.out.println("\t\t" + ws.posts.getString("text"));
 			}
-			System.out.println("");
 		}
 	}
 }
 ```
+
+First run:
+```
+Loading database users!
+Database users loaded!
+Loading database posts!
+Database posts loaded!
+Databases do not exist, inserting some data...
+Inserting user1: VPTvzpCJpY with password hash 747074543
+Inserting user2: h9t2Xc8mBe with password hash 1163470248
+Inserting post1: from h9t2Xc8mBe with title How to decode ABZhEyJbL9
+Saving database users...
+Database users successfuly saved to /media/delino/DELI_USB/Java/workspace/Test/dbs/users.wndb!
+Saving database posts...
+Database posts successfuly saved to /media/delino/DELI_USB/Java/workspace/Test/dbs/posts.wndb!
+Databases should be saved. Run this program again to load and print data...
+```
+
+Second run:
+```
+Loading database users!
+Database users loaded!
+Loading database posts!
+Database posts loaded!
+Displaying saved users:
+	- VPTvzpCJpY with password hash 747074543
+	- h9t2Xc8mBe with password hash 1163470248
+
+Displaying saved posts:
+	- How to decode ABZhEyJbL9 from user h9t2Xc8mBe
+		It's just random string.
+```
+
+
+### Database
+
+High-level interface for any database. *TODO, 20% Done*
