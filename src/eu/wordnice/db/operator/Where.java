@@ -207,21 +207,20 @@ public class Where {
 		wdb.insertRaw(new Object[] { "SHREKTB", 23.42, new byte[] {} });
 		wdb.insertRaw(new Object[] { "SHREKTa", 23.42, new byte[] {} });
 		wdb.insertRaw(new Object[] { "SHREKTA", 23.42, new byte[] {} });
-		Database db = new Database(wdb);
+		Database db = new Database(Database.copy(Database.copy(wdb.getSnapshot()).getSnapshot())); //Dat works!
 		
-		wdb.first();
-		wdb = wdb.getSnapshot();
 		while(wdb.next()) {
 			System.out.println(wdb.getEntries());
 		}
 		
-		ResSet rs = db.get(null, new And(
+		ResSet rs = db.get(new And(
 				new Where("rekts", "SHREKT", WType.NOT_EQUAL),
 				new Where("rekts", "SHREKTy", WType.NOT_EQUAL, true),
-				//new Where("rekts", "SHREKTy", WType.EQUAL, false),
+				new Where("rekts", "SHREKTa", WType.EQUAL, false),
+					//[UP] change to false will display only SHREKTa, otherwise SHREKTA too
 				new Where("rektb", new byte[] {}, WType.EQUAL, false),
 				new Where("rektd", 23.43, WType.SMALLER, false)
-		), null, new Sort[] {
+		), new Sort[] {
 				new Sort("rekts", SType.ASC, false)
 		});
 		while(rs.next()) {

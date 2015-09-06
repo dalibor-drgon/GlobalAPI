@@ -151,7 +151,11 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 
 	@Override
 	public void insert(Map<String, Object> vals) throws Exception {
-		this.list.add(vals);
+		if(this.it != null) {
+			this.it.add(vals);
+		} else {
+			this.list.add(vals);
+		}
 	}
 
 	@Override

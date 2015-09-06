@@ -208,18 +208,67 @@ public class Database {
 	}
 	
 	/**
+	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 */
+	public ResSet get(AndOr where) throws IllegalArgumentException, Exception {
+		return this.get(null, where, null, null);
+	}
+	
+	/**
+	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 */
+	public ResSet get(String[] columns, AndOr where) throws IllegalArgumentException, Exception {
+		return this.get(columns, where, null, null);
+	}
+	
+	/**
+	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 */
+	public ResSet get(String[] columns, AndOr where, Sort[] sort) throws IllegalArgumentException, Exception {
+		return this.get(columns, where, sort, null);
+	}
+	
+	/**
+	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 */
+	public ResSet get(String[] columns, AndOr where, Limit limit) throws IllegalArgumentException, Exception {
+		return this.get(columns, where, null, limit);
+	}
+	
+	/**
+	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 */
+	public ResSet get(AndOr where, Sort[] sort) throws IllegalArgumentException, Exception {
+		return this.get(null, where, sort, null);
+	}
+	
+	/**
+	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 */
+	public ResSet get(AndOr where, Limit limit) throws IllegalArgumentException, Exception {
+		return this.get(null, where, null, limit);
+	}
+	
+	/**
+	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 */
+	public ResSet get(AndOr where, Sort[] sort, Limit limit) throws IllegalArgumentException, Exception {
+		return this.get(null, where, sort, limit);
+	}
+	
+	/**
 	 * @param columns Columns to get. Returned value can contain more or all
 	 *                available columns.
 	 *                If null, then there are selected all available columns
 	 * @param where Filter values
-	 * @param limit Offset + Limit
 	 * @param sort Sort by
+	 * @param limit Offset + Limit
 	 * 
 	 * @throws IllegalArgumentException When limit != null and (limit.off < 0 or limit.len <= 0)
 	 * @throws Exception Implementation specific exception
 	 * @return Results
 	 */
-	public ResSet get(String[] columns, AndOr where, Limit limit, Sort[] sort) throws IllegalArgumentException, Exception {
+	public ResSet get(String[] columns, AndOr where, Sort[] sort, Limit limit) throws IllegalArgumentException, Exception {
 		if(this.sql != null) {
 			StringBuilder suf = new StringBuilder();
 			if(sort != null && sort.length != 0) {

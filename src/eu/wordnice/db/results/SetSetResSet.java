@@ -264,7 +264,11 @@ public class SetSetResSet extends SimpleResSet implements ResSetDB {
 		if(!this.checkRowRaw(values)) {
 			throw new IllegalArgumentException("Invalid raw values!");
 		}
-		this.values.add(values);
+		if(this.it != null) {
+			this.it.add(values);
+		} else {
+			this.values.add(values);
+		}
 	}
 	
 	/**

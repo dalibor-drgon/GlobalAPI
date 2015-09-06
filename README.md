@@ -348,7 +348,7 @@ To get working example, just copy code from `Simple HTTP server` and replace con
 
 `WNDB` class is for easy tables serialization & deserialization, low-level inserting, querying and updating. For even easily work, there was created `WNDBStore` abstract class, and with its help there can be created very short and clean databases store class. Example, class with 2 databases is below. Run it twice, if everything will be OK and no errors will be displayed, after second run you should get printed database data.
 
-Example below is for demonstrating low-level access (you can use `Database` class below).
+Example below is for demonstrating low-level access (for advanced access you can use `Database` class, example below this one).
 
 
 ```java
