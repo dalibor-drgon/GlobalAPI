@@ -37,10 +37,12 @@ import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -65,7 +67,7 @@ public class Api {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <X, Y> X[] toArray(Collection<Y> col) {
+	public static <X> X[] toArray(Collection<?> col) {
 		if(col instanceof ImmArray) {
 			return (X[]) ((ImmArray<X>) col).arr;
 		}
@@ -73,7 +75,7 @@ public class Api {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <X, Y> X[] toArray(Collection<Y> col, Class<?> c) {
+	public static <X> X[] toArray(Collection<?> col, Class<?> c) {
 		if(col instanceof ImmArray) {
 			return (X[]) ((ImmArray<X>) col).arr;
 		}
@@ -122,31 +124,41 @@ public class Api {
 				 (ip & 0xff));
 	}
 	
-	public static <X, Y> Map<String, String> toStringMap(Map<X, Y> map) {
+	public static Map<String, String> toStringMap(Map<?, ?> map) {
 		Map<String, String> ret = new HashMap<String, String>();
 		Api.toStringMap(ret, map);
 		return ret;
 	}
 	
-	public static <X, Y> void toStringMap(Map<String, String> out, Map<X, Y> map) {
-		Iterator<Entry<X, Y>> it = map.entrySet().iterator();
+	public static void toStringMap(Map<String, String> out, Map<?, ?> map) {
+		Iterator<? extends Entry<?, ?>> it = map.entrySet().iterator();
 		while(it.hasNext()) {
-			Entry<X, Y> ent = it.next();
-			out.put(("" + ent.getKey()), ("" + ent.getValue()));
+			Entry<?, ?> ent = it.next();
+			Object key = ent.getKey();
+			Object val = ent.getValue();
+			String str_key = (key == null) ? null : key.toString();
+			String str_val = (val == null) ? null : val.toString();
+			out.put(str_key, str_val);
 		}
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <X, Y, T, V> void copyMap(Map<X, Y> out, Map<T, V> map) {
-		Iterator<Entry<T, V>> it = map.entrySet().iterator();
+	public static void copyMap(Map<?, ?> out, Map<?, ?> map) {
+		Iterator<? extends Entry<?, ?>> it = map.entrySet().iterator();
 		while(it.hasNext()) {
-			Entry<T, V> ent = it.next();
-			out.put((X) ent.getKey(), (Y) ent.getValue());
+			Entry<?, ?> ent = it.next();
+			((Map<Object, Object>)out).put(ent.getKey(), ent.getValue());
 		}
 	}
 	
-	public static <X> void toStringColl(Collection<String> out, Collection<X> set) {
-		Iterator<X> it = set.iterator();
+	public static List<String> toStringColl(Collection<?> set) {
+		List<String> list = new ArrayList<String>();
+		Api.toStringColl(list, set);
+		return list;
+	}
+	
+	public static void toStringColl(Collection<String> out, Collection<?> set) {
+		Iterator<?> it = set.iterator();
 		while(it.hasNext()) {
 			Object next = it.next();
 			if(next == null) {
@@ -158,11 +170,22 @@ public class Api {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <X, Y> void copyColl(Collection<X> out, Collection<Y> set) {
-		Iterator<Y> it = set.iterator();
+	public static void copyColl(Collection<?> out, Collection<?> set) {
+		Iterator<?> it = set.iterator();
 		while(it.hasNext()) {
-			out.add((X) it.next());
+			((Collection<Object>) out).add(it.next());
 		}
+	}
+	
+	public static <X, Y> boolean equals(Object[] one, Object[] two, int size) {
+		while(size-- != 0) {
+			Object on = one[size];
+			Object tw = two[size];
+			if((on == null) ? tw != null : !on.equals(tw)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/***********

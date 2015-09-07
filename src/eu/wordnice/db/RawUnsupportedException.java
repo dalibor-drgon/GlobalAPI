@@ -24,7 +24,7 @@
 
 package eu.wordnice.db;
 
-public class RawUnsupportedException extends IllegalStateException {
+public class RawUnsupportedException extends UnsupportedOperationException {
 
 	private static final long serialVersionUID = 1L;
 

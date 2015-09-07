@@ -55,6 +55,12 @@ public class ImmEntry<X, Y> implements Entry<X, Y> {
 		throw new UnsupportedOperationException("Immutable entry!");
 	}
 	
+	
+	@Override
+	public String toString() {
+		return this.key + "=" + this.val;
+	}
+	
 	@Override
 	public boolean equals(Object obj) {
 		if(obj == this) {
@@ -70,11 +76,6 @@ public class ImmEntry<X, Y> implements Entry<X, Y> {
 				&& (this.val == null) 
 					? (en.getValue() == null)
 					: (this.val.equals(en.getValue())));
-	}
-	
-	@Override
-	public String toString() {
-		return this.key + "=" + this.val;
 	}
 
 }

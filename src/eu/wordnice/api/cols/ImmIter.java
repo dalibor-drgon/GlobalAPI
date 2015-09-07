@@ -222,4 +222,34 @@ public class ImmIter<T> implements Set<T> {
 		return sb.toString();
 	}
 	
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == this) {
+			return true;
+		}
+		if(obj instanceof Iterable) {
+			if(obj instanceof Collection) {
+				if(this.size != ((Collection<?>) obj).size()) {
+					return false;
+				}
+			}
+			Iterator<?> it = ((Iterable<?>) obj).iterator();
+			Iterator<?> it2 = this.iterator();
+			int i = 0;
+			while(it.hasNext()) {
+				if(!it2.hasNext() || i >= this.size) {
+					return false;
+				}
+				i++;
+				Object cur = it.next();
+				Object tcur = it2.next();
+				if((cur == null) ? tcur != null : !cur.equals(tcur)) {
+					return false;
+				}
+			}
+			return (i == this.size);
+		}
+		return false;
+	}
+	
 }

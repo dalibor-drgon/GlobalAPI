@@ -239,11 +239,6 @@ public class ResultResSet implements ResSet {
 	}
 
 	@Override
-	public boolean hasByName() {
-		return true;
-	}
-
-	@Override
 	public boolean hasByIndex() {
 		return true;
 	}

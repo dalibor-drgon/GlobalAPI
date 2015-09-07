@@ -32,6 +32,8 @@ import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
+import eu.wordnice.api.Api;
+
 @Immutable
 public class ImmMapArray<X, Y> implements Map<X, Y> {
 
@@ -607,6 +609,45 @@ public class ImmMapArray<X, Y> implements Map<X, Y> {
 		}
 		sb.append('}');
 		return sb.toString();
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == this) {
+			return true;
+		}
+		if(obj instanceof ImmMapArray) {
+			ImmMapArray<?,?> ia = (ImmMapArray<?,?>) obj;
+			return (this.size == ia.size && Api.equals(this.objs, ia.objs, this.size));
+		} else if(obj instanceof Map) {
+			if(obj instanceof Collection) {
+				if(this.size != ((Collection<?>) obj).size()) {
+					return false;
+				}
+				if(obj instanceof ImmIter) {
+					obj = ((ImmIter<?>) obj).arr;
+					if(obj == null) {
+						return false;
+					}
+				}
+			}
+			Iterator<?> it = ((Map<?, ?>) obj).entrySet().iterator();
+			Iterator<?> it2 = this.entrySet().iterator();
+			int i = 0;
+			while(it.hasNext()) {
+				if(!it2.hasNext() || i >= this.size) {
+					return false;
+				}
+				i++;
+				Object cur = it.next();
+				Object tcur = it2.next();
+				if((cur == null) ? tcur != null : !cur.equals(tcur)) {
+					return false;
+				}
+			}
+			return (i == this.size);
+		}
+		return false;
 	}
 	
 }

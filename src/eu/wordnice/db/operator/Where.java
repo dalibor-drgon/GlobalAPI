@@ -28,10 +28,13 @@ import java.util.regex.Pattern;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.ByteString;
+import eu.wordnice.api.cols.ImmArray;
 import eu.wordnice.db.DBType;
 import eu.wordnice.db.Database;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.results.ResSetDB;
+import eu.wordnice.db.sql.MySQL;
+import eu.wordnice.db.sql.SQL;
 import eu.wordnice.db.wndb.WNDB;
 
 public class Where {
@@ -143,7 +146,7 @@ public class Where {
 			case SMALLER_EQUAL:
 				return rs.getDouble(this.key) <= ((Number) this.val).doubleValue();
 				
-				//TODO
+			//TODO
 				
 			case REGEX:
 				if(this.sens) {
@@ -198,26 +201,28 @@ public class Where {
 	 * Test
 	 */
 	public static void main(String... lel_varargs) throws Throwable {
-		/*ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		WNDB w = WNDB.createWNDB(new OStream(baos), new String[] {"yolo", "thug"}, new DBType[] {DBType.BOOLEAN, DBType.STRING});
-		Database db = new Database(w);*/
-		//SQL sql = new MySQL("db.mysql-01.gsp-europe.net", "sql_1040", "sql_1040", "2qZ0h1e0nURTWbfiCQpHaz50Not8yuV");
 		
-		ResSetDB wdb = WNDB.createEmptyWNDB(new String[] {"rekts", "rektd", "rektb"}, new DBType[] {DBType.STRING, DBType.DOUBLE, DBType.BYTES});
-		wdb.insertRaw(new Object[] { "SHREKTB", 23.42, new byte[] {} });
-		wdb.insertRaw(new Object[] { "SHREKTa", 23.42, new byte[] {} });
-		wdb.insertRaw(new Object[] { "SHREKTA", 23.42, new byte[] {} });
-		Database db = new Database(Database.copy(Database.copy(wdb.getSnapshot()).getSnapshot())); //Dat works!
+		//TODO Test me!
+		boolean use_sql = true;
 		
-		while(wdb.next()) {
-			System.out.println(wdb.getEntries());
+		Database db = null;
+		if(use_sql) {
+			SQL sql = new MySQL("db.mysql-01.gsp-europe.net", "sql_1040", "sql_1040", "2qZ0h1e0nURTWbfiCQpHaz50Not8yuV");
+			sql.connect();
+			db = new Database(sql, "shets");
+		} else {
+			ResSetDB wdb = WNDB.createEmptyWNDB(new String[] {"rekts", "rektd", "rektb"}, new DBType[] {DBType.STRING, DBType.DOUBLE, DBType.BYTES});
+			wdb.insertRaw(new ImmArray<Object>(new Object[] { "SHREKTB", 23.42, new byte[] {} }));
+			wdb.insertRaw(new ImmArray<Object>(new Object[] { "SHREKTa", 23.42, new byte[] {} }));
+			wdb.insertRaw(new ImmArray<Object>(new Object[] { "SHREKTA", 23.42, new byte[] {} }));
+			db = new Database(Database.copy(Database.copy(wdb.getSnapshot()).getSnapshot()));
 		}
 		
 		ResSet rs = db.get(new And(
 				new Where("rekts", "SHREKT", WType.NOT_EQUAL),
 				new Where("rekts", "SHREKTy", WType.NOT_EQUAL, true),
 				new Where("rekts", "SHREKTa", WType.EQUAL, false),
-					//[UP] change to false will display only SHREKTa, otherwise SHREKTA too
+					//[UP] change to true will display only SHREKTa, otherwise SHREKTA too
 				new Where("rektb", new byte[] {}, WType.EQUAL, false),
 				new Where("rektd", 23.43, WType.SMALLER, false)
 		), new Sort[] {
@@ -227,6 +232,5 @@ public class Where {
 			System.out.println(rs.getString("rekts"));
 		}
 	}
-	
 	
 }

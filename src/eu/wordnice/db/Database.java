@@ -35,12 +35,12 @@ import eu.wordnice.api.Val;
 import eu.wordnice.db.operator.AndOr;
 import eu.wordnice.db.operator.Limit;
 import eu.wordnice.db.operator.Sort;
-import eu.wordnice.db.results.CollResSet;
+import eu.wordnice.db.results.MapsResSet;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.results.ResSetDB;
 import eu.wordnice.db.results.ResSetDBAdvanced;
 import eu.wordnice.db.results.ResultResSet;
-import eu.wordnice.db.results.SetSetResSet;
+import eu.wordnice.db.results.ArraysResSet;
 import eu.wordnice.db.sql.MySQL;
 import eu.wordnice.db.sql.SQL;
 import eu.wordnice.db.sql.SQLite;
@@ -331,7 +331,7 @@ public class Database {
 				}
 			}
 			if(sort != null) {
-				if(rs.hasSort() == false) {
+				if(rs.hasSortCut() == false) {
 					rs = Database.copy(rs);
 				}
 				rs.sort(sort);
@@ -343,7 +343,7 @@ public class Database {
 				if(limit.off < 0) {
 					throw new IllegalArgumentException("Invalid offset " + limit.off);
 				}
-				if(rs.hasSort() == false) {
+				if(rs.hasSortCut() == false) {
 					rs = Database.copy(rs);
 				}
 				rs.cut(limit.off, limit.len);
@@ -353,19 +353,56 @@ public class Database {
 	}
 	
 	
+	/**
+	 * Create copy of Entered ResSet with supported sort() and cut()
+	 * 
+	 * @param rs ResSet to copy
+	 * 
+	 * @return copy of Entered ResSet with supported sort() and cut()
+	 * 
+	 * @throws IllegalArgumentException
+	 * @throws Exception
+	 * 
+	 * @see {@link ResSetDB#insert(Map)}
+	 * @see {@link ResSetDB#insertRaw(java.util.Collection)}
+	 */
 	public static ResSetDB copy(ResSet rs) throws IllegalArgumentException, Exception {
 		if(rs.isTable()) {
-			ResSetDB nev = new SetSetResSet(Api.<String, String>toArray(rs.getKeys()));
+			ResSetDB nev = new ArraysResSet(Api.<String>toArray(rs.getKeys(), String.class));
 			while(rs.next()) {
-				nev.insertRaw(Api.toArray(rs.getValues()));
+				nev.insertRaw(rs.getValues());
 			}
 			return nev;
 		}
-		ResSetDB nev = new CollResSet();
+		ResSetDB nev = new MapsResSet();
 		while(rs.next()) {
 			nev.insert(rs.getEntries());
 		}
 		return nev;
+	}
+	
+	/**
+	 * Copy values from second to first argument
+	 * 
+	 * @param out Destination
+	 * @param rs Source
+	 * 
+	 * @throws IllegalArgumentException
+	 * @throws Exception
+	 * 
+	 * @see {@link ResSetDB#insert(Map)}
+	 * @see {@link ResSetDB#insertRaw(java.util.Collection)}
+	 */
+	public static void copy(ResSetDB out, ResSet rs) throws IllegalArgumentException, Exception {
+		if(rs.isTable() && out.isTable() && out.isRaw() && out.getKeys().equals(rs.getKeys())) {
+			while(rs.next()) {
+				out.insertRaw(rs.getValues());
+			}
+		} else {
+			while(rs.next()) {
+				out.insert(rs.getEntries());
+			}
+		}
 	}
 	
 }

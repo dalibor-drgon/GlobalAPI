@@ -30,44 +30,37 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
+import eu.wordnice.api.cols.ImmArray;
+import eu.wordnice.api.cols.ImmIter;
+import eu.wordnice.api.cols.ImmMapIterPair;
 import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.Sort;
 
-public class CollResSet extends SimpleResSet implements ResSetDB {
+public class MapsResSet extends ObjectResSet implements ResSetDB {
 
 	public List<Map<String, Object>> list;
 	public ListIterator<Map<String, Object>> it;
 	public Map<String, Object> cur;
-	public MapFactory factory;
-
-	public CollResSet() { }
 
 	/**
-	 * @param factory MapFactory for creating maps
-	 * @param list List with Map, which won't throw ConcurencyException
+	 * Create empty ready MapsResSet
 	 */
-	public CollResSet(MapFactory factory, List<Map<String, Object>> list) {
-		this.factory = factory;
-		this.list = list;
+	public MapsResSet() {
+		this.list = new ArrayList<Map<String, Object>>();
 		this.first();
 	}
-	
-	protected Map<String, Object> createMap(Object[] pair) {
-		Map<String, Object> vals = this.factory.createMap(pair);
-		if(vals != null) {
-			return vals;
-		}
-		vals = this.factory.createMap();
-		for(int i = 0, n = pair.length; i < n;) {
-			String key = (String) pair[i++];
-			Object val = pair[i++];
-			vals.put(key, val);
-		}
-		return vals;
+
+	/**
+	 * @param list Values
+	 */
+	public MapsResSet(List<Map<String, Object>> list) {
+		this.list = list;
+		this.first();
 	}
 
 	@Override
@@ -105,11 +98,6 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 	public void close() {}
 
 	@Override
-	public boolean hasByName() {
-		return true;
-	}
-
-	@Override
 	public boolean hasByIndex() {
 		return false;
 	}
@@ -140,21 +128,63 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 	}
 
 	@Override
-	public boolean checkRow(Map<String, Object> vals) {
-		return vals != null;
-	}
-
-	@Override
 	public void update(Map<String, Object> vals) throws Exception {
+		if(this instanceof ResSetDBSnap) {
+			((ResSetDBSnap) this).getOriginal().update(vals);
+			return;
+		}
+		
 		this.it.set(vals);
 	}
 
 	@Override
 	public void insert(Map<String, Object> vals) throws Exception {
+		if(this instanceof ResSetDBSnap) {
+			((ResSetDBSnap) this).getOriginal().insert(vals);
+			return;
+		}
+		
 		if(this.it != null) {
 			this.it.add(vals);
 		} else {
 			this.list.add(vals);
+		}
+	}
+	
+	@Override
+	public void insertAll(Collection<Map<String, Object>> vals)
+			throws Exception {
+		if(this instanceof ResSetDBSnap) {
+			((ResSetDBSnap) this).getOriginal().insertAll(vals);
+			return;
+		}
+		
+		Iterator<Map<String, Object>> it = vals.iterator();
+		if(this.list instanceof ArrayList) {
+			((ArrayList<?>) this.list).ensureCapacity(this.list.size() + vals.size());
+		}
+		while(it.hasNext()) {
+			this.insert(it.next());
+		}
+	}
+
+	@Override
+	public void insertAll(Collection<String> columns,
+			Collection<Collection<Object>> vals) throws Exception {
+		if(this instanceof ResSetDBSnap) {
+			((ResSetDBSnap) this).getOriginal().insertAll(columns, vals);
+			return;
+		}
+		
+		Iterator<Collection<Object>> it = vals.iterator();
+		List<String> cols = new ImmArray<String>(columns.toArray(new String[0]));
+		if(this.list instanceof ArrayList) {
+			((ArrayList<?>) this.list).ensureCapacity(this.list.size() + vals.size());
+		}
+		while(it.hasNext()) {
+			Collection<Object> cur = it.next();
+			int cursize = Math.min(cur.size(), cols.size());
+			this.insert(new ImmMapIterPair<String, Object>(cols, new ImmIter<Object>(cur, cursize), cursize));
 		}
 	}
 
@@ -176,33 +206,20 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 	public boolean isRaw() {
 		return false;
 	}
-
+	
 	@Override
-	public boolean checkRowRaw(Object[] vals) throws RawUnsupportedException {
+	public void updateRaw(Collection<Object> values) throws RawUnsupportedException {
 		throw new RawUnsupportedException();
 	}
 
 	@Override
-	public boolean isRawValueOK(int i, Object val)
-			throws RawUnsupportedException {
+	public void insertRaw(Collection<Object> values) throws RawUnsupportedException {
 		throw new RawUnsupportedException();
 	}
-
+	
 	@Override
-	public boolean isRawValueOK(String name, Object val)
-			throws RawUnsupportedException {
-		throw new RawUnsupportedException();
-	}
-
-	@Override
-	public void updateRaw(Object[] values) throws RawUnsupportedException,
-			IllegalArgumentException, Exception {
-		throw new RawUnsupportedException();
-	}
-
-	@Override
-	public void insertRaw(Object[] values) throws RawUnsupportedException,
-			IllegalArgumentException, Exception {
+	public void insertRawAll(Collection<Collection<Object>> values)
+			throws RawUnsupportedException, IllegalArgumentException, Exception {
 		throw new RawUnsupportedException();
 	}
 	
@@ -211,7 +228,7 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 	 * @see {@link ResSetDB#hasSort()}
 	 */
 	@Override
-	public boolean hasSort() {
+	public boolean hasSortCut() {
 		return true;
 	}
 	
@@ -240,30 +257,6 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 		this.list = this.list.subList(off, off + len);
 		this.first();
 	}
-	
-
-	/**
-	 * Map Factory
-	 * 
-	 * @author wordnice
-	 */
-	public interface MapFactory {
-		
-		/**
-		 * @return Empty map
-		 */
-		public Map<String, Object> createMap();
-		
-		/**
-		 * @param pair Keys & Values to insert
-		 * 
-		 * @return You can return `null` - we will additionaly call {@link #createMap()}
-		 *         and put values there manually
-		 */
-		public Map<String, Object> createMap(Object[] pair);
-		
-	}
-
 
 	@Override
 	public ResSetDBSnap getSnapshot() {
@@ -275,12 +268,12 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 	 * 
 	 * @author wordnice
 	 */
-	protected class CollResSetSnapshot extends CollResSet implements ResSetDBSnap {
+	protected class CollResSetSnapshot extends MapsResSet implements ResSetDBSnap {
 		
-		protected CollResSet orig;
+		protected MapsResSet orig;
 		
 		@SuppressWarnings("unchecked")
-		protected CollResSetSnapshot(CollResSet orig) {
+		protected CollResSetSnapshot(MapsResSet orig) {
 			this.orig = orig;
 			List<Map<String, Object>> list = null;
 			try {
@@ -294,7 +287,6 @@ public class CollResSet extends SimpleResSet implements ResSetDB {
 			}
 			list.addAll(orig.list);
 			this.list = list;
-			this.factory = orig.factory;
 			this.first();
 		}
 		

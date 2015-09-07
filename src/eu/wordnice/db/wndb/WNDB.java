@@ -35,9 +35,9 @@ import eu.wordnice.api.Val;
 import eu.wordnice.db.DBType;
 import eu.wordnice.db.results.ResSetDB;
 import eu.wordnice.db.results.ResSetDBSnap;
-import eu.wordnice.db.results.SetSetResSet;
+import eu.wordnice.db.results.ArraysResSet;
 
-public class WNDB extends SetSetResSet {
+public class WNDB extends ArraysResSet {
 
 	public File file = null;
 	public DBType[] types = null;

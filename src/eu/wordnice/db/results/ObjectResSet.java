@@ -28,10 +28,7 @@ import java.sql.SQLException;
 
 import org.apache.commons.lang.ArrayUtils;
 
-public abstract class SimpleResSet implements ResSet {
-
-	@Override
-	public abstract boolean hasByName();
+public abstract class ObjectResSet implements ResSet {
 	
 	@Override
 	public abstract boolean hasByIndex();

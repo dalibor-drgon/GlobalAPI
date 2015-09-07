@@ -351,4 +351,35 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 		return sb.toString();
 	}
 	
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == this) {
+			return true;
+		}
+		if(obj instanceof ImmArray) {
+			ImmArray<?> ia = (ImmArray<?>) obj;
+			return (this.size == ia.size && Api.equals(this.arr, ia.arr, this.size));
+		} else if(obj instanceof Iterable) {
+			if(obj instanceof Collection) {
+				if(this.size != ((Collection<?>) obj).size()) {
+					return false;
+				}
+			}
+			Iterator<?> it = ((Iterable<?>) obj).iterator();
+			int i = 0;
+			while(it.hasNext()) {
+				if(i >= this.size) {
+					return false;
+				}
+				Object cur = it.next();
+				Object tcur = this.arr[i++];
+				if((cur == null) ? tcur != null : !cur.equals(tcur)) {
+					return false;
+				}
+			}
+			return (i == this.size);
+		}
+		return false;
+	}
+	
 }

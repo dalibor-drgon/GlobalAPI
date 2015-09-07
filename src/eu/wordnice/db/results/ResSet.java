@@ -35,7 +35,9 @@ public interface ResSet {
 	public int cols();
 	
 	/**
-	 * @return Current keys. Do not modify, collection should be immutable
+	 * @return Current keys. Do not modify, collection should be immutable.
+	 *         If this ResSet is from table, keys should be returned at any time
+	 *         and should be same.
 	 */
 	public Collection<String> getKeys();
 	
@@ -55,20 +57,13 @@ public interface ResSet {
 	public boolean isTable();
 	
 	/**
-	 * @see {@link ResSet#getObject(String)}
-	 * @return `true` if getting by name is supported
-	 */
-	public boolean hasByName();
-	
-	/**
 	 * @see {@link ResSet#getObject(int)}
 	 * @return `true` if getting by index is supported
 	 */
 	public boolean hasByIndex();
 
 	/**
-	 * Get object by name
-	 * Always check if getting by name is supported by {@link ResSet#hasByName()}
+	 * Get object by name}
 	 * 
 	 * @param name Key for requested value
 	 * 

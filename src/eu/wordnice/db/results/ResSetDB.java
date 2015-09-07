@@ -24,6 +24,7 @@
 
 package eu.wordnice.db.results;
 
+import java.util.Collection;
 import java.util.Map;
 
 import eu.wordnice.db.RawUnsupportedException;
@@ -38,22 +39,14 @@ public interface ResSetDB extends ResSet {
 	
 	/**
 	 * @param name
-	 * @return If {@link ResSetDB#hasByIndex()} and {@link ResSetDB#hasByName()} returns `true`,
+	 * @return If {@link ResSetDB#hasByIndex()} returns `true`,
 	 *         this method may return index of requested column, otherwise or if not found `-1`
 	 */
 	public int getColumnIndex(String name);
 	
 	/**
-	 * Check if values can be inserted into database
-	 * 
-	 * @param vals Values
-	 * 
-	 * @return `true` if data are valid
-	 */
-	public boolean checkRow(Map<String, Object> vals);
-	
-	/**
 	 * Update current values
+	 * If instanceof ResSetDBSnap, modify only original ResSetDB
 	 * 
 	 * @param vals Values
 	 * 
@@ -63,6 +56,7 @@ public interface ResSetDB extends ResSet {
 	
 	/**
 	 * Insert values
+	 * If instanceof ResSetDBSnap, modify only original ResSetDB
 	 * 
 	 * @param vals Values
 	 * 
@@ -71,9 +65,30 @@ public interface ResSetDB extends ResSet {
 	public void insert(Map<String, Object> vals) throws Exception;
 	
 	/**
+	 * Insert values
+	 * If instanceof ResSetDBSnap, modify only original ResSetDB
+	 * 
+	 * @param vals Multiple values (entries) to insert
+	 * 
+	 * @throws Exception Implementation specific exception
+	 */
+	public void insertAll(Collection<Map<String, Object>> vals) throws Exception;
+	
+	/**
+	 * Insert values
+	 * If instanceof ResSetDBSnap, modify only original ResSetDB
+	 * 
+	 * @param columns Column names for given values
+	 * @param vals Multiple values (entries) to insert
+	 * 
+	 * @throws Exception Implementation specific exception
+	 */
+	public void insertAll(Collection<String> columns, Collection<Collection<Object>> vals) throws Exception;
+	
+	/**
 	 * Get current database snapshot
 	 * All inserts and updates must be ignored by snapshot,
-	 * but inserted into original database
+	 * but send into original database
 	 * 
 	 * @return If calling for ResSetDBSnap, should return another copy
 	 *         of original database
@@ -84,10 +99,11 @@ public interface ResSetDB extends ResSet {
 	 * @return `true` when methods {@link ResSetDB#sort(Sort[])} and
 	 *         {@link ResSetDB#cut(int, int)} are accessible
 	 */
-	public boolean hasSort();
+	public boolean hasSortCut();
 	
 	/**
 	 * Sort values by given schema
+	 * Modify only this ResSet (if instanceof ResSetDBSnap, do not touch original ResSet)
 	 * This action also calls {@link ResSetDB#first()}
 	 * 
 	 * @param sorts Schema for sorting
@@ -102,6 +118,7 @@ public interface ResSetDB extends ResSet {
 	
 	/**
 	 * Cut results
+	 * Modify only this ResSet (if instanceof ResSetDBSnap, do not touch original ResSet)
 	 * This action also calls {@link ResSetDB#first()}
 	 * 
 	 * @param off Offset
@@ -119,59 +136,40 @@ public interface ResSetDB extends ResSet {
 	public boolean isRaw();
 	
 	/**
-	 * Check if raw values could be inserted
-	 * 
-	 * @throws RawUnsupportedException If raw is not supported
-	 * @param vals raw values to check
-	 * 
-	 * @return `true` if Raw value array can be inserted
-	 */
-	public boolean checkRowRaw(Object[] vals) throws RawUnsupportedException;
-	
-	/**
-	 * Check if value could be inserted into given column
-	 * 
-	 * @param i Index, Column number (starting from 0)
-	 * @param val Value to check
-	 * 
-	 * @throws RawUnsupportedException If raw is not supported
-	 * @return `true` If value could be inserted into given column and
-	 *         if {@link ResSet#hasByIndex()} returns `true`
-	 */
-	public boolean isRawValueOK(int i, Object val) throws RawUnsupportedException;
-	
-	/**
-	 * Check if value could be inserted into given column
-	 * 
-	 * @param name Key for value to check
-	 * @param val Value to check
-	 * 
-	 * @throws RawUnsupportedException If raw is not supported
-	 * @return `true` If value could be inserted into given column and
-	 *         if {@link ResSet#hasByName()} returns `true`
-	 */
-	public boolean isRawValueOK(String name, Object val) throws RawUnsupportedException;
-	
-	/**
 	 * Update current values
+	 * If instanceof ResSetDBSnap, modify only original ResSetDB
 	 * 
-	 * @param values {value, value2, ...}
+	 * @param values Values to insert {value, value2, ...}
 	 * 
 	 * @throws RawUnsupportedException If raw is not supported
-	 * @throws IllegalArgumentException When {@link ResSetDB#checkRowRaw(Object[])} returns `false`
+	 * @throws IllegalArgumentException When values to insert are invalid / instances of invalid type
 	 * @throws Exception Implementation specific exception
 	 */
-	public void updateRaw(Object[] values) throws RawUnsupportedException, IllegalArgumentException, Exception;
+	public void updateRaw(Collection<Object> values) throws RawUnsupportedException, IllegalArgumentException, Exception;
 	
 	/**
 	 * Insert values
+	 * If instanceof ResSetDBSnap, modify only original ResSetDB
 	 * 
-	 * @param values {value, value2, ...}
+	 * @param values Values to insert {value, value2, ...}
 	 * 
 	 * @throws RawUnsupportedException If raw is not supported
-	 * @throws IllegalArgumentException When {@link ResSetDB#checkRowRaw(Object[])} returns `false`
+	 * @throws IllegalArgumentException When values to insert are invalid / instances of invalid type
 	 * @throws Exception Implementation specific exception
 	 */
-	public void insertRaw(Object[] values) throws RawUnsupportedException, IllegalArgumentException, Exception;
+	public void insertRaw(Collection<Object> values) throws RawUnsupportedException, IllegalArgumentException, Exception;
+	
+	/**
+	 * Insert values
+	 * If instanceof ResSetDBSnap, modify only original ResSetDB
+	 * 
+	 * @param values Multiple values (entries) to insert [{value, value2, ...}, ...]
+	 * 
+	 * @throws RawUnsupportedException If raw is not supported
+	 * @throws IllegalArgumentException When values to insert are invalid / instances of invalid type
+	 * @throws Exception Implementation specific exception
+	 */
+	public void insertRawAll(Collection<Collection<Object>> values)
+			throws RawUnsupportedException, IllegalArgumentException, Exception;
 	
 }

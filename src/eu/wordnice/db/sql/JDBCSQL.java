@@ -36,6 +36,7 @@ public class JDBCSQL extends ConnectionSQL {
 	public String user;
 	public String pass;
 	public String db_name;
+	public String[] onConnect;
 
 	public JDBCSQL() {}
 
@@ -93,6 +94,11 @@ public class JDBCSQL extends ConnectionSQL {
 					this.getUser(), this.getPass());
 		}
 		this.stm = this.con.createStatement();
+		if(this.onConnect != null && this.onConnect.length != 0) {
+			for(int i = 0, n = this.onConnect.length; i < n; i++) {
+				this.stm.executeUpdate(this.onConnect[i]);
+			}
+		}
 	}
 
 	protected String getDBUrl() {
