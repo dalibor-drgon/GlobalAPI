@@ -28,11 +28,19 @@ import eu.wordnice.db.operator.AndOr;
 import eu.wordnice.db.operator.Limit;
 import eu.wordnice.db.operator.Sort;
 
-public interface ResSetDBAdvanced {
+public interface ResSetDBAdv {
+	
+	/**
+	 * @return `true` if got implemented {@link ResSetDBAdv#get(String[], AndOr, Limit, Sort[])}
+	 */
+	public boolean hasGet();
 	
 	/**
 	 * @see {@link eu.wordnice.db.Database#get(String[], AndOr, Limit, Sort[])}
+	 * 
+	 * @throws UnsupportedOperationException When {@link ResSetDBAdv#hasGet()} returns `false`
 	 */
-	public ResSet get(String[] columns, AndOr where, Limit limit, Sort[] sort) throws IllegalArgumentException, Exception;
+	public ResSet get(String[] columns, AndOr where, Limit limit, Sort[] sort)
+			throws UnsupportedOperationException, IllegalArgumentException, Exception;
 	
 }

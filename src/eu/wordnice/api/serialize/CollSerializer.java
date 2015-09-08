@@ -29,6 +29,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.ResultSet;
@@ -46,7 +47,7 @@ import eu.wordnice.api.IStream;
 import eu.wordnice.api.OStream;
 import eu.wordnice.db.wndb.WNDBDecoder;
 
-public class WNSerializer {
+public class CollSerializer {
 	
 	public static final int SET_PREFIX = 0xBABE0989;
 	public static final int MAP_PREFIX = 0xBABE1989;
@@ -57,12 +58,17 @@ public class WNSerializer {
 	public List<Map<String, Object>> resultsToList(ResultSet rs) throws SQLException {
 		ResultSetMetaData md = rs.getMetaData();
 		int columns = md.getColumnCount();
+		String[] cols = new String[columns];
 		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-		while (rs.next()){
+		for(int i = 0; i < columns; i++) {           
+			cols[i] = md.getColumnName(i + 1);
+		}
+		while(rs.next()) {
 			Map<String, Object> row = new HashMap<String, Object>(columns);
-			int i = 1;
-			for(; i <= columns; i++) {           
-				row.put(md.getColumnName(i), rs.getObject(i));
+			for(int i = 0; i < columns;) {
+				String col = cols[i];
+				i++;
+				row.put(col, rs.getObject(i));
 			}
 			list.add(row);
 		}
@@ -73,22 +79,22 @@ public class WNSerializer {
 	
 	/*** Collection ***/
 	
-	public static void coll2file(File f, Iterable<?> set) throws Exception {
+	public static void coll2file(File f, Iterable<?> set) throws SerializeException, IOException {
 		OutputStream out = new FileOutputStream(f);
 		OStream ost = new OStream(new BufferedOutputStream(out));
-		WNSerializer.coll2stream(ost, set);
+		CollSerializer.coll2stream(ost, set);
 		ost.close();
 		try {
 			out.close();
 		} catch(Throwable t) {}
 	}
 	
-	public static void coll2stream(OStream o, Iterable<?> set) throws Exception {
-		o.writeInt(WNSerializer.SET_PREFIX);
-		WNSerializer.coll2streamWithoutPrefix(o, set);
+	public static void coll2stream(OStream o, Iterable<?> set) throws SerializeException, IOException {
+		o.writeInt(CollSerializer.SET_PREFIX);
+		CollSerializer.coll2streamWithoutPrefix(o, set);
 	}
 	
-	public static void coll2streamWithoutPrefix(OStream o, Iterable<?> set) throws Exception {
+	public static void coll2streamWithoutPrefix(OStream o, Iterable<?> set) throws SerializeException, IOException {
 		Iterator<?> it = set.iterator();
 		while(it.hasNext()) {
 			o.writeObject(it.next());
@@ -96,26 +102,26 @@ public class WNSerializer {
 		o.writeByte((byte) 0);
 	}
 	
-	public static <X> void file2coll(Collection<X> set, File f) throws Exception {
+	public static <X> void file2coll(Collection<X> set, File f) throws SerializeException, IOException {
 		InputStream in = new FileInputStream(f);
 		IStream ins = new IStream(new BufferedInputStream(in));
-		WNSerializer.stream2coll(set, ins);
+		CollSerializer.stream2coll(set, ins);
 		ins.close();
 		try {
 			in.close();
 		} catch(Throwable t) {}
 	}
 	
-	public static <X> void stream2coll(Collection<X> set, IStream s) throws Exception {
+	public static <X> void stream2coll(Collection<X> set, IStream s) throws SerializeException, IOException {
 		int l = s.readInt();
-		if(l != WNSerializer.SET_PREFIX) {
-			throw new Exception("Not SET format!");
+		if(l != CollSerializer.SET_PREFIX) {
+			throw new BadFilePrefixException("Not SET format!");
 		}
-		WNSerializer.stream2collWithoutPrefix(set, s);
+		CollSerializer.stream2collWithoutPrefix(set, s);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <X> void stream2collWithoutPrefix(Collection<X> set, IStream s) throws Exception {
+	public static <X> void stream2collWithoutPrefix(Collection<X> set, IStream s) throws SerializeException, IOException {
 		byte b;
 		int i = 0;
 		while((b = s.readByte()) > 0) {
@@ -128,22 +134,22 @@ public class WNSerializer {
 	
 	/*** Map ***/
 	
-	public static void map2file(File f, Map<?,?> map) throws Exception {
+	public static void map2file(File f, Map<?,?> map) throws SerializeException, IOException {
 		OutputStream out = new FileOutputStream(f);
 		OStream ost = new OStream(new BufferedOutputStream(out));
-		WNSerializer.map2stream(ost, map);
+		CollSerializer.map2stream(ost, map);
 		ost.close();
 		try {
 			out.close();
 		} catch(Throwable t) {}
 	}
 	
-	public static void map2stream(OStream o, Map<?,?> map) throws Exception {
-		o.writeInt(WNSerializer.MAP_PREFIX);
-		WNSerializer.map2streamWithoutPrefix(o, map);
+	public static void map2stream(OStream o, Map<?,?> map) throws SerializeException, IOException {
+		o.writeInt(CollSerializer.MAP_PREFIX);
+		CollSerializer.map2streamWithoutPrefix(o, map);
 	}
 	
-	public static void map2streamWithoutPrefix(OStream o, Map<?,?> map) throws Exception {
+	public static void map2streamWithoutPrefix(OStream o, Map<?,?> map) throws SerializeException, IOException {
 		Iterator<? extends Entry<?,?>> it = map.entrySet().iterator();
 		while(it.hasNext()) {
 			Entry<?,?> ent = it.next();
@@ -153,26 +159,26 @@ public class WNSerializer {
 		o.writeByte((byte) 0);
 	}
 	
-	public static <X,Y> void file2map(Map<X,Y> map, File f) throws Exception {
+	public static <X,Y> void file2map(Map<X,Y> map, File f) throws SerializeException, IOException {
 		InputStream in = new FileInputStream(f);
 		IStream ins = new IStream(new BufferedInputStream(in));
-		WNSerializer.stream2map(map, ins);
+		CollSerializer.stream2map(map, ins);
 		ins.close();
 		try {
 			in.close();
 		} catch(Throwable t) {}
 	}
 	
-	public static <X,Y> void stream2map(Map<X,Y> map, IStream s) throws Exception {
+	public static <X,Y> void stream2map(Map<X,Y> map, IStream s) throws SerializeException, IOException {
 		int l = s.readInt();
-		if(l != WNSerializer.MAP_PREFIX) {
-			throw new Exception("Not MAP format!");
+		if(l != CollSerializer.MAP_PREFIX) {
+			throw new BadFilePrefixException("Not MAP format!");
 		}
-		WNSerializer.stream2mapWithoutPrefix(map, s);
+		CollSerializer.stream2mapWithoutPrefix(map, s);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <X,Y> void stream2mapWithoutPrefix(Map<X,Y> map, IStream s) throws Exception {
+	public static <X,Y> void stream2mapWithoutPrefix(Map<X,Y> map, IStream s) throws SerializeException, IOException {
 		byte b;
 		int i = 0;
 		while((b = s.readByte()) > 0) {

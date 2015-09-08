@@ -22,12 +22,27 @@
  * SOFTWARE.
  */
 
-package eu.wordnice.db.rsdb;
+package eu.wordnice.api.serialize;
 
-import eu.wordnice.db.results.MapsResSet;
 
-public class JSON extends MapsResSet {
+public class BadFilePrefixException extends SerializeException {
 	
+	private static final long serialVersionUID = 1L;
+
+	public BadFilePrefixException() {
+		super("Types do not match!");
+	}
 	
+	public BadFilePrefixException(String str) {
+		super(str);
+	}
+	
+	public BadFilePrefixException(Throwable thr) {
+		super(thr);
+	}
+	
+	public BadFilePrefixException(String str, Throwable thr) {
+		super(str, thr);
+	}
 	
 }

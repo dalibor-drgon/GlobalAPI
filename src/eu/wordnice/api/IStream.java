@@ -29,15 +29,17 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.Map;
 
-import eu.wordnice.api.serialize.WNSerializer;
+import eu.wordnice.api.serialize.BadFilePrefixException;
+import eu.wordnice.api.serialize.CollSerializer;
+import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.db.wndb.WNDBDecoder;
 
 public class IStream extends InputStream {
 
 	public InputStream in;
-
+	
 	public IStream() {}
-
+	
 	public IStream(InputStream in) {
 		this.in = in;
 	}
@@ -120,35 +122,35 @@ public class IStream extends InputStream {
 	}
 	
 	
-	public <X> Collection<X> readSet(Collection<X> col) throws Exception {
+	public <X> Collection<X> readColl(Collection<X> col) throws SerializeException, IOException {
 		int ch = this.readInt();
 		if(ch == -1) {
 			return null;
 		}
-		if(ch != WNSerializer.SET_PREFIX) {
-			throw new Exception("Not SET!");
+		if(ch != CollSerializer.SET_PREFIX) {
+			throw new BadFilePrefixException("Not SET!");
 		}
-		WNSerializer.stream2collWithoutPrefix(col, this);
+		CollSerializer.stream2collWithoutPrefix(col, this);
 		return col;
 	}
 	
-	public <X, Y> Map<X, Y> readMap(Map<X, Y> map) throws Exception {
+	public <X, Y> Map<X, Y> readMap(Map<X, Y> map) throws SerializeException, IOException {
 		int ch = this.readInt();
 		if(ch == -1) {
 			return null;
 		}
-		if(ch != WNSerializer.MAP_PREFIX) {
-			throw new Exception("Not MAP!");
+		if(ch != CollSerializer.MAP_PREFIX) {
+			throw new BadFilePrefixException("Not MAP!");
 		}
-		WNSerializer.stream2mapWithoutPrefix(map, this);
+		CollSerializer.stream2mapWithoutPrefix(map, this);
 		return map;
 	}
 	
-	public Object readObject() throws Exception {
+	public Object readObject() throws SerializeException, IOException {
 		return this.readObject(-1, -1);
 	}
 	
-	public Object readObject(int ri, int vi) throws Exception {
+	public Object readObject(int ri, int vi) throws SerializeException, IOException {
 		return WNDBDecoder.readObject(this, this.readByte(), ri, vi);
 	}
 	

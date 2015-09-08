@@ -22,22 +22,26 @@
  * SOFTWARE.
  */
 
-package eu.wordnice.db;
+package eu.wordnice.api.serialize;
 
-public class BadTypeException extends Exception {
+public class SerializeException extends Exception {
 	
-	private static final long serialVersionUID = -9098826783241103869L;
+	private static final long serialVersionUID = 1L;
 
-	public BadTypeException() {
-		super("Types do not match!");
+	public SerializeException() {
+		super();
 	}
 	
-	public BadTypeException(String str) {
+	public SerializeException(String str) {
 		super(str);
 	}
 	
-	public BadTypeException(Throwable thr) {
+	public SerializeException(Throwable thr) {
 		super(thr);
+	}
+	
+	public SerializeException(String str, Throwable thr) {
+		super(str, thr);
 	}
 	
 }

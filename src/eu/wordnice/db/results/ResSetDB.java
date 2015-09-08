@@ -27,10 +27,12 @@ package eu.wordnice.db.results;
 import java.util.Collection;
 import java.util.Map;
 
+import eu.wordnice.api.serialize.DataReader;
+import eu.wordnice.api.serialize.DataWriter;
 import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.Sort;
 
-public interface ResSetDB extends ResSet {
+public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	
 	/**
 	 * @return Number of rows

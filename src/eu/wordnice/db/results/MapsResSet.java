@@ -24,6 +24,7 @@
 
 package eu.wordnice.db.results;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -35,9 +36,12 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
+import eu.wordnice.api.IStream;
+import eu.wordnice.api.OStream;
 import eu.wordnice.api.cols.ImmArray;
 import eu.wordnice.api.cols.ImmIter;
 import eu.wordnice.api.cols.ImmMapIterPair;
+import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.Sort;
 
@@ -300,6 +304,16 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 			return this.getOriginal().getSnapshot();
 		}
 		
+	}
+
+	@Override
+	public void write(OStream out) throws SerializeException, IOException {
+		out.writeColl(this.list);
+	}
+
+	@Override
+	public void read(IStream in) throws SerializeException, IOException {
+		this.list = (List<Map<String, Object>>) in.readColl(new ArrayList<Map<String, Object>>());
 	}
 
 }

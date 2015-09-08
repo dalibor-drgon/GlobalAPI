@@ -36,6 +36,8 @@ import eu.wordnice.api.cols.ImmMapArray;
 public class ResultResSet implements ResSet {
 
 	public String[] keys;
+	public Object[] last;
+	public boolean hasLast = false;
 	public ResultSet rs;
 	public boolean pendingFirst = false;
 
@@ -49,6 +51,7 @@ public class ResultResSet implements ResSet {
 		for(int i = 0; i < cols; i++) {
 			this.keys[i] = md.getColumnName(i + 1);
 		}
+		this.last = new Object[cols];
 	}
 	
 	@Override
@@ -213,11 +216,13 @@ public class ResultResSet implements ResSet {
 
 	@Override
 	public void first() {
+		this.hasLast = false;
 		this.pendingFirst = true;
 	}
 
 	@Override
 	public boolean next() {
+		this.hasLast = false;
 		try {
 			if(this.pendingFirst) {
 				this.pendingFirst = false;
@@ -231,6 +236,7 @@ public class ResultResSet implements ResSet {
 	@Override
 	public void close() throws SQLException {
 		this.rs.close();
+		this.hasLast = false;
 	}
 	
 	
@@ -246,6 +252,7 @@ public class ResultResSet implements ResSet {
 	@Override
 	public void remove() throws SQLException {
 		this.rs.deleteRow();
+		this.hasLast = false;
 	}
 
 	@Override
@@ -264,16 +271,18 @@ public class ResultResSet implements ResSet {
 	}
 	
 	protected Object[] getValuesArray() {
-		int n = this.cols();
-		Object[] vals = new Object[this.cols()];
-		try {
-			for(int i = 0; i < n; i++) {
-				vals[i] = this.rs.getObject(i + 1);
+		if(this.hasLast == false) {
+			int n = this.cols();
+			try {
+				for(int i = 0; i < n; i++) {
+					this.last[i] = this.rs.getObject(i + 1);
+				}
+				this.hasLast = true;
+			} catch(SQLException e) {
+				throw new RuntimeException(e);
 			}
-		} catch(SQLException e) {
-			throw new RuntimeException(e);
 		}
-		return vals;
+		return this.last;
 	}
 
 	@Override

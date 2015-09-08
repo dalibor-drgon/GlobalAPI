@@ -24,6 +24,7 @@
 
 package eu.wordnice.db.results;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,8 +37,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import eu.wordnice.api.Api;
+import eu.wordnice.api.IStream;
+import eu.wordnice.api.OStream;
 import eu.wordnice.api.cols.ImmArray;
 import eu.wordnice.api.cols.ImmMapPair;
+import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.Sort;
 
@@ -476,6 +480,16 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 			return this.getOriginal().getSnapshot();
 		}
 		
+	}
+
+	@Override
+	public void write(OStream out) throws SerializeException, IOException {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void read(IStream in) throws SerializeException, IOException {
+		// TODO Auto-generated method stub
 	}
 
 }

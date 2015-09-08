@@ -38,7 +38,7 @@ import eu.wordnice.db.operator.Sort;
 import eu.wordnice.db.results.MapsResSet;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.results.ResSetDB;
-import eu.wordnice.db.results.ResSetDBAdvanced;
+import eu.wordnice.db.results.ResSetDBAdv;
 import eu.wordnice.db.results.ResultResSet;
 import eu.wordnice.db.results.ArraysResSet;
 import eu.wordnice.db.sql.MySQL;
@@ -319,8 +319,8 @@ public class Database {
 			}
 			return new ResultResSet(ps.executeQuery());
 		} else {
-			if(this.rs instanceof ResSetDBAdvanced) {
-				return ((ResSetDBAdvanced) this.rs).get(columns, where, limit, sort);
+			if(this.rs instanceof ResSetDBAdv && ((ResSetDBAdv) this.rs).hasGet()) {
+				return ((ResSetDBAdv) this.rs).get(columns, where, limit, sort);
 			}
 			ResSetDB rs = this.rs.getSnapshot();
 			if(where != null) {

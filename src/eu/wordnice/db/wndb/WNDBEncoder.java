@@ -27,18 +27,21 @@ package eu.wordnice.db.wndb;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Map;
 
 import eu.wordnice.api.OStream;
 import eu.wordnice.api.Val;
+import eu.wordnice.api.serialize.BadTypeException;
+import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.db.DBType;
 
 public class WNDBEncoder {
 
 	public static void writeFileData(File f, 
-			Val.ThreeVal<String[], DBType[], Iterable<Object[]>> vals) throws Exception {
+			Val.ThreeVal<String[], DBType[], Iterable<Object[]>> vals) throws SerializeException, IOException {
 		if(vals == null || f == null) {
 			throw new NullPointerException("File or values are null!");
 		}
@@ -50,7 +53,7 @@ public class WNDBEncoder {
 	}
 	
 	public static void writeOutputStreamData(OStream out, 
-			Val.ThreeVal<String[], DBType[], Iterable<Object[]>> vals) throws Exception {
+			Val.ThreeVal<String[], DBType[], Iterable<Object[]>> vals) throws SerializeException, IOException {
 		if(out == null || vals == null || 
 				vals.one == null || vals.two == null || vals.three == null ||
 				vals.one.length < 1 || vals.two.length < 1 || (vals.one.length != vals.two.length)) {
@@ -84,13 +87,13 @@ public class WNDBEncoder {
 	 * @param ri Row number (index) - used for exception
 	 * @param vi Column index - used for exception
 	 */
-	public static void writeObject(OStream out, Object obj, Byte type, int ri, int vi) throws Exception {
+	public static void writeObject(OStream out, Object obj, Byte type, int ri, int vi) throws SerializeException, IOException {
 		WNDBEncoder.writeObject(out, obj, DBType.getByByte(type), ri, vi);
 	}
 
-	public static void writeObject(OStream out, Object obj, DBType typ, int ri, int vi) throws Exception {
+	public static void writeObject(OStream out, Object obj, DBType typ, int ri, int vi) throws SerializeException, IOException {
 		if(obj != null && !DBType.isAssignable(typ, obj)) {
-			throw new Exception("Cannot write object at " + ri + ":" + vi + ", class " + obj.getClass().getName() + " - is not assignable for type " + typ.name());
+			throw new BadTypeException("Cannot write object at " + ri + ":" + vi + ", class " + obj.getClass().getName() + " - is not assignable for type " + typ.name());
 		}
 		switch(typ) {
 			case BOOLEAN:
@@ -159,9 +162,9 @@ public class WNDBEncoder {
 			case SET:
 			case LIST:
 				if(obj == null) {
-					out.writeSet(null);
+					out.writeColl(null);
 				} else {
-					out.writeSet((Iterable<?>) obj);
+					out.writeColl((Iterable<?>) obj);
 				}
 				return;
 			case MAP:
@@ -172,7 +175,7 @@ public class WNDBEncoder {
 				}
 				return;
 		}
-		throw new Exception("Cannot write object at " + ri + ":" + vi + ", class " + obj.getClass().getName() + " - unsupported type " + typ.name());
+		throw new BadTypeException("Cannot write object at " + ri + ":" + vi + ", class " + obj.getClass().getName() + " - unsupported type " + typ.name());
 	}
 	
 }
