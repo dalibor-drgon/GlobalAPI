@@ -146,6 +146,21 @@ public class IStream extends InputStream {
 		return map;
 	}
 	
+	public Object[] readArray() throws SerializeException, IOException {
+		return this.readArray(Object.class);
+	}
+	
+	public <X> X[] readArray(Class<X> clz) throws SerializeException, IOException {
+		int ch = this.readInt();
+		if(ch == -1) {
+			return null;
+		}
+		if(ch != CollSerializer.ARRAY_PREFIX) {
+			throw new BadFilePrefixException("Not ARRAY!");
+		}
+		return CollSerializer.stream2arrayWithoutPrefix(clz, this);
+	}
+	
 	public Object readObject() throws SerializeException, IOException {
 		return this.readObject(-1, -1);
 	}

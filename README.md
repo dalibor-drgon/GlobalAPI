@@ -1,11 +1,9 @@
  GlobalApi
 ===========
 
-Java library for easy reading & writing primite types, fast data serialization, timeout threads, mysql & sqlite interface.
+Java library for easy & fast data serialization, timeout threads, mysql & sqlite interface, JSON encoding, Unsafe and Reflections tools, classes and packages listing.
 
-Usable as Bukkit plugin, with small changes compatible with plain Java. Not well documented, but try it on your own.
-
-Under MIT license.
+Usable as Bukkit and Sponge plugin, with small changes compatible with plain Java. Under MIT license.
 
 
 

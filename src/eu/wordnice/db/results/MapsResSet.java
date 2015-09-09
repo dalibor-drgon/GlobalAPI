@@ -41,6 +41,7 @@ import eu.wordnice.api.OStream;
 import eu.wordnice.api.cols.ImmArray;
 import eu.wordnice.api.cols.ImmIter;
 import eu.wordnice.api.cols.ImmMapIterPair;
+import eu.wordnice.api.serialize.BadResultException;
 import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.Sort;
@@ -314,6 +315,9 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	@Override
 	public void read(IStream in) throws SerializeException, IOException {
 		this.list = (List<Map<String, Object>>) in.readColl(new ArrayList<Map<String, Object>>());
+		if(this.list == null) {
+			throw new BadResultException();
+		}
 	}
 
 }

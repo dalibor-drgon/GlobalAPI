@@ -110,6 +110,18 @@ public class OStream extends OutputStream {
 		CollSerializer.map2stream(this, map);
 	}
 	
+	public void writeArray(Object[] arr) throws SerializeException, IOException {
+		this.writeArray(arr, ((arr == null) ? 0 : arr.length));
+	}
+	
+	public void writeArray(Object[] arr, int len) throws SerializeException, IOException {
+		if(arr == null) {
+			this.writeInt(-1);
+			return;
+		}
+		CollSerializer.array2stream(this, arr, len);
+	}
+	
 	public void writeObject(Object obj) throws SerializeException, IOException {
 		this.writeObject(obj, -1, -1);
 	}

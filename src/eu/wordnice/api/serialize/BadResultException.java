@@ -25,23 +25,23 @@
 package eu.wordnice.api.serialize;
 
 
-public class BadFilePrefixException extends SerializeException {
+public class BadResultException extends SerializeException {
 	
 	private static final long serialVersionUID = 1L;
 
-	public BadFilePrefixException() {
-		super("Unknown format!");
+	public BadResultException() {
+		super("Unexpected result!");
 	}
 	
-	public BadFilePrefixException(String str) {
+	public BadResultException(String str) {
 		super(str);
 	}
 	
-	public BadFilePrefixException(Throwable thr) {
+	public BadResultException(Throwable thr) {
 		super(thr);
 	}
 	
-	public BadFilePrefixException(String str, Throwable thr) {
+	public BadResultException(String str, Throwable thr) {
 		super(str, thr);
 	}
 	

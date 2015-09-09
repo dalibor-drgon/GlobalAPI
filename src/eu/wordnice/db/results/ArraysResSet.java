@@ -484,7 +484,11 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 
 	@Override
 	public void write(OStream out) throws SerializeException, IOException {
-		// TODO Auto-generated method stub
+		Iterator<Object[]> it = this.values.iterator();
+		while(it.hasNext()) {
+			//Object[] cur = it.next();
+			//TODO
+		}
 	}
 
 	@Override

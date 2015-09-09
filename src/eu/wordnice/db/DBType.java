@@ -24,7 +24,6 @@
 
 package eu.wordnice.db;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +31,7 @@ import java.util.Set;
 public enum DBType {
 
 	BOOLEAN(1), BYTE(2), SHORT(3), INT(4), LONG(5), FLOAT(6), DOUBLE(7), STRING(8), BYTES(9),
-	SET(11), MAP(12), LIST(13);
+	SET(11), MAP(12), LIST(13), ARRAY(14);
 
 	public byte b;
 
@@ -79,7 +78,9 @@ public enum DBType {
 				return (byte[].class.isAssignableFrom(c) || Byte[].class.isAssignableFrom(c));
 			case SET:
 			case LIST:
-				return Collection.class.isAssignableFrom(c);
+				return Iterable.class.isAssignableFrom(c);
+			case ARRAY:
+				return c.isArray();
 			case MAP:
 				return Map.class.isAssignableFrom(c);
 		}
@@ -127,11 +128,31 @@ public enum DBType {
 		if(Iterable.class.isAssignableFrom(c)) {
 			return LIST;
 		}
+		if(c.isArray()) {
+			return ARRAY;
+		}
 		if(Map.class.isAssignableFrom(c)) {
 			return MAP;
 		}
 		
 		return null;
+	}
+	
+	
+	public static byte[] toBytes(DBType[] set) {
+		byte[] out = new byte[set.length];
+		for(int i = 0; i < set.length; i++) {
+			out[i] = set[i].b;
+		}
+		return out;
+	}
+	
+	public static DBType[] toTypes(byte[] set) {
+		DBType[] out = new DBType[set.length];
+		for(int i = 0; i < set.length; i++) {
+			out[i] = DBType.getByByte(set[i]);
+		}
+		return out;
 	}
 
 }

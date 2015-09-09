@@ -207,10 +207,6 @@ public class WNDB extends ArraysResSet {
 	
 	/*** Static CREATE ***/
 	
-	public static WNDB createWNDB_(File f, String[] names, Byte[] types) throws Exception {
-		return WNDB.createWNDB(f, names, WNDBDecoder.getBytesToVarTypes(types));
-	}
-	
 	public static WNDB createWNDB(File f, String[] names, DBType[] types) throws Exception {
 		f.createNewFile();
 		List<Object[]> vals = new ArrayList<Object[]>();
@@ -225,11 +221,6 @@ public class WNDB extends ArraysResSet {
 		return ret;
 	}
 	
-	
-	public static WNDB createWNDB_(OStream out, String[] names, Byte[] types) throws Exception {
-		return WNDB.createWNDB(out, names, WNDBDecoder.getBytesToVarTypes(types));
-	}
-	
 	public static WNDB createWNDB(OStream out, String[] names, DBType[] types) throws Exception {
 		List<Object[]> vals = new ArrayList<Object[]>();
 		Val.ThreeVal<String[], DBType[], Iterable<Object[]>> threevals = new Val.ThreeVal<String[], DBType[], Iterable<Object[]>>(names, types, vals);
@@ -242,10 +233,6 @@ public class WNDB extends ArraysResSet {
 		ret.cols = names.length;
 		ret.first();
 		return ret;
-	}
-	
-	public static WNDB createEmptyWNDB_(String[] names, Byte[] types) {
-		return WNDB.createEmptyWNDB(names, WNDBDecoder.getBytesToVarTypes(types));
 	}
 	
 	public static WNDB createEmptyWNDB(String[] names, DBType[] types) {

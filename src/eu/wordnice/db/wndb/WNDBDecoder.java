@@ -45,22 +45,6 @@ public class WNDBDecoder {
 
 	public static final long STATIC_DB_PREFIX = 0xDEADCAFEBEEFBABEL;
 	
-	public static Byte[] getVarTypesToBytes(DBType[] set) {
-		Byte[] out = new Byte[set.length];
-		for(int i = 0; i < set.length; i++) {
-			out[i] = set[i].b;
-		}
-		return out;
-	}
-	
-	public static DBType[] getBytesToVarTypes(Byte[] set) {
-		DBType[] out = new DBType[set.length];
-		for(int i = 0; i < set.length; i++) {
-			out[i] = DBType.getByByte(set[i]);
-		}
-		return out;
-	}
-
 	
 	public static Val.ThreeVal<String[], DBType[], List<Object[]>> readFileRawData(File f) throws SerializeException, IOException {
 		InputStream fin = new FileInputStream(f);
@@ -133,6 +117,8 @@ public class WNDBDecoder {
 				return in.readColl(new HashSet<Object>());
 			case LIST:
 				return in.readColl(new ArrayList<Object>());
+			case ARRAY:
+				return in.readArray(Object.class);
 			case MAP:
 				return in.readMap(new HashMap<Object, Object>());
 		}

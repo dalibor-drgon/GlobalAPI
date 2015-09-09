@@ -32,6 +32,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Array;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -49,6 +50,7 @@ import eu.wordnice.db.wndb.WNDBDecoder;
 
 public class CollSerializer {
 	
+	public static final int ARRAY_PREFIX = 0xBABE0889;
 	public static final int SET_PREFIX = 0xBABE0989;
 	public static final int MAP_PREFIX = 0xBABE1989;
 	
@@ -77,7 +79,74 @@ public class CollSerializer {
 	
 	
 	
-	/*** Collection ***/
+	/*** Arrays ***/
+	
+	public static void array2file(File f, Object[] arr) throws SerializeException, IOException {
+		OutputStream out = new FileOutputStream(f);
+		OStream ost = new OStream(new BufferedOutputStream(out));
+		CollSerializer.array2stream(ost, arr, ((arr == null) ? 0 : arr.length));
+		ost.close();
+		try {
+			out.close();
+		} catch(Throwable t) {}
+	}
+	
+	public static void array2file(File f, Object[] arr, int len) throws SerializeException, IOException {
+		OutputStream out = new FileOutputStream(f);
+		OStream ost = new OStream(new BufferedOutputStream(out));
+		CollSerializer.array2stream(ost, arr, len);
+		ost.close();
+		try {
+			out.close();
+		} catch(Throwable t) {}
+	}
+	
+	public static void array2stream(OStream o, Object[] arr, int len) throws SerializeException, IOException {
+		o.writeInt(CollSerializer.ARRAY_PREFIX);
+		CollSerializer.array2streamWithoutPrefix(o, arr, len);
+	}
+	
+	public static void array2streamWithoutPrefix(OStream o, Object[] arr, int len) throws SerializeException, IOException {
+		o.writeInt(len);
+		for(int i = 0; i < len; i++) {
+			o.writeObject(arr[i]);
+		}
+	}
+	
+	public static <X> X[] file2array(Class<X> clz, File f) throws SerializeException, IOException {
+		InputStream in = new FileInputStream(f);
+		IStream ins = new IStream(new BufferedInputStream(in));
+		X[] arr = CollSerializer.stream2array(clz, ins);
+		ins.close();
+		try {
+			in.close();
+		} catch(Throwable t) {}
+		return arr;
+	}
+	
+	public static <X> X[] stream2array(Class<X> clz, IStream s) throws SerializeException, IOException {
+		int l = s.readInt();
+		if(l != CollSerializer.ARRAY_PREFIX) {
+			throw new BadFilePrefixException("Not ARRAY format!");
+		}
+		return CollSerializer.stream2arrayWithoutPrefix(clz, s);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <X> X[] stream2arrayWithoutPrefix(Class<X> clz, IStream s) throws SerializeException, IOException {
+		int len = s.readInt();
+		if(len == -1) {
+			return null;
+		}
+		X[] arr = (X[]) Array.newInstance(clz, len);
+		for(int i = 0; i < len; i++) {
+			arr[i] = (X) s.readObject();
+		}
+		return arr;
+	}
+	
+	
+	/*** Iterable & Collection ***/
 	
 	public static void coll2file(File f, Iterable<?> set) throws SerializeException, IOException {
 		OutputStream out = new FileOutputStream(f);

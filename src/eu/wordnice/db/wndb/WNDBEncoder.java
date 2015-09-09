@@ -103,6 +103,7 @@ public class WNDBEncoder {
 					out.writeBoolean((Boolean) obj);
 				}
 				return;
+				
 			case BYTE:
 				if(obj == null) {
 					out.writeByte((byte) 0);
@@ -110,6 +111,7 @@ public class WNDBEncoder {
 					out.writeByte((Byte) obj);
 				}
 				return;
+				
 			case SHORT:
 				if(obj == null) {
 					out.writeShort((short) 0);
@@ -117,6 +119,7 @@ public class WNDBEncoder {
 					out.writeShort((Short) obj);
 				}
 				return;
+				
 			case INT:
 				if(obj == null) {
 					out.writeInt((int) 0);
@@ -124,6 +127,7 @@ public class WNDBEncoder {
 					out.writeInt((Integer) obj);
 				}
 				return;
+				
 			case LONG:
 				if(obj == null) {
 					out.writeLong((long) 0);
@@ -131,6 +135,7 @@ public class WNDBEncoder {
 					out.writeLong((Long) obj);
 				}
 				return;
+				
 			case FLOAT:
 				if(obj == null) {
 					out.writeFloat((float) 0);
@@ -138,6 +143,7 @@ public class WNDBEncoder {
 					out.writeFloat((Float) obj);
 				}
 				return;
+				
 			case DOUBLE:
 				if(obj == null) {
 					out.writeDouble((double) 0);
@@ -145,6 +151,7 @@ public class WNDBEncoder {
 					out.writeDouble((Double) obj);
 				}
 				return;
+				
 			case STRING:
 				if(obj == null) {
 					out.writeString(null);
@@ -152,6 +159,7 @@ public class WNDBEncoder {
 					out.writeString((String) obj.toString());
 				}
 				return;
+				
 			case BYTES:
 				if(obj == null) {
 					out.writeBytes(null);
@@ -159,6 +167,7 @@ public class WNDBEncoder {
 					out.writeBytes((byte[]) obj);
 				}
 				return;
+				
 			case SET:
 			case LIST:
 				if(obj == null) {
@@ -167,6 +176,15 @@ public class WNDBEncoder {
 					out.writeColl((Iterable<?>) obj);
 				}
 				return;
+				
+			case ARRAY:
+				if(obj == null) {
+					out.writeArray(null);
+				} else {
+					out.writeArray((Object[]) obj);
+				}
+				return;
+				
 			case MAP:
 				if(obj == null) {
 					out.writeMap(null);
