@@ -138,7 +138,15 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 			((ResSetDBSnap) this).getOriginal().update(vals);
 			return;
 		}
-		
+		this.cur.putAll(vals);
+	}
+	
+	@Override
+	public void updateAll(Map<String, Object> vals) throws Exception {
+		if(this instanceof ResSetDBSnap) {
+			((ResSetDBSnap) this).getOriginal().update(vals);
+			return;
+		}
 		this.it.set(vals);
 	}
 
@@ -316,7 +324,7 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	public void read(IStream in) throws SerializeException, IOException {
 		this.list = (List<Map<String, Object>>) in.readColl(new ArrayList<Map<String, Object>>());
 		if(this.list == null) {
-			throw new BadResultException();
+			throw new BadResultException("Readed null collection!");
 		}
 	}
 

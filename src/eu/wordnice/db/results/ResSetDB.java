@@ -47,7 +47,7 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	public int getColumnIndex(String name);
 	
 	/**
-	 * Update current values
+	 * Change entered values and keep other unchanged
 	 * If instanceof ResSetDBSnap, modify only original ResSetDB
 	 * 
 	 * @param vals Values
@@ -55,6 +55,16 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * @throws Exception Implementation specific exception
 	 */
 	public void update(Map<String, Object> vals) throws Exception;
+	
+	/**
+	 * Replace current values with entered
+	 * If instanceof ResSetDBSnap, modify only original ResSetDB
+	 * 
+	 * @param vals Values
+	 * 
+	 * @throws Exception Implementation specific exception
+	 */
+	public void updateAll(Map<String, Object> vals) throws Exception;
 	
 	/**
 	 * Insert values

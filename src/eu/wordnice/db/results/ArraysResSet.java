@@ -41,6 +41,7 @@ import eu.wordnice.api.IStream;
 import eu.wordnice.api.OStream;
 import eu.wordnice.api.cols.ImmArray;
 import eu.wordnice.api.cols.ImmMapPair;
+import eu.wordnice.api.serialize.BadResultException;
 import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.Sort;
@@ -89,8 +90,9 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 		return this.cur;
 	}
 	
-	protected Object[] vals2raw(Map<String, Object> vals) throws IllegalArgumentException {
+	protected Object[] vals2raw(Map<String, Object> vals, boolean keepOriginal) throws IllegalArgumentException {
 		Object[] nev = new Object[this.cols()];
+		boolean[] was = new boolean[this.cols()];
 		Iterator<Entry<String, Object>> it = vals.entrySet().iterator();
 		while(it.hasNext()) {
 			Entry<String, Object> ent =  it.next();
@@ -101,9 +103,17 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 				throw new IllegalArgumentException("Illegal column name '" + key + "'!");
 			} else if(this.isRawValueOK(index, val)) {
 				nev[index] = val;
+				was[index] = true;
 			} else {
 				throw new IllegalArgumentException("Illegal type for column '" + key 
 						+ "', value class " + ((val == null) ? null : val.getClass()) + "!");
+			}
+		}
+		if(keepOriginal) {
+			for(int i = 0; i < this.cols; i++) {
+				if(!was[i]) {
+					nev[i] = this.cur[i];
+				}
 			}
 		}
 		return nev;
@@ -239,7 +249,17 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 			return;
 		}
 		
-		this.updateRaw(this.vals2raw(vals));
+		this.updateRaw(this.vals2raw(vals, true));
+	}
+	
+	@Override
+	public void updateAll(Map<String, Object> vals) throws Exception {
+		if(this instanceof ResSetDBSnap) {
+			((ResSetDBSnap) this).getOriginal().update(vals);
+			return;
+		}
+		
+		this.updateRaw(this.vals2raw(vals, false));
 	}
 
 	@Override
@@ -249,7 +269,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 			return;
 		}
 		
-		this.insertRaw(this.vals2raw(vals));
+		this.insertRaw(this.vals2raw(vals, false));
 	}
 	
 	@Override
@@ -484,16 +504,24 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 
 	@Override
 	public void write(OStream out) throws SerializeException, IOException {
-		Iterator<Object[]> it = this.values.iterator();
-		while(it.hasNext()) {
-			//Object[] cur = it.next();
-			//TODO
-		}
+		out.writeColl(this.values);
 	}
 
 	@Override
 	public void read(IStream in) throws SerializeException, IOException {
-		// TODO Auto-generated method stub
+		this.values = (List<Object[]>) in.readColl(new ArrayList<Object[]>());
+		if(this.values == null) {
+			throw new BadResultException("Readed null collection!");
+		}
+		ListIterator<Object[]> it = this.values.listIterator();
+		int i = 0;
+		while(it.hasNext()) {
+			Object[] arr = it.next();
+			if(arr == null || arr.length <= this.cols) {
+				throw new BadResultException("Bad readed collection! Array at index " + i + " has " + ((arr == null) ? -1 : arr.length) + " elements!");
+			}
+			i++;
+		}
 	}
 
 }
