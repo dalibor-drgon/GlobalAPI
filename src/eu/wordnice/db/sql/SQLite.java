@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+ * Copyright (c) 2015, Dalibor DrgoĹ� <emptychannelmc@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,18 @@
 
 package eu.wordnice.db.sql;
 
+import java.io.File;
+
+import eu.wordnice.api.Api;
+
 public class SQLite extends JDBCSQL {
 	
+	public SQLite(File file) {
+		super("jdbc:sqlite:" + Api.getRealPath(file));
+	}
+	
 	public SQLite(String file) {
-		super("org.sqlite.JDBC", "jdbc:sqlite:" + file);
+		super("jdbc:sqlite:" + file);
 	}
 
 }

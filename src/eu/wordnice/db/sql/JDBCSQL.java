@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+ * Copyright (c) 2015, Dalibor DrgoĹ� <emptychannelmc@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,6 @@ package eu.wordnice.db.sql;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-import eu.wordnice.api.Api;
-
 public class JDBCSQL extends ConnectionSQL {
 
 	protected boolean single;
@@ -53,29 +51,6 @@ public class JDBCSQL extends ConnectionSQL {
 	}
 
 	public JDBCSQL(String db_url, String user, String pass, boolean single) {
-		this.single = single;
-		this.db_url = db_url;
-		this.user = user;
-		this.pass = pass;
-	}
-
-	public JDBCSQL(String driver, String db_url) {
-		Api.loadClassAndDebug(driver);
-		this.single = true;
-		this.db_url = db_url;
-	}
-
-	public JDBCSQL(String driver, String db_url, String user, String pass) {
-		Api.loadClassAndDebug(driver);
-		this.single = false;
-		this.db_url = db_url;
-		this.user = user;
-		this.pass = pass;
-	}
-
-	public JDBCSQL(String driver, String db_url, String user, String pass,
-			boolean single) {
-		Api.loadClassAndDebug(driver);
 		this.single = single;
 		this.db_url = db_url;
 		this.user = user;

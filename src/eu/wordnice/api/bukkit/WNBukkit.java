@@ -46,6 +46,33 @@ import eu.wordnice.api.cols.ImmArray;
 public class WNBukkit {
 	
 	/**
+	 * Bukkit-only utilities
+	 */
+	public static String NMS = null;
+	
+	/**
+	 * Get net.minecraft.server.v___.* class name
+	 * 
+	 * @param clz Class name
+	 * 
+	 * @return Class name
+	 */
+	public static String getNMS(String clz) {
+		return "net.minecraft.server." + WNBukkit.NMS + "." + clz;
+	}
+	
+	/**
+	 * Get org.bukkit.craftbukkit.v___ class name
+	 * 
+	 * @param clz Class name
+	 * 
+	 * @return Class name
+	 */
+	public static String getCB(String clz) {
+		return "org.bukkit.craftbukkit." + WNBukkit.NMS + "." + clz;
+	}
+	
+	/**
 	 * Get all online players
 	 * 
 	 * @see Bukkit#getOnlinePlayers()

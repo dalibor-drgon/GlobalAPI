@@ -471,9 +471,9 @@ Inserting user1: VPTvzpCJpY with password hash 747074543
 Inserting user2: h9t2Xc8mBe with password hash 1163470248
 Inserting post1: from h9t2Xc8mBe with title How to decode ABZhEyJbL9
 Saving database users...
-Database users successfuly saved to /media/delino/DELI_USB/Java/workspace/Test/dbs/users.wndb!
+Database users successfuly saved to F:/Java/workspace/Test/dbs/users.wndb!
 Saving database posts...
-Database posts successfuly saved to /media/delino/DELI_USB/Java/workspace/Test/dbs/posts.wndb!
+Database posts successfuly saved to F:/Java/workspace/Test/dbs/posts.wndb!
 Databases should be saved. Run this program again to load and print data...
 ```
 

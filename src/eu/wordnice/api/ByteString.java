@@ -30,6 +30,10 @@ public class ByteString {
 		return ByteString.equals(str1, 0, str1.length, str2, 0, str2.length);
 	}
 	
+	public static boolean equals(byte[] str1, byte[] str2, int len) {
+		return ByteString.equals(str1, 0, len, str2, 0, len);
+	}
+	
 	public static boolean equals(byte[] str1, int str1_off, int str1_len,
 			byte[] str2, int str2_off, int str2_len) {
 		if(str1_len != str2_len) {
@@ -47,6 +51,10 @@ public class ByteString {
 	
 	public static boolean equalsIgnoreCase(byte[] str1, byte[] str2) {
 		return ByteString.equalsIgnoreCase(str1, 0, str1.length, str2, 0, str2.length);
+	}
+	
+	public static boolean equalsIgnoreCase(byte[] str1, byte[] str2, int len) {
+		return ByteString.equalsIgnoreCase(str1, 0, len, str2, 0, len);
 	}
 	
 	public static boolean equalsIgnoreCase(byte[] str1, int str1_off, int str1_len,

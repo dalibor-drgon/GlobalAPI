@@ -1,0 +1,5 @@
+eclipse.preferences.version=1
+encoding//src/eu/wordnice/api/Api.java=UTF-8
+encoding//src/eu/wordnice/db/sql/JDBCSQL.java=UTF-8
+encoding//src/eu/wordnice/db/sql/MySQL.java=UTF-8
+encoding//src/eu/wordnice/db/sql/SQLite.java=UTF-8

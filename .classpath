@@ -2,13 +2,13 @@
 <classpath>
 	<classpathentry excluding="eu/wordnice/sql/CopyOfSimpleResSet.java|eu/wordnice/sql/wnsql/CopyOfWNDB.java|eu/wordnice/api/ClassEnumerator.java|eu/wordnice/api/RegexFinder.java|eu/wordnice/sql/wndb/CopyOfWNDB.java|eu/wordnice/sql/wndb/CopyOfWNDB1.java|eu/wordnice/sql/wndb/CopyOfWNDB2.java" kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/media/delino/DELI_USB/Java/Files/sponges/spongeapi-2.1-SNAPSHOT.jar"/>
-	<classpathentry kind="lib" path="/media/delino/DELI_USB/Java/Files/sponges/spongeapi-2.1-SNAPSHOT-javadoc.jar"/>
-	<classpathentry kind="lib" path="/media/delino/DELI_USB/Java/Files/sponges/spongeapi-2.1-SNAPSHOT-sources.jar"/>
-	<classpathentry kind="lib" path="/media/delino/DELI_USB/Java/Files/sponges/slf4j-api-1.7.12.jar"/>
-	<classpathentry kind="lib" path="/media/delino/DELI_USB/Java/Files/sponges/slf4j-simple-1.7.12.jar"/>
-	<classpathentry kind="lib" path="/media/delino/DELI_USB/Java/Files/sponges/guice-3.0.jar"/>
-	<classpathentry kind="lib" path="/media/delino/DELI_USB/Java/Files/CB-152/plugins/PlaceholderAPI.jar"/>
-	<classpathentry kind="lib" path="/media/delino/DELI_USB/Java/Files/CB-152/spigot-1.8.8.jar"/>
+	<classpathentry kind="lib" path="F:/Java/Files/sponges/spongeapi-2.1-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="F:/Java/Files/sponges/spongeapi-2.1-SNAPSHOT-javadoc.jar"/>
+	<classpathentry kind="lib" path="F:/Java/Files/sponges/spongeapi-2.1-SNAPSHOT-sources.jar"/>
+	<classpathentry kind="lib" path="F:/Java/Files/sponges/slf4j-api-1.7.12.jar"/>
+	<classpathentry kind="lib" path="F:/Java/Files/sponges/slf4j-simple-1.7.12.jar"/>
+	<classpathentry kind="lib" path="F:/Java/Files/sponges/guice-3.0.jar"/>
+	<classpathentry kind="lib" path="F:/Java/Files/CB-152/plugins/PlaceholderAPI.jar"/>
+	<classpathentry kind="lib" path="F:/Java/Files/CB-152/spigot-1.8.8.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import eu.wordnice.api.cols.ImmArray;
-import eu.wordnice.api.cols.ImmMapArray;
+import eu.wordnice.api.cols.ImmMapPair;
 
 public class ResultResSet implements ResSet {
 
@@ -292,7 +292,7 @@ public class ResultResSet implements ResSet {
 
 	@Override
 	public Map<String, Object> getEntries() {
-		return new ImmMapArray<String, Object>(this.keys, this.getValuesArray(), this.keys.length);
+		return new ImmMapPair<String, Object>(this.keys, this.getValuesArray(), this.keys.length);
 	}
 
 }

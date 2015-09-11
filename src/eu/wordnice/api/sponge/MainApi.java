@@ -27,6 +27,7 @@ package eu.wordnice.api.sponge;
 import java.util.Set;
 
 import eu.wordnice.api.Api;
+import eu.wordnice.api.OnlyOnce;
 
 @org.spongepowered.api.plugin.Plugin(id="MainAPI", name="MainAPI", version="1.8.0")
 public class MainApi {
@@ -39,15 +40,28 @@ public class MainApi {
 		try {
 			Set<String> clzs = Api.getClasses(Api.getClassesLocation(org.spongepowered.api.Server.class));
 			this.log.info("Sponge classes: " + clzs.size());
-			this.log.info("Sponge packages: " + Api.filterPackagesString(clzs, null).size());
+			this.log.info("Sponge packages: " + Api.filterPackagesString(clzs, (String) null).size());
 		} catch(Throwable t) {}
+		
+		OnlyOnce.debugAll(new OnlyOnce.OnlyOnceLogger() {
+			
+			@Override
+			public void severe(String str) {
+				MainApi.this.log.error(str);
+			}
+			
+			@Override
+			public void info(String str) {
+				MainApi.this.log.info(str);
+			}
+		});
 		
 		this.log.info("MainAPI by wordnice for Sponge was enabled! Hello!");
 	}
 	
 	@org.spongepowered.api.event.Subscribe
     public void onServerStart(org.spongepowered.api.event.state.ServerStoppingEvent event) {
-		this.log.info("MainAPI by wordnice was disabled! Bye!");
+		this.log.info("MainAPI was disabled! Bye!");
 	}
 	
 }

@@ -24,6 +24,7 @@
 
 package eu.wordnice.db.operator;
 
+import java.sql.PreparedStatement;
 import java.util.regex.Pattern;
 
 import eu.wordnice.api.Api;
@@ -33,6 +34,7 @@ import eu.wordnice.db.DBType;
 import eu.wordnice.db.Database;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.results.ResSetDB;
+import eu.wordnice.db.results.ResultResSet;
 import eu.wordnice.db.sql.MySQL;
 import eu.wordnice.db.sql.SQL;
 import eu.wordnice.db.wndb.WNDB;
@@ -146,54 +148,116 @@ public class Where {
 			case SMALLER_EQUAL:
 				return rs.getDouble(this.key) <= ((Number) this.val).doubleValue();
 				
-			//TODO
+			case START:
+				return Where.start(rs, this.key, rs, this.sens);
+				
+			case NOT_START:
+				return !Where.start(rs, this.key, rs, this.sens);
+				
+			case END:
+				return Where.end(rs, this.key, rs, this.sens);
+				
+			case NOT_END:
+				return !Where.end(rs, this.key, rs, this.sens);
 				
 			case REGEX:
-				if(this.sens) {
-					return Pattern.compile((String) this.val).matcher("" + rs.getObject(this.key)).find();
-				}
-				return Pattern.compile((String) this.val, Pattern.CASE_INSENSITIVE).matcher("" + rs.getObject(this.key)).find();
+				return Where.regex(rs, this.key, rs, this.sens);
 				
 			case NOT_REGEX:
-				if(this.sens) {
-					return !Pattern.compile((String) this.val).matcher("" + rs.getObject(this.key)).find();
-				}
-				return !Pattern.compile((String) this.val, Pattern.CASE_INSENSITIVE).matcher("" + rs.getObject(this.key)).find();
-			
+				return !Where.regex(rs, this.key, rs, this.sens);
+				
 			case NOT_EQUAL:
-				if(this.val instanceof Number) {
-					return rs.getDouble(this.key) != ((Number) this.val).doubleValue();
-				} else if(this.val instanceof byte[]) {
-					if(this.sens) {
-						return !ByteString.equals(rs.getBytes(this.key), (byte[]) this.val);
-					}
-					return !ByteString.equalsIgnoreCase(rs.getBytes(this.key), (byte[]) this.val);
-				} else if(this.val == null) {
-					return rs.getObject(this.key) != null;
-				} else {
-					if(!this.sens == this.val instanceof String) {
-						return !((String) this.val).equalsIgnoreCase(rs.getString(this.key));
-					}
-					return !this.val.equals(rs.getObject(this.key));
-				}
+				return !Where.equals(rs, this.key, rs, this.sens);
 				
 			case EQUAL:
 			default:
-				if(this.val instanceof Number) {
-					return rs.getDouble(this.key) == ((Number) this.val).doubleValue();
-				} else if(this.val instanceof byte[]) {
-					if(this.sens) {
-						return ByteString.equals(rs.getBytes(this.key), (byte[]) this.val);
-					}
-					return ByteString.equalsIgnoreCase(rs.getBytes(this.key), (byte[]) this.val);
-				} else if(this.val == null) {
-					return rs.getObject(this.key) == null;
-				} else {
-					if(!this.sens == this.val instanceof String) {
-						return ((String) this.val).equalsIgnoreCase(rs.getString(this.key));
-					}
-					return this.val.equals(rs.getObject(this.key));
-				}
+				return Where.equals(rs, this.key, rs, this.sens);
+		}
+	}
+	
+	protected static boolean regex(ResSet rs, String key, Object val, boolean sens) {
+		String str = rs.getString(key);
+		if(str == null) {
+			if(val == null) {
+				return true;
+			}
+			return false;
+		}
+		if(sens) {
+			return Pattern.compile((String) val).matcher("" + rs.getObject(key)).find();
+		} else {
+			return Pattern.compile((String) val, Pattern.CASE_INSENSITIVE).matcher("" + rs.getObject(key)).find();
+		}
+	}
+	
+	protected static boolean start(ResSet rs, String key, Object val, boolean sens) {
+		if(val instanceof byte[]) {
+			byte[] b = (byte[]) val;
+			byte[] ent = rs.getBytes(key);
+			if(ent.length < b.length) {
+				return false;
+			}
+			if(sens) {
+				return ByteString.equals(ent, b, b.length);
+			} else {
+				return ByteString.equalsIgnoreCase(ent, b, b.length);
+			}
+		} else {
+			String b = (String) val;
+			String ent = rs.getString(key);
+			if(ent.length() < b.length()) {
+				return false;
+			}
+			if(sens) {
+				return Api.equals(ent, 0, b, 0, b.length());
+			} else {
+				return Api.equalsIgnoreCase(ent, 0, b, 0, b.length());
+			}
+		}
+	}
+	
+	protected static boolean end(ResSet rs, String key, Object val, boolean sens) {
+		if(val instanceof byte[]) {
+			byte[] b = (byte[]) val;
+			byte[] ent = rs.getBytes(key);
+			int b_len = b.length;
+			if(ent.length < b.length) {
+				return false;
+			}
+			if(sens) {
+				return ByteString.equals(ent, ent.length - b_len, b.length, b, 0, b.length);
+			} else {
+				return ByteString.equalsIgnoreCase(ent, ent.length - b_len, b.length, b, 0, b.length);
+			}
+		} else {
+			String b = (String) val;
+			String ent = rs.getString(key);
+			if(ent.length() < b.length()) {
+				return false;
+			}
+			if(sens) {
+				return Api.equals(ent, ent.length() - b.length(), b, 0, b.length());
+			} else {
+				return Api.equalsIgnoreCase(ent, ent.length() - b.length(), b, 0, b.length());
+			}
+		}
+	}
+	
+	protected static boolean equals(ResSet rs, String key, Object val, boolean sens) {
+		if(val instanceof Number) {
+			return rs.getDouble(key) == ((Number) val).doubleValue();
+		} else if(val instanceof byte[]) {
+			if(sens) {
+				return ByteString.equals(rs.getBytes(key), (byte[]) val);
+			}
+			return ByteString.equalsIgnoreCase(rs.getBytes(key), (byte[]) val);
+		} else if(val == null) {
+			return rs.getObject(key) == null;
+		} else {
+			if(!sens == val instanceof String) {
+				return ((String) val).equalsIgnoreCase(rs.getString(key));
+			}
+			return val.equals(rs.getObject(key));
 		}
 	}
 	
@@ -210,6 +274,13 @@ public class Where {
 			SQL sql = new MySQL("db.mysql-01.gsp-europe.net", "sql_1040", "sql_1040", "2qZ0h1e0nURTWbfiCQpHaz50Not8yuV");
 			sql.connect();
 			db = new Database(sql, "shets");
+			
+			PreparedStatement ps = sql.prepare("SELECT * FROM shets WHERE rekts LIKE ? '%'");
+			ps.setString(1, "SHRE%a");
+			ResSet rs = new ResultResSet(ps.executeQuery());
+			while(rs.next()) {
+				System.out.println(rs.getEntries());
+			}
 		} else {
 			ResSetDB wdb = WNDB.createEmptyWNDB(new String[] {"rekts", "rektd", "rektb"}, new DBType[] {DBType.STRING, DBType.DOUBLE, DBType.BYTES});
 			wdb.insertRaw(new ImmArray<Object>(new Object[] { "SHREKTB", 23.42, new byte[] {} }));

@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+ * Copyright (c) 2015, Dalibor DrgoĹ� <emptychannelmc@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ import java.sql.SQLException;
 public class MySQL extends JDBCSQL {
 	
 	public MySQL(String url, String db, String user, String pass) throws SQLException {
-		super("com.mysql.jdbc.Driver", ("jdbc:mysql://" + url + "/" + db + "?useUnicode=true&characterEncoding=UTF-8"), user, pass);
+		super(("jdbc:mysql://" + url + "/" + db + "?useUnicode=true&characterEncoding=UTF-8"), user, pass);
 		this.onConnect = new String[] {"SET CHARSET 'utf8'", "SET NAMES 'utf8' COLLATE 'utf8_unicode_ci'"};
 	}
 	

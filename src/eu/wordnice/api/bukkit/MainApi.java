@@ -25,37 +25,12 @@
 package eu.wordnice.api.bukkit;
 
 import java.util.Set;
+import java.util.logging.Logger;
 
 import eu.wordnice.api.Api;
+import eu.wordnice.api.OnlyOnce;
 
 public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
-	
-	/**
-	 * Bukkit-only utilities
-	 */
-	public static String NMS = null;
-	
-	/**
-	 * Get net.minecraft.server.v___.* class name
-	 * 
-	 * @param clz Class name
-	 * 
-	 * @return Class name
-	 */
-	public static String getNMS(String clz) {
-		return "net.minecraft.server." + MainApi.NMS + "." + clz;
-	}
-	
-	/**
-	 * Get org.bukkit.craftbukkit.v___ class name
-	 * 
-	 * @param clz Class name
-	 * 
-	 * @return Class name
-	 */
-	public static String getCB(String clz) {
-		return "org.bukkit.craftbukkit." + MainApi.NMS + "." + clz;
-	}
 	
 	/**
 	 * @see org.bukkit.plugin.java.JavaPlugin#onEnable()
@@ -65,12 +40,27 @@ public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 		try {
 			Set<String> clzs = Api.getClasses(Api.getClassesLocation(org.bukkit.Bukkit.class));
 			this.getLogger().info("Bukkit classes: " + clzs.size());
-			this.getLogger().info("Bukkit packages: " + Api.filterPackagesString(clzs, null).size());
+			this.getLogger().info("Bukkit packages: " + Api.filterPackagesString(clzs, (String) null).size());
 		} catch(Throwable t) {}
 		
 		String cpkg = org.bukkit.Bukkit.getServer().getClass().getPackage().getName();
-		MainApi.NMS = cpkg.substring(cpkg.lastIndexOf('.') + 1);
-		this.getLogger().info("NMS version: " + MainApi.NMS);
+		WNBukkit.NMS = cpkg.substring(cpkg.lastIndexOf('.') + 1);
+		this.getLogger().info("NMS version: " + WNBukkit.NMS);
+		
+		final Logger lg = this.getLogger();
+		
+		OnlyOnce.debugAll(new OnlyOnce.OnlyOnceLogger() {
+			
+			@Override
+			public void severe(String str) {
+				lg.severe(str);
+			}
+			
+			@Override
+			public void info(String str) {
+				lg.info(str);
+			}
+		});
 		
 		this.getLogger().info("MainAPI by wordnice for Bukkit was enabled! Hello!");
 	}
@@ -80,7 +70,7 @@ public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 	 */
 	@Override
 	public void onDisable() {
-		this.getLogger().info("MainAPI by wordnice was disabled! Bye!");
+		this.getLogger().info("MainAPI was disabled! Bye!");
 	}
 	
 }

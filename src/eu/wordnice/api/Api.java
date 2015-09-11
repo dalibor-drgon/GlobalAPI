@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+ * Copyright (c) 2015, Dalibor DrgoĹ� <emptychannelmc@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -309,31 +309,19 @@ public class Api {
 	 * PACKAGES
 	 */
 	
-	public static boolean loadClass(String cls) {
+	public static Class<?> getClassSafe(String cls) {
 		try {
-			Class.forName(cls);
-			return true;
+			return Class.forName(cls);
 		} catch (Throwable t) { }
-		return false;
+		return null;
 	}
 	
-	public static boolean loadClassAndDebug(String cls) {
+	public static Class<?> getClassSafe(String cls, ClassLoader cl) {
 		try {
-			if(Class.forName(cls, false, Api.class.getClassLoader()) != null) {
-				return true;
-			}
-		} catch(Throwable ign) {}
-		try {
-			Class.forName(cls);
-			System.out.println("[CLASSLOADER] Loaded class '" + cls + "'");
-			return true;
-		} catch (Throwable t) {
-			System.err.println("[CLASSLOADER] Loaded class '" + cls + "', details:");
-			t.printStackTrace();
-		}
-		return false;
+			return Class.forName(cls, true, cl);
+		} catch (Throwable t) {}
+		return null;
 	}
-	
 	
 	public static String getCopiesOfString(String cp, int k) {
 		StringBuilder sb = new StringBuilder(cp.length() * k);
@@ -429,7 +417,7 @@ public class Api {
 	
 	/*** CLASS LOADERS ***/
 	public static ClassLoader getClassLoader() {
-		return ClassLoader.getSystemClassLoader();
+		return Thread.currentThread().getContextClassLoader();
 	}
 	
 	public static Set<Class<?>> filterClasses(Collection<Class<?>> in, Class<?> ext) {

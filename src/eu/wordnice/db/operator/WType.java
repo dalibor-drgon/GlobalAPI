@@ -45,28 +45,28 @@ public enum WType {
 	 * 
 	 * Check if value in database starts with entered string
 	 */
-	START("$ LIKE 1 '%' || ? 2"),
+	START("$ LIKE 1 '%' + ? 2"),
 	
 	/**
 	 * For: String, byte[]
 	 * 
 	 * Check if value in database ends with entered string
 	 */
-	END("$ LIKE 1 ? || '%' 2"),
+	END("$ LIKE 1 ? + '%' 2"),
 	
 	/**
 	 * For: String, byte[]
 	 * 
 	 * Check if value in database does not start with entered string
 	 */
-	NOT_START("not($ LIKE 1 '%' || ? 2)"),
+	NOT_START("not($ LIKE 1 '%' + ? 2)"),
 	
 	/**
 	 * For: String, byte[]
 	 * 
 	 * Check if value in database does not end with entered string
 	 */
-	NOT_END("not($ LIKE 1 ? || '%' 2)"),
+	NOT_END("not($ LIKE 1 ? + '%' 2)"),
 	
 	/**
 	 * For: String
