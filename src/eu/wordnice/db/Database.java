@@ -25,13 +25,18 @@
 package eu.wordnice.db;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.Val;
+import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.db.operator.AndOr;
 import eu.wordnice.db.operator.Limit;
 import eu.wordnice.db.operator.Sort;
@@ -74,7 +79,7 @@ public class Database {
 	/**
 	 * @see {@link Database#init(Map)}
 	 */
-	public Database(Map<String, String> data) throws IllegalArgumentException, Exception {
+	public Database(Map<String, String> data) throws IllegalArgumentException, SerializeException, IOException, SQLException {
 		this.init(data);
 	}
 	
@@ -109,7 +114,7 @@ public class Database {
 	 * - type: yaml (todo)
 	 * - file: ./test.yml
 	 * 
-	 * - type: json
+	 * - type: json (todo)
 	 * - file: ./test.json
 	 * 
 	 * - type: mysql
@@ -120,13 +125,15 @@ public class Database {
 	 * - table: test_table
 	 * 
 	 * 
-	 * @param data Info
+	 * @param data Map
 	 * 
 	 * @throws IllegalArgumentException when not enought information were provided
 	 *                                  or entered database type does not exist
-	 * @throws Exception If error occured while parsing / connecting to database
+	 * @throws SerializeException Error while parsing file-based database
+	 * @throws IOException Error while reading file-based database
+	 * @throws SQLException Error while connecting or quering SQL-based database
 	 */
-	public void init(Map<String, String> data) throws IllegalArgumentException, Exception {
+	public void init(Map<String, String> data) throws IllegalArgumentException, SerializeException, IOException, SQLException {
 		String type = data.get("type");
 		if(type == null) {
 			throw new IllegalArgumentException("Entered type is null!");
@@ -173,7 +180,10 @@ public class Database {
 				throw new IllegalArgumentException("SQLite file is null!");
 			}
 			this.init(new WNDB(new File(file)));
+		} else {
+			throw new IllegalArgumentException("Unknown database type " + type);
 		}
+		
 	}
 	
 	/**
@@ -352,6 +362,132 @@ public class Database {
 		}
 	}
 	
+	/**
+	 * Insert one row into database
+	 * 
+	 * @param vals Row to insert
+	 * 
+	 * @throws SQLException When working with sql-based database and error while connecting was thrown
+	 * @throws DatabaseException Any error with reading or writing file-based database
+	 */
+	public void insert(Map<String, Object> vals) throws SQLException, DatabaseException {
+		if(this.sql != null) {
+			StringBuilder sb = new StringBuilder();
+			StringBuilder sb_vals = new StringBuilder();
+			Iterator<Entry<String, Object>> it = vals.entrySet().iterator();
+			
+			int size = 0;
+			sb.append('(');
+			sb_vals.append('(');
+			while(it.hasNext()) {
+				Entry<String, Object> cur = it.next();
+				if(size != 0) {
+					sb.append(',');
+					sb_vals.append(',');
+				}
+				sb.append(cur.getKey());
+				sb_vals.append('?');
+				size++;
+			}
+			sb.append(')');
+			sb_vals.append(')');
+			
+			PreparedStatement ps = this.sql.prepare("INSERT INTO " + this.sql_table + " " + sb.toString() + " VALUES " + sb_vals.toString());
+			
+			int cursize = 0;
+			it = vals.entrySet().iterator();
+			while(it.hasNext()) {
+				cursize++;
+				ps.setObject(cursize, it.next().getValue());
+			}
+			
+			if(cursize != size) {
+				throw new IllegalArgumentException("Map results mismatch! After first iteration got " + size + " elements, after second " + cursize + "!");
+			}
+			ps.executeUpdate();
+		} else {
+			this.rs.insert(vals);
+		}
+	}
+	
+	/**
+	 * Insert multiple rows into database
+	 * 
+	 * @param vals Multiple rows to insert
+	 * 
+	 * @throws SQLException When working with sql-based database and error while connecting was thrown
+	 * @throws DatabaseException Any error with reading or writing file-based database
+	 */
+	public void insertAll(Collection<Map<String, Object>> vals) throws SQLException, DatabaseException {
+		if(this.sql != null) {
+			Iterator<Map<String, Object>> it = vals.iterator();
+			while(it.hasNext()) {
+				this.insert(it.next());
+			}
+		} else {
+			this.rs.insertAll(vals);
+		}
+	}
+	
+	/**
+	 * Fast insert multiple rows into database
+	 * 
+	 * @param names Column names, pair with second argument
+	 * @param vals Multiple rows to insert
+	 * 
+	 * @throws SQLException When working with sql-based database and error while connecting was thrown
+	 * @throws DatabaseException Any error with reading or writing file-based database
+	 */
+	public void insertAll(Collection<String> names, Collection<Collection<Object>> vals) throws SQLException, DatabaseException {
+		if(this.sql != null) {
+			StringBuilder sb = new StringBuilder();
+			StringBuilder sb_vals = new StringBuilder();
+			Iterator<String> names_it = names.iterator();
+			
+			int size = 0;
+			sb.append('(');
+			sb_vals.append('(');
+			while(names_it.hasNext()) {
+				if(size != 0) {
+					sb.append(',');
+					sb_vals.append(',');
+				}
+				sb.append(names_it.next());
+				sb_vals.append('?');
+				size++;
+			}
+			sb.append(')');
+			sb_vals.append(')');
+			
+			PreparedStatement ps = this.sql.prepare("INSERT INTO " + this.sql_table + " " + sb.toString() + " VALUES " + sb_vals.toString());
+			
+			int i = 0;
+			Iterator<Collection<Object>> vals_it = vals.iterator();
+			while(vals_it.hasNext()) {
+				Collection<Object> cur = vals_it.next();
+				Iterator<Object> it = cur.iterator();
+				int cur_size = 0;
+				while(it.hasNext() && cur_size < size) {
+					cur_size++;
+					ps.setObject(cur_size, it.next());
+				}
+				if(cur_size != size) {
+					throw new IllegalArgumentException("Values set at index " + i + " has less values than expected: " + cur_size + " / " + size);
+				}
+				ps.addBatch();
+				i++;
+				if(i == 500) {
+					ps.executeBatch();
+					i = 0;
+				}
+			}
+			if(i != 0) {
+				ps.executeBatch();
+			}
+		} else {
+			this.rs.insertAll(names, vals);
+		}
+	}
 	
 	/**
 	 * Create copy of Entered ResSet with supported sort() and cut()
@@ -404,5 +540,7 @@ public class Database {
 			}
 		}
 	}
+	
+	
 	
 }

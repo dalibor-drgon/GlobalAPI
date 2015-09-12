@@ -32,6 +32,7 @@ import java.util.Map;
 
 import eu.wordnice.api.cols.ImmArray;
 import eu.wordnice.api.cols.ImmMapPair;
+import eu.wordnice.db.DatabaseException;
 
 public class ResultResSet implements ResSet {
 
@@ -234,8 +235,12 @@ public class ResultResSet implements ResSet {
 	}
 
 	@Override
-	public void close() throws SQLException {
-		this.rs.close();
+	public void close() throws DatabaseException {
+		try {
+			this.rs.close();
+		} catch(SQLException e) {
+			throw new DatabaseException(e);
+		}
 		this.hasLast = false;
 	}
 	
@@ -250,8 +255,12 @@ public class ResultResSet implements ResSet {
 	}
 
 	@Override
-	public void remove() throws SQLException {
-		this.rs.deleteRow();
+	public void remove() throws DatabaseException {
+		try {
+			this.rs.deleteRow();
+		} catch(SQLException e) {
+			throw new DatabaseException(e);
+		}
 		this.hasLast = false;
 	}
 

@@ -35,35 +35,31 @@ import eu.wordnice.db.results.ResultResSet;
 public abstract class ConnectionSQL implements SQL {
 
 	public Connection con;
-	public Statement stm;
-
+	
 	public ConnectionSQL() {}
 
 	public ConnectionSQL(Connection con) {
 		this.con = con;
-		this.stm = null;
-		try {
-			this.stm = con.createStatement();
-		} catch (Throwable t) {
-			t.printStackTrace();
-		}
 	}
-
-	public ConnectionSQL(Connection con, Statement stm) {
-		this.con = con;
-		this.stm = stm;
+	
+	public Statement createStatement() throws SQLException {
+		this.checkConnection();
+		return this.con.createStatement();
 	}
 
 	@Override
 	public ResSet query(String query) throws SQLException {
-		this.checkConnection();
-		return new ResultResSet(this.stm.executeQuery(query));
+		Statement stm = this.createStatement();
+		ResSet rs = new ResultResSet(stm.executeQuery(query));
+		stm.close();
+		return rs;
 	}
 
 	@Override
 	public void command(String cmd) throws SQLException {
-		this.checkConnection();
-		this.stm.executeUpdate(cmd);
+		Statement stm = this.createStatement();
+		stm.executeUpdate(cmd);
+		stm.close();
 	}
 	
 	@Override
@@ -74,9 +70,6 @@ public abstract class ConnectionSQL implements SQL {
 
 	@Override
 	public void close() throws SQLException {
-		if(this.stm != null) {
-			this.stm.close();
-		}
 		if(this.con != null) {
 			this.con.close();
 		}
@@ -96,9 +89,6 @@ public abstract class ConnectionSQL implements SQL {
 	public void checkConnection() throws SQLException {
 		if(this.isClosed()) {
 			this.connect();
-		}
-		if(this.stm == null) {
-			this.stm = this.con.createStatement();
 		}
 	}
 

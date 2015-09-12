@@ -24,7 +24,9 @@
 
 package eu.wordnice.api.serialize;
 
-public class SerializeException extends Exception {
+import eu.wordnice.db.DatabaseException;
+
+public class SerializeException extends DatabaseException {
 	
 	private static final long serialVersionUID = 1L;
 

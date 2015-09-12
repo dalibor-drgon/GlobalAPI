@@ -25,6 +25,7 @@
 package eu.wordnice.db.operator;
 
 import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.regex.Pattern;
 
 import eu.wordnice.api.Api;
@@ -35,8 +36,8 @@ import eu.wordnice.db.Database;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.results.ResSetDB;
 import eu.wordnice.db.results.ResultResSet;
+import eu.wordnice.db.sql.JDBCSQL;
 import eu.wordnice.db.sql.MySQL;
-import eu.wordnice.db.sql.SQL;
 import eu.wordnice.db.wndb.WNDB;
 
 public class Where {
@@ -177,24 +178,26 @@ public class Where {
 	
 	protected static boolean regex(ResSet rs, String key, Object val, boolean sens) {
 		String str = rs.getString(key);
-		if(str == null) {
-			if(val == null) {
-				return true;
-			}
+		if(val == null) {
+			return str == null;
+		} else if(str == null) {
 			return false;
 		}
 		if(sens) {
-			return Pattern.compile((String) val).matcher("" + rs.getObject(key)).find();
+			return Pattern.compile((String) val).matcher(str).find();
 		} else {
-			return Pattern.compile((String) val, Pattern.CASE_INSENSITIVE).matcher("" + rs.getObject(key)).find();
+			return Pattern.compile((String) val, Pattern.CASE_INSENSITIVE).matcher(str).find();
 		}
 	}
 	
 	protected static boolean start(ResSet rs, String key, Object val, boolean sens) {
+		if(val == null) {
+			return rs.getObject(key) == null;
+		}
 		if(val instanceof byte[]) {
 			byte[] b = (byte[]) val;
 			byte[] ent = rs.getBytes(key);
-			if(ent.length < b.length) {
+			if(ent == null || ent.length < b.length) {
 				return false;
 			}
 			if(sens) {
@@ -202,10 +205,10 @@ public class Where {
 			} else {
 				return ByteString.equalsIgnoreCase(ent, b, b.length);
 			}
-		} else {
+		} else if(val instanceof String) {
 			String b = (String) val;
 			String ent = rs.getString(key);
-			if(ent.length() < b.length()) {
+			if(ent == null || ent.length() < b.length()) {
 				return false;
 			}
 			if(sens) {
@@ -214,14 +217,18 @@ public class Where {
 				return Api.equalsIgnoreCase(ent, 0, b, 0, b.length());
 			}
 		}
+		throw new IllegalArgumentException("Unknown value type " + val.getClass().getName());
 	}
 	
 	protected static boolean end(ResSet rs, String key, Object val, boolean sens) {
+		if(val == null) {
+			return rs.getObject(key) == null;
+		}
 		if(val instanceof byte[]) {
 			byte[] b = (byte[]) val;
 			byte[] ent = rs.getBytes(key);
 			int b_len = b.length;
-			if(ent.length < b.length) {
+			if(ent == null || ent.length < b.length) {
 				return false;
 			}
 			if(sens) {
@@ -229,10 +236,10 @@ public class Where {
 			} else {
 				return ByteString.equalsIgnoreCase(ent, ent.length - b_len, b.length, b, 0, b.length);
 			}
-		} else {
+		} else if(val instanceof String) {
 			String b = (String) val;
 			String ent = rs.getString(key);
-			if(ent.length() < b.length()) {
+			if(ent == null || ent.length() < b.length()) {
 				return false;
 			}
 			if(sens) {
@@ -241,9 +248,13 @@ public class Where {
 				return Api.equalsIgnoreCase(ent, ent.length() - b.length(), b, 0, b.length());
 			}
 		}
+		throw new IllegalArgumentException("Unknown value type " + val.getClass().getName());
 	}
 	
 	protected static boolean equals(ResSet rs, String key, Object val, boolean sens) {
+		if(val == null) {
+			return rs.getObject(key) == null;
+		}
 		if(val instanceof Number) {
 			return rs.getDouble(key) == ((Number) val).doubleValue();
 		} else if(val instanceof byte[]) {
@@ -251,10 +262,8 @@ public class Where {
 				return ByteString.equals(rs.getBytes(key), (byte[]) val);
 			}
 			return ByteString.equalsIgnoreCase(rs.getBytes(key), (byte[]) val);
-		} else if(val == null) {
-			return rs.getObject(key) == null;
 		} else {
-			if(!sens == val instanceof String) {
+			if(!sens && val instanceof String) {
 				return ((String) val).equalsIgnoreCase(rs.getString(key));
 			}
 			return val.equals(rs.getObject(key));
@@ -266,17 +275,25 @@ public class Where {
 	 */
 	public static void main(String... lel_varargs) throws Throwable {
 		
-		//TODO Test me!
+		//TEST!
 		boolean use_sql = true;
 		
 		Database db = null;
 		if(use_sql) {
-			SQL sql = new MySQL("db.mysql-01.gsp-europe.net", "sql_1040", "sql_1040", "2qZ0h1e0nURTWbfiCQpHaz50Not8yuV");
+			JDBCSQL sql = new MySQL("db.mysql-01.gsp-europe.net", "sql_1040", "sql_1040", "2qZ0h1e0nURTWbfiCQpHaz50Not8yuV");
 			sql.connect();
 			db = new Database(sql, "shets");
 			
-			PreparedStatement ps = sql.prepare("SELECT * FROM shets WHERE rekts LIKE ? '%'");
-			ps.setString(1, "SHRE%a");
+			long start = System.nanoTime();
+			Statement s = sql.createStatement();
+			System.out.println("Created in " + (System.nanoTime() - start) + " ns!");
+			
+			start = System.nanoTime();
+			s.execute("SELECT * FROM shets");
+			System.out.println("Executed in " + (System.nanoTime() - start) + " ns!");
+						
+			PreparedStatement ps = sql.prepare("SELECT rekts, SUBSTR(rekts, -5, 5) as rekts_sub FROM shets");
+			//ps.setString(1, "E");
 			ResSet rs = new ResultResSet(ps.executeQuery());
 			while(rs.next()) {
 				System.out.println(rs.getEntries());

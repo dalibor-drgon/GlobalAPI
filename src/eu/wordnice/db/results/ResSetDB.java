@@ -29,6 +29,7 @@ import java.util.Map;
 
 import eu.wordnice.api.serialize.DataReader;
 import eu.wordnice.api.serialize.DataWriter;
+import eu.wordnice.db.DatabaseException;
 import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.Sort;
 
@@ -52,9 +53,9 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * 
 	 * @param vals Values
 	 * 
-	 * @throws Exception Implementation specific exception
+	 * @throws DatabaseException Implementation specific exception
 	 */
-	public void update(Map<String, Object> vals) throws Exception;
+	public void update(Map<String, Object> vals) throws DatabaseException;
 	
 	/**
 	 * Replace current values with entered
@@ -62,9 +63,9 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * 
 	 * @param vals Values
 	 * 
-	 * @throws Exception Implementation specific exception
+	 * @throws DatabaseException Implementation specific exception
 	 */
-	public void updateAll(Map<String, Object> vals) throws Exception;
+	public void updateAll(Map<String, Object> vals) throws DatabaseException;
 	
 	/**
 	 * Insert values
@@ -72,9 +73,9 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * 
 	 * @param vals Values
 	 * 
-	 * @throws Exception Implementation specific exception
+	 * @throws DatabaseException Implementation specific exception
 	 */
-	public void insert(Map<String, Object> vals) throws Exception;
+	public void insert(Map<String, Object> vals) throws DatabaseException;
 	
 	/**
 	 * Insert values
@@ -82,9 +83,9 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * 
 	 * @param vals Multiple values (entries) to insert
 	 * 
-	 * @throws Exception Implementation specific exception
+	 * @throws DatabaseException Implementation specific exception
 	 */
-	public void insertAll(Collection<Map<String, Object>> vals) throws Exception;
+	public void insertAll(Collection<Map<String, Object>> vals) throws DatabaseException;
 	
 	/**
 	 * Insert values
@@ -93,9 +94,9 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * @param columns Column names for given values
 	 * @param vals Multiple values (entries) to insert
 	 * 
-	 * @throws Exception Implementation specific exception
+	 * @throws DatabaseException Implementation specific exception
 	 */
-	public void insertAll(Collection<String> columns, Collection<Collection<Object>> vals) throws Exception;
+	public void insertAll(Collection<String> columns, Collection<Collection<Object>> vals) throws DatabaseException;
 	
 	/**
 	 * Get current database snapshot
@@ -155,9 +156,9 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * 
 	 * @throws RawUnsupportedException If raw is not supported
 	 * @throws IllegalArgumentException When values to insert are invalid / instances of invalid type
-	 * @throws Exception Implementation specific exception
+	 * @throws DatabaseException Implementation specific exception
 	 */
-	public void updateRaw(Collection<Object> values) throws RawUnsupportedException, IllegalArgumentException, Exception;
+	public void updateRaw(Collection<Object> values) throws RawUnsupportedException, IllegalArgumentException, DatabaseException;
 	
 	/**
 	 * Insert values
@@ -167,9 +168,9 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * 
 	 * @throws RawUnsupportedException If raw is not supported
 	 * @throws IllegalArgumentException When values to insert are invalid / instances of invalid type
-	 * @throws Exception Implementation specific exception
+	 * @throws DatabaseException Implementation specific exception
 	 */
-	public void insertRaw(Collection<Object> values) throws RawUnsupportedException, IllegalArgumentException, Exception;
+	public void insertRaw(Collection<Object> values) throws RawUnsupportedException, IllegalArgumentException, DatabaseException;
 	
 	/**
 	 * Insert values
@@ -179,9 +180,9 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * 
 	 * @throws RawUnsupportedException If raw is not supported
 	 * @throws IllegalArgumentException When values to insert are invalid / instances of invalid type
-	 * @throws Exception Implementation specific exception
+	 * @throws DatabaseException Implementation specific exception
 	 */
 	public void insertRawAll(Collection<Collection<Object>> values)
-			throws RawUnsupportedException, IllegalArgumentException, Exception;
+			throws RawUnsupportedException, IllegalArgumentException, DatabaseException;
 	
 }

@@ -24,9 +24,7 @@
 
 package eu.wordnice.db.results;
 
-import java.sql.SQLException;
-
-import org.apache.commons.lang.ArrayUtils;
+import eu.wordnice.db.DatabaseException;
 
 public abstract class ObjectResSet implements ResSet {
 	
@@ -48,9 +46,6 @@ public abstract class ObjectResSet implements ResSet {
 		if(obj instanceof byte[]) {
 			return new String((byte[]) obj);
 		}
-		if(obj instanceof Byte[]) {
-			return new String(ArrayUtils.toPrimitive((Byte[]) obj));
-		}
 		return null;
 	}
 
@@ -63,9 +58,6 @@ public abstract class ObjectResSet implements ResSet {
 		if(obj instanceof byte[]) {
 			return new String((byte[]) obj);
 		}
-		if(obj instanceof Byte[]) {
-			return new String(ArrayUtils.toPrimitive((Byte[]) obj));
-		}
 		return null;
 	}
 
@@ -77,9 +69,6 @@ public abstract class ObjectResSet implements ResSet {
 		if(obj instanceof byte[]) {
 			return (byte[]) obj;
 		}
-		if(obj instanceof Byte[]) {
-			return ArrayUtils.toPrimitive((Byte[]) obj);
-		}
 		return null;
 	}
 
@@ -90,9 +79,6 @@ public abstract class ObjectResSet implements ResSet {
 		}
 		if(obj instanceof byte[]) {
 			return (byte[]) obj;
-		}
-		if(obj instanceof Byte[]) {
-			return ArrayUtils.toPrimitive((Byte[]) obj);
 		}
 		return null;
 	}
@@ -272,10 +258,10 @@ public abstract class ObjectResSet implements ResSet {
 	public abstract boolean next();
 
 	@Override
-	public abstract void close() throws SQLException;
+	public abstract void close() throws DatabaseException;
 
 	@Override
-	public abstract void remove() throws SQLException;
+	public abstract void remove() throws DatabaseException;
 
 	@Override
 	public abstract boolean isTable();

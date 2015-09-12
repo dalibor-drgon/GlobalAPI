@@ -43,6 +43,7 @@ import eu.wordnice.api.cols.ImmArray;
 import eu.wordnice.api.cols.ImmMapPair;
 import eu.wordnice.api.serialize.BadResultException;
 import eu.wordnice.api.serialize.SerializeException;
+import eu.wordnice.db.DatabaseException;
 import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.Sort;
 
@@ -243,7 +244,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 	}
 	
 	@Override
-	public void update(Map<String, Object> vals) throws Exception {
+	public void update(Map<String, Object> vals) throws DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ResSetDBSnap) this).getOriginal().update(vals);
 			return;
@@ -253,7 +254,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 	}
 	
 	@Override
-	public void updateAll(Map<String, Object> vals) throws Exception {
+	public void updateAll(Map<String, Object> vals) throws DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ResSetDBSnap) this).getOriginal().update(vals);
 			return;
@@ -263,7 +264,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 	}
 
 	@Override
-	public void insert(Map<String, Object> vals) throws Exception {
+	public void insert(Map<String, Object> vals) throws DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ResSetDBSnap) this).getOriginal().insert(vals);
 			return;
@@ -274,7 +275,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 	
 	@Override
 	public void insertAll(Collection<Map<String, Object>> vals)
-			throws Exception {
+			throws DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ResSetDBSnap) this).getOriginal().insertAll(vals);
 			return;
@@ -291,7 +292,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 
 	@Override
 	public void insertAll(Collection<String> columns,
-			Collection<Collection<Object>> vals) throws Exception {
+			Collection<Collection<Object>> vals) throws DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ResSetDBSnap) this).getOriginal().insertAll(columns, vals);
 			return;
@@ -351,7 +352,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 		return true;
 	}
 
-	public void updateRaw(Object[] values) throws IllegalStateException, Exception {
+	public void updateRaw(Object[] values) throws IllegalStateException, DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ArraysResSet) ((ResSetDBSnap) this).getOriginal()).updateRaw(values);
 			return;
@@ -363,7 +364,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 		this.it.set(values);
 	}
 
-	public void insertRaw(Object[] values) throws IllegalStateException, Exception {
+	public void insertRaw(Object[] values) throws IllegalStateException, DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ArraysResSet) ((ResSetDBSnap) this).getOriginal()).insertRaw(values);
 			return;
@@ -381,7 +382,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 	
 	@Override
 	public void updateRaw(Collection<Object> values)
-			throws RawUnsupportedException, IllegalArgumentException, Exception {
+			throws RawUnsupportedException, IllegalArgumentException, DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ResSetDBSnap) this).getOriginal().updateRaw(values);
 			return;
@@ -392,7 +393,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 
 	@Override
 	public void insertRaw(Collection<Object> values)
-			throws RawUnsupportedException, IllegalArgumentException, Exception {
+			throws RawUnsupportedException, IllegalArgumentException, DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ResSetDBSnap) this).getOriginal().insertRaw(values);
 			return;
@@ -403,7 +404,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 	
 	@Override
 	public void insertRawAll(Collection<Collection<Object>> values)
-			throws RawUnsupportedException, IllegalArgumentException, Exception {
+			throws RawUnsupportedException, IllegalArgumentException, DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ResSetDBSnap) this).getOriginal().insertRawAll(values);
 			return;

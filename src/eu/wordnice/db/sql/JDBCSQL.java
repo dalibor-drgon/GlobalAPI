@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2015, Dalibor DrgoĹ� <emptychannelmc@gmail.com>
+ * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@ package eu.wordnice.db.sql;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 public class JDBCSQL extends ConnectionSQL {
 
@@ -68,11 +69,12 @@ public class JDBCSQL extends ConnectionSQL {
 			this.con = DriverManager.getConnection(this.getDBUrl(),
 					this.getUser(), this.getPass());
 		}
-		this.stm = this.con.createStatement();
 		if(this.onConnect != null && this.onConnect.length != 0) {
+			Statement stm = this.con.createStatement();
 			for(int i = 0, n = this.onConnect.length; i < n; i++) {
-				this.stm.executeUpdate(this.onConnect[i]);
+				stm.executeUpdate(this.onConnect[i]);
 			}
+			stm.close();
 		}
 	}
 

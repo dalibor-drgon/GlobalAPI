@@ -22,20 +22,26 @@
  * SOFTWARE.
  */
 
-package eu.wordnice.db.sql;
+package eu.wordnice.db;
 
-import java.io.File;
-
-import eu.wordnice.api.Api;
-
-public class SQLite extends JDBCSQL {
+public class DatabaseException extends Exception {
 	
-	public SQLite(File file) {
-		super("jdbc:sqlite:" + Api.getRealPath(file));
+	private static final long serialVersionUID = 1L;
+
+	public DatabaseException() {
+		super();
 	}
 	
-	public SQLite(String file) {
-		super("jdbc:sqlite:" + file);
+	public DatabaseException(String str) {
+		super(str);
 	}
-
+	
+	public DatabaseException(Throwable thr) {
+		super(thr);
+	}
+	
+	public DatabaseException(String str, Throwable thr) {
+		super(str, thr);
+	}
+	
 }

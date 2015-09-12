@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2015, Dalibor DrgoĹ� <emptychannelmc@gmail.com>
+ * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -400,6 +400,10 @@ public class Api {
 			return null;
 		}
 		return file.substring((i + 1), file.length());
+	}
+	
+	public static File getFreeName(File f) {
+		return Api.getFreeName(Api.getRealPath(f));
 	}
 	
 	public static File getFreeName(String old) {

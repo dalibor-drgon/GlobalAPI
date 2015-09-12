@@ -26,7 +26,6 @@ package eu.wordnice.db.results;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,6 +42,7 @@ import eu.wordnice.api.cols.ImmIter;
 import eu.wordnice.api.cols.ImmMapIterPair;
 import eu.wordnice.api.serialize.BadResultException;
 import eu.wordnice.api.serialize.SerializeException;
+import eu.wordnice.db.DatabaseException;
 import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.Sort;
 
@@ -133,7 +133,7 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	}
 
 	@Override
-	public void update(Map<String, Object> vals) throws Exception {
+	public void update(Map<String, Object> vals) throws DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ResSetDBSnap) this).getOriginal().update(vals);
 			return;
@@ -142,7 +142,7 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	}
 	
 	@Override
-	public void updateAll(Map<String, Object> vals) throws Exception {
+	public void updateAll(Map<String, Object> vals) throws DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ResSetDBSnap) this).getOriginal().update(vals);
 			return;
@@ -151,7 +151,7 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	}
 
 	@Override
-	public void insert(Map<String, Object> vals) throws Exception {
+	public void insert(Map<String, Object> vals) throws DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ResSetDBSnap) this).getOriginal().insert(vals);
 			return;
@@ -166,7 +166,7 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	
 	@Override
 	public void insertAll(Collection<Map<String, Object>> vals)
-			throws Exception {
+			throws DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ResSetDBSnap) this).getOriginal().insertAll(vals);
 			return;
@@ -183,7 +183,7 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 
 	@Override
 	public void insertAll(Collection<String> columns,
-			Collection<Collection<Object>> vals) throws Exception {
+			Collection<Collection<Object>> vals) throws DatabaseException {
 		if(this instanceof ResSetDBSnap) {
 			((ResSetDBSnap) this).getOriginal().insertAll(columns, vals);
 			return;
@@ -202,7 +202,7 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	}
 
 	@Override
-	public void remove() throws SQLException {
+	public void remove() throws DatabaseException {
 		this.it.remove();
 	}
 
@@ -232,7 +232,7 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	
 	@Override
 	public void insertRawAll(Collection<Collection<Object>> values)
-			throws RawUnsupportedException, IllegalArgumentException, Exception {
+			throws RawUnsupportedException, IllegalArgumentException, DatabaseException {
 		throw new RawUnsupportedException();
 	}
 	

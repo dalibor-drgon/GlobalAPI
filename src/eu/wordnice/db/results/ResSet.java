@@ -27,6 +27,8 @@ package eu.wordnice.db.results;
 import java.util.Collection;
 import java.util.Map;
 
+import eu.wordnice.db.DatabaseException;
+
 public interface ResSet {
 	
 	/**
@@ -130,15 +132,15 @@ public interface ResSet {
 	/**
 	 * Remove current entry
 	 * 
-	 * @throws Exception Implementation-specific exception
+	 * @throws DatabaseException Implementation-specific exception
 	 */
-	public void remove() throws Exception;
+	public void remove() throws DatabaseException;
 
 	/**
 	 * Close & destroy this result set
 	 * 
-	 * @throws Exception Implementation-specific exception
+	 * @throws DatabaseException Implementation-specific exception
 	 */
-	public void close() throws Exception;
+	public void close() throws DatabaseException;
 
 }
