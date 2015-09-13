@@ -60,7 +60,7 @@ public class WNDB extends ArraysResSet {
 	public WNDB(IStream in) throws SerializeException, IOException {
 		this.changed = false;
 		this.file = null;
-		this.load(in);
+		this.read(in);
 	}
 
 	/**
@@ -82,12 +82,15 @@ public class WNDB extends ArraysResSet {
 		this.changed = false;
 	}
 	
-	public void save(OStream ost) throws SerializeException, IOException {
+	@Override
+	public void write(OStream ost) throws SerializeException, IOException {
 		WNDBEncoder.writeOutputStreamData(ost, new Val.ThreeVal<String[], DBType[], Iterable<Object[]>>(this.names, this.types, this.values));
 		this.changed = false;
 	}
 	
-	public void load(IStream ist) throws SerializeException, IOException {
+	
+	@Override
+	public void read(IStream ist) throws SerializeException, IOException {
 		Val.ThreeVal<String[], DBType[], List<Object[]>> vals = WNDBDecoder.readInputStreamRawData(ist);
 		this.names = vals.one;
 		this.types = vals.two;

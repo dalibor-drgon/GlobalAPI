@@ -113,21 +113,26 @@ public class Where {
 			return Api.replace(str, new Object[]{
 					"1 ", "",
 					" 2", "",
+					"3", "",
 					"$", this.key
 			});
-		}
-		if(this.val instanceof byte[]) {
+		} else if(this.val instanceof byte[]) {
 			return Api.replace(str, new Object[]{
 					"1", (this.sens) ? "BINARY" : "",
 					" 2", "",
+					"3", ((byte[]) this.val).length,
 					"$", this.key
 			});
-		} else {
+		} else if(this.val instanceof String) {
 			return Api.replace(str, new Object[]{
 					"1 ", "",
 					"2", (this.sens) ? "COLLATE utf8_bin" : "",
+					"3", ((String) this.val).length(),
 					"$", this.key
 			});
+		} else {
+			throw new IllegalArgumentException("Unknown value type " 
+					+ ((this.val == null) ? null : this.val.getClass().getName()));
 		}
 	}
 	
@@ -303,7 +308,7 @@ public class Where {
 			wdb.insertRaw(new ImmArray<Object>(new Object[] { "SHREKTB", 23.42, new byte[] {} }));
 			wdb.insertRaw(new ImmArray<Object>(new Object[] { "SHREKTa", 23.42, new byte[] {} }));
 			wdb.insertRaw(new ImmArray<Object>(new Object[] { "SHREKTA", 23.42, new byte[] {} }));
-			db = new Database(Database.copy(Database.copy(wdb.getSnapshot()).getSnapshot()));
+			db = new Database(Database.copy(Database.copy(wdb.getSnapshot()).getSnapshot()), null);
 		}
 		
 		ResSet rs = db.get(new And(

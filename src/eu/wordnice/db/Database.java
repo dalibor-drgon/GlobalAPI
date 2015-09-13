@@ -73,8 +73,15 @@ public class Database {
 	
 	/**
 	 * Set when WNDB, FLATFILE, JSON or any other ResSet-based database is used
+	 * Pair with File
 	 */
 	public ResSetDB rs;
+	
+	/**
+	 * File, where data will be saved and from which will be data loaded
+	 * Pair with rs
+	 */
+	public File file;
 	
 	/**
 	 * @see {@link Database#init(Map)}
@@ -93,8 +100,8 @@ public class Database {
 	/**
 	 * @see {@link Database#init(ResSet)}
 	 */
-	public Database(ResSetDB rs) {
-		this.init(rs);
+	public Database(ResSetDB rs, File file) {
+		this.init(rs, file);
 	}
 	
 	/**
@@ -179,7 +186,8 @@ public class Database {
 			if(file == null) {
 				throw new IllegalArgumentException("SQLite file is null!");
 			}
-			this.init(new WNDB(new File(file)));
+			File fl = new File(file);
+			this.init(new WNDB(fl), fl);
 		} else {
 			throw new IllegalArgumentException("Unknown database type " + type);
 		}
@@ -194,6 +202,7 @@ public class Database {
 	 */
 	public void init(SQL sql, String table) throws SQLException {
 		this.rs = null;
+		this.file = null;
 		this.sql = sql;
 		this.sql_table = table;
 	}
@@ -203,10 +212,11 @@ public class Database {
 	 * 
 	 * @param rs ResSet instance
 	 */
-	public void init(ResSetDB rs) {
+	public void init(ResSetDB rs, File file) {
 		this.sql = null;
 		this.sql_table = null;
 		this.rs = rs;
+		this.file = file;
 	}
 	
 	/**
