@@ -51,6 +51,14 @@ public class ImmMapIterPair<X, Y> implements Map<X, Y> {
 	 */
 	public int size;
 	
+	/**
+	 * Create immutable map from two iterables with given size
+	 * 
+	 * @param keys Keys
+	 * @param vals Values
+	 * @param size Maximum size (real size can be smaller if
+	 *             any iterator on #hasNext() returns false)
+	 */
 	public ImmMapIterPair(Iterable<X> keys, Iterable<Y> vals, int size) {
 		this.keys = keys;
 		this.vals = vals;
@@ -340,9 +348,9 @@ public class ImmMapIterPair<X, Y> implements Map<X, Y> {
 			if(i != 1) {
 				sb.append(',').append(' ');
 			}
-			sb.append((key == this) ? "(this Map)" : key);
+			sb.append(key);
 			sb.append('=');
-			sb.append((val == this) ? "(this Map)" : val);
+			sb.append(val);
 		}
 		sb.append('}');
 		return sb.toString();

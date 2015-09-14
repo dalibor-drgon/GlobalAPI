@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.NoSuchElementException;
 import java.util.RandomAccess;
 import java.util.Set;
 
@@ -76,7 +75,7 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 	 */
 	@Override
 	public Iterator<T> iterator() {
-		return new SimpleIterator(0);
+		return new ImmArrayIterator<T>(this.arr, this.size, 0);
 	}
 	
 	/**
@@ -85,7 +84,7 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 	 */
 	@Override
 	public ListIterator<T> listIterator() {
-		return new SimpleIterator(0);
+		return new ImmArrayIterator<T>(this.arr, this.size, 0);
 	}
 	
 	/**
@@ -94,114 +93,7 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 	 */
 	@Override
 	public ListIterator<T> listIterator(int start) {
-		return new SimpleIterator(start);
-	}
-	
-	public class SimpleIterator implements ListIterator<T> {
-		
-		/**
-		 * Current index
-		 */
-		private int i = -1;
-		
-		/**
-		 * Create iterator
-		 */
-		protected SimpleIterator(int i) {
-			if(i < 0 || i >= ImmArray.this.size) {
-				throw new ArrayIndexOutOfBoundsException(i);
-			}
-			this.i = i - 1;
-		}
-
-		/**
-		 * @see java.util.Iterator#hasNext()
-		 */
-		@Override
-		public boolean hasNext() {
-			int index = this.i + 1;
-			if(index < ImmArray.this.size) {
-				this.i++;
-				return true;
-			}
-			return false;
-		}
-
-		/**
-		 * @see java.util.Iterator#next()
-		 */
-		@SuppressWarnings("unchecked")
-		@Override
-		public T next() {
-			int index = this.i;
-			if(index == -1) {
-				index = 0;
-			}
-			if(index >= ImmArray.this.size) {
-				throw new NoSuchElementException();
-			}
-			return (T) ImmArray.this.arr[index];
-		}
-
-		/**
-		 * @see java.util.Iterator#remove()
-		 */
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException("Immutable collection!");
-		}
-
-		@Override
-		public void add(T arg0) {
-			throw new UnsupportedOperationException("Immutable collection!");
-		}
-
-		@Override
-		public boolean hasPrevious() {
-			int index = this.i - 1;
-			if(index >= 0) {
-				this.i--;
-				return true;
-			}
-			return false;
-		}
-
-		@Override
-		public int nextIndex() {
-			int index = this.i;
-			int max = ImmArray.this.size;
-			if(index <= max) {
-				if(index < 0) {
-					return 0;
-				}
-				return index;
-			}
-			return max;
-		}
-
-		@Override
-		public T previous() {
-			return this.next();
-		}
-
-		@Override
-		public int previousIndex() {
-			int index = this.i;
-			int max = ImmArray.this.size;
-			if(index <= max) {
-				return index;
-			}
-			if(index >= -1) {
-				return index;
-			}
-			return -1;
-		}
-
-		@Override
-		public void set(T arg0) {
-			throw new UnsupportedOperationException("Immutable collection!");
-		}
-		
+		return new ImmArrayIterator<T>(this.arr, this.size, start);
 	}
 
 	@Override
@@ -327,8 +219,17 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 	}
 
 	@Override
-	public List<T> subList(int from, int to) {
-		return new ImmArray<T>(Arrays.copyOfRange(this.arr, from, to));
+	public List<T> subList(int fromIndex, int toIndex) {
+		if(fromIndex < 0 || fromIndex >= this.size()) {
+			throw new ArrayIndexOutOfBoundsException(fromIndex);
+		}
+		if(toIndex < 0 || toIndex >= this.size()) {
+			throw new ArrayIndexOutOfBoundsException(toIndex);
+		}
+		if(fromIndex > toIndex) {
+			throw new IllegalArgumentException("fromIndex > toIndex");
+		}
+		return new ImmSkipArray<T>(this.arr, (toIndex - fromIndex), fromIndex, 1);
 	}
 	
 	@Override
@@ -380,6 +281,16 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 			return (i == this.size);
 		}
 		return false;
+	}
+	
+	
+	@SafeVarargs
+	public static <X> ImmArray<X> create(X... vals) {
+		return new ImmArray<X>(vals);
+	}
+	
+	public static ImmArray<Object> createObj(Object... vals) {
+		return new ImmArray<Object>(vals);
 	}
 	
 }

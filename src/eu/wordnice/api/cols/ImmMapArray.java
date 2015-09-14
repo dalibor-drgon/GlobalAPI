@@ -24,7 +24,6 @@
 
 package eu.wordnice.api.cols;
 
-import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -50,18 +49,20 @@ public class ImmMapArray<X, Y> implements Map<X, Y> {
 	
 	/**
 	 * Create Map for array of entries
+	 * 
 	 * @param objs array of entries {@link ImmMapArray#objs}
 	 */
-	public ImmMapArray(Object... objs) {
+	public ImmMapArray(Object[] objs) {
 		this.objs = objs;
 		this.size = objs.length;
 		if((this.size & 0x01) == 0x01) {
-			throw new IllegalArgumentException("Array size must be divideable by 2!");
+			this.size--;
 		}
 	}
 	
 	/**
 	 * Create Map for array of entries
+	 * 
 	 * @param objs array of entries {@link ImmMapArray#objs}
 	 * @param size Number of entries divideable by 2 {@link ImmMapArray#size}
 	 */
@@ -69,7 +70,7 @@ public class ImmMapArray<X, Y> implements Map<X, Y> {
 		this.objs = objs;
 		this.size = size;
 		if((this.size & 0x01) == 0x01) {
-			throw new IllegalArgumentException("Array size must be divideable by 2!");
+			this.size--;
 		}
 	}
 
@@ -163,428 +164,17 @@ public class ImmMapArray<X, Y> implements Map<X, Y> {
 	
 	@Override
 	public Set<X> keySet() {
-		return new KeySet();
-	}
-	
-	public class KeySet implements Set<X> {
-
-		@Override
-		public boolean add(X arg0) {
-			throw new UnsupportedOperationException("Keys from immutable map!");
-		}
-
-		@Override
-		public boolean addAll(Collection<? extends X> arg0) {
-			throw new UnsupportedOperationException("Keys from immutable map!");
-		}
-
-		@Override
-		public void clear() {
-			throw new UnsupportedOperationException("Keys from immutable map!");
-		}
-
-		@Override
-		public boolean contains(Object key) {
-			return ImmMapArray.this.containsKey(key);
-		}
-
-		@Override
-		public boolean containsAll(Collection<?> col) {
-			Iterator<?> it = col.iterator();
-			while(it.hasNext()) {
-				if(!ImmMapArray.this.containsKey(it.next())) {
-					return false;
-				}
-			}
-			return true;
-		}
-
-		@Override
-		public boolean isEmpty() {
-			return ImmMapArray.this.isEmpty();
-		}
-
-		@Override
-		public Iterator<X> iterator() {
-			return new KeySetIterator();
-		}
-		
-		public class KeySetIterator implements Iterator<X> {
-
-			public int i = -1;
-			
-			@Override
-			public boolean hasNext() {
-				this.i++;
-				return this.i < ImmMapArray.this.size();
-			}
-
-			@SuppressWarnings("unchecked")
-			@Override
-			public X next() {
-				return (X) ImmMapArray.this.objs[this.i * 2];
-			}
-
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException("Keys from immutable map!");
-			}
-			
-		}
-
-		@Override
-		public boolean remove(Object arg0) {
-			throw new UnsupportedOperationException("Keys from immutable map!");
-		}
-
-		@Override
-		public boolean removeAll(Collection<?> arg0) {
-			throw new UnsupportedOperationException("Keys from immutable map!");
-		}
-
-		@Override
-		public boolean retainAll(Collection<?> arg0) {
-			throw new UnsupportedOperationException("Keys from immutable map!");
-		}
-
-		@Override
-		public int size() {
-			return ImmMapArray.this.size();
-		}
-
-		@Override
-		public Object[] toArray() {
-			Object[] objs = ImmMapArray.this.objs;
-			int len = ImmMapArray.this.size / 2;
-			Object[] arr = new Object[len];
-			for(int i = 0; i < len; i++) {
-				arr[i] = objs[i * 2];
-			}
-			return arr;
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public <T> T[] toArray(T[] arr) {
-			Object[] objs = ImmMapArray.this.objs;
-			int len = ImmMapArray.this.size / 2;
-			if(arr == null) {
-				arr = (T[]) new Object[len];
-			} else if(arr.length < len) {
-				arr = (T[]) Array.newInstance(arr.getClass().getComponentType(), len);
-			}
-			for(int i = 0; i < len; i++) {
-				arr[i] = (T) objs[i * 2];
-			}
-			return arr;
-		}
-		
-		@Override
-		public String toString() {
-			int len = ImmMapArray.this.size;
-			if(len == 0) {
-				return "[]";
-			}
-
-			StringBuilder sb = new StringBuilder();
-			sb.append('[');
-			for(int i = 0; i < len; i += 2) {
-				Object key = ImmMapArray.this.objs[i];
-				if(i != 0) {
-					sb.append(',').append(' ');
-				}
-				sb.append(key);
-			}
-			sb.append(']');
-			return sb.toString();
-		}
-		
+		return new ImmSkipArray<X>(this.objs, this.size, 0, 2);
 	}
 	
 	@Override
 	public Collection<Y> values() {
-		return new ValueCollection();
-	}
-	
-	public class ValueCollection implements Collection<Y> {
-
-		@Override
-		public boolean add(Y arg0) {
-			throw new UnsupportedOperationException("Values from immutable map!");
-		}
-
-		@Override
-		public boolean addAll(Collection<? extends Y> arg0) {
-			throw new UnsupportedOperationException("Values from immutable map!");
-		}
-
-		@Override
-		public void clear() {
-			throw new UnsupportedOperationException("Values from immutable map!");
-		}
-
-		@Override
-		public boolean contains(Object val) {
-			return ImmMapArray.this.containsValue(val);
-		}
-
-		@Override
-		public boolean containsAll(Collection<?> col) {
-			Iterator<?> it = col.iterator();
-			while(it.hasNext()) {
-				if(!ImmMapArray.this.containsValue(it.next())) {
-					return false;
-				}
-			}
-			return true;
-		}
-
-		@Override
-		public boolean isEmpty() {
-			return ImmMapArray.this.isEmpty();
-		}
-
-		@Override
-		public Iterator<Y> iterator() {
-			return new ValueCollectionIterator();
-		}
-		
-		public class ValueCollectionIterator implements Iterator<Y> {
-
-			public int i = -1;
-			
-			@Override
-			public boolean hasNext() {
-				this.i++;
-				return this.i < ImmMapArray.this.size();
-			}
-
-			@SuppressWarnings("unchecked")
-			@Override
-			public Y next() {
-				return (Y) ImmMapArray.this.objs[(this.i * 2) + 1];
-			}
-
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException("Values from immutable map!");
-			}
-			
-		}
-
-		@Override
-		public boolean remove(Object o) {
-			throw new UnsupportedOperationException("Values from immutable map!");
-		}
-
-		@Override
-		public boolean removeAll(Collection<?> c) {
-			throw new UnsupportedOperationException("Values from immutable map!");
-		}
-
-		@Override
-		public boolean retainAll(Collection<?> c) {
-			throw new UnsupportedOperationException("Values from immutable map!");
-		}
-
-		@Override
-		public int size() {
-			return ImmMapArray.this.size();
-		}
-
-		@Override
-		public Object[] toArray() {
-			Object[] objs = ImmMapArray.this.objs;
-			int len = ImmMapArray.this.size / 2;
-			Object[] arr = new Object[len];
-			for(int i = 0; i < len; i++) {
-				arr[i] = objs[(i * 2) + 1];
-			}
-			return arr;
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public <T> T[] toArray(T[] arr) {
-			Object[] objs = ImmMapArray.this.objs;
-			int len = ImmMapArray.this.size / 2;
-			if(arr == null) {
-				arr = (T[]) new Object[len];
-			} else if(arr.length < len) {
-				arr = (T[]) Array.newInstance(arr.getClass().getComponentType(), len);
-			}
-			for(int i = 0; i < len; i++) {
-				arr[i] = (T) objs[(i * 2) + 1];
-			}
-			return arr;
-		}
-		
-		@Override
-		public String toString() {
-			int len = ImmMapArray.this.size;
-			if(len == 0) {
-				return "[]";
-			}
-
-			StringBuilder sb = new StringBuilder();
-			sb.append('[');
-			for(int i = 0; i < len;) {
-				i++;
-				Object key = ImmMapArray.this.objs[i++];
-				if(i != 2) {
-					sb.append(',').append(' ');
-				}
-				sb.append(key);
-			}
-			sb.append(']');
-			return sb.toString();
-		}
-		
+		return new ImmSkipArray<Y>(this.objs, this.size, 1, 2);
 	}
 	
 	@Override
 	public Set<Entry<X, Y>> entrySet() {
-		return new EntrySet();
-	}
-	
-	public class EntrySet implements Set<Entry<X, Y>> {
-
-		@Override
-		public boolean add(java.util.Map.Entry<X, Y> e) {
-			throw new UnsupportedOperationException("Immutable map!");
-		}
-
-		@Override
-		public boolean addAll(Collection<? extends java.util.Map.Entry<X, Y>> c) {
-			throw new UnsupportedOperationException("Immutable map!");
-		}
-
-		@Override
-		public void clear() {
-			throw new UnsupportedOperationException("Immutable map!");
-		}
-
-		@Override
-		public boolean contains(Object o) {
-			if(!(o instanceof Entry)) {
-				return false;
-			}
-			Entry<?, ?> en = (Entry<?, ?>) o;
-			Object e_key = en.getKey();
-			Object e_val = en.getValue();
-			int len = ImmMapArray.this.size;
-			for(int i = 0; i < len;) {
-				Object key = ImmMapArray.this.objs[i++];
-				Object val = ImmMapArray.this.objs[i++];
-				
-				if((key == null) 
-						? (e_key == null)
-						: (key.equals(e_key))
-					&& (val == null) 
-						? (e_val == null)
-						: (val.equals(e_val))) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-		@Override
-		public boolean containsAll(Collection<?> c) {
-			Iterator<?> it = c.iterator();
-			while(it.hasNext()) {
-				if(!this.contains(it.next())) {
-					return false;
-				}
-			}
-			return true;
-		}
-
-		@Override
-		public boolean isEmpty() {
-			return ImmMapArray.this.isEmpty();
-		}
-
-		@Override
-		public Iterator<Entry<X, Y>> iterator() {
-			return new EntrySetIterator();
-		}
-
-		public class EntrySetIterator implements Iterator<Entry<X, Y>> {
-
-			public int i = -1;
-			
-			@Override
-			public boolean hasNext() {
-				this.i++;
-				return this.i < ImmMapArray.this.size();
-			}
-
-			@SuppressWarnings("unchecked")
-			@Override
-			public Entry<X, Y> next() {
-				return new ImmEntry<X, Y>((X) ImmMapArray.this.objs[this.i * 2],
-						(Y) ImmMapArray.this.objs[(this.i * 2) + 1]);
-			}
-
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException("Values from immutable map!");
-			}
-			
-		}
-		
-		@Override
-		public boolean remove(Object o) {
-			throw new UnsupportedOperationException("Immutable map!");
-		}
-
-		@Override
-		public boolean removeAll(Collection<?> c) {
-			throw new UnsupportedOperationException("Immutable map!");
-		}
-
-		@Override
-		public boolean retainAll(Collection<?> c) {
-			throw new UnsupportedOperationException("Immutable map!");
-		}
-
-		@Override
-		public int size() {
-			return ImmMapArray.this.size();
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public Object[] toArray() {
-			Object[] objs = ImmMapArray.this.objs;
-			int len = ImmMapArray.this.size / 2;
-			Object[] arr = new ImmEntry[len];
-			for(int i = 0; i < len; i++) {
-				arr[i] = new ImmEntry<X, Y>((X) objs[i * 2], (Y) objs[(i * 2) + 1]);
-			}
-			return arr;
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public <T> T[] toArray(T[] arr) {
-			Object[] objs = ImmMapArray.this.objs;
-			int len = ImmMapArray.this.size / 2;
-			if(arr == null || arr.length < len) {
-				arr = (T[]) new ImmEntry[len];
-			}
-			for(int i = 0; i < len; i++) {
-				arr[i] = (T) new ImmEntry<X, Y>((X) objs[i * 2], (Y) objs[(i * 2) + 1]);
-			}
-			return arr;
-		}
-		
-		@Override
-		public String toString() {
-			return ImmMapArray.this.toString();
-		}
-		
+		return new ImmEntryArray<X, Y>(this.objs, this.size);
 	}
 	
 	@Override
@@ -603,9 +193,9 @@ public class ImmMapArray<X, Y> implements Map<X, Y> {
 			if(i != 2) {
 				sb.append(',').append(' ');
 			}
-			sb.append((key == this) ? "(this Map)" : key);
+			sb.append(key);
 			sb.append('=');
-			sb.append((val == this) ? "(this Map)" : val);
+			sb.append(val);
 		}
 		sb.append('}');
 		return sb.toString();

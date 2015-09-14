@@ -305,9 +305,9 @@ public class Where {
 			}
 		} else {
 			ResSetDB wdb = WNDB.createEmptyWNDB(new String[] {"rekts", "rektd", "rektb"}, new DBType[] {DBType.STRING, DBType.DOUBLE, DBType.BYTES});
-			wdb.insertRaw(new ImmArray<Object>(new Object[] { "SHREKTB", 23.42, new byte[] {} }));
-			wdb.insertRaw(new ImmArray<Object>(new Object[] { "SHREKTa", 23.42, new byte[] {} }));
-			wdb.insertRaw(new ImmArray<Object>(new Object[] { "SHREKTA", 23.42, new byte[] {} }));
+			wdb.insertRaw(ImmArray.createObj("SHREKTB", 23.42, new byte[] {}));
+			wdb.insertRaw(ImmArray.createObj("SHREKTa", 23.42, new byte[] {}));
+			wdb.insertRaw(ImmArray.createObj("SHREKTA", 23.42, new byte[] {}));
 			db = new Database(Database.copy(Database.copy(wdb.getSnapshot()).getSnapshot()), null);
 		}
 		

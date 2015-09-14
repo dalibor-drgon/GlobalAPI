@@ -68,6 +68,27 @@ public class Api {
 		return RANDOM;
 	}
 	
+	public static boolean equalsIterable(Iterable<?> i1, Iterable<?> i2) {
+		if(i1 instanceof Collection && i2 instanceof Collection) {
+			if(((Collection<?>) i1).size() != ((Collection<?>) i2).size()) {
+				return false;
+			}
+		}
+		Iterator<?> it1 = i1.iterator();
+		Iterator<?> it2 = i2.iterator();
+		while(it1.hasNext()) {
+			if(!it2.hasNext()) {
+				return false;
+			}
+			Object c1 = it1.next();
+			Object c2 = it2.next();
+			if((c1 == null) ? c2 != null : !c1.equals(c2)) {
+				return false;
+			}
+		}
+		return !it2.hasNext();
+	}
+	
 	@SuppressWarnings("unchecked")
 	public static <X> X[] toArray(Collection<?> col) {
 		if(col instanceof ImmArray) {

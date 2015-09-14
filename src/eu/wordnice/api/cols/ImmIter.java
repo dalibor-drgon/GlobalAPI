@@ -61,37 +61,7 @@ public class ImmIter<T> implements Set<T> {
 	 */
 	@Override
 	public Iterator<T> iterator() {
-		return new SimpleIterator();
-	}
-	
-	public class SimpleIterator implements Iterator<T> {
-		
-		/**
-		 * Current index
-		 */
-		private int i = -1;
-		
-		/**
-		 * Iterator
-		 */
-		private Iterator<T> it = ImmIter.this.arr.iterator();
-		
-		@Override
-		public boolean hasNext() {
-			this.i++;
-			return (this.i < ImmIter.this.size() && this.it.hasNext());
-		}
-
-		@Override
-		public T next() {
-			return this.it.next();
-		}
-
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException("Values from immutable map!");
-		}
-		
+		return new ImmIterIterator<T>(this.arr.iterator(), this.size);
 	}
 
 	@Override
