@@ -201,9 +201,27 @@ public class Api {
 	}
 	
 	public static <X, Y> boolean equals(Object[] one, Object[] two, int size) {
+		if(one == two) {
+			return true;
+		}
 		while(size-- != 0) {
 			Object on = one[size];
 			Object tw = two[size];
+			if((on == null) ? tw != null : !on.equals(tw)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public static <X, Y> boolean equals(Object[] one, int off1, Object[] two, int off2, int size) {
+		if(one == two) {
+			return true;
+		}
+		size += off1;
+		for(; off1 < size; off1++, off2++) {
+			Object on = one[off1];
+			Object tw = two[off2];
 			if((on == null) ? tw != null : !on.equals(tw)) {
 				return false;
 			}

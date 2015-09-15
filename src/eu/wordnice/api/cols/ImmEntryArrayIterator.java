@@ -58,20 +58,19 @@ public class ImmEntryArrayIterator<X, Y> implements Iterator<Entry<X, Y>> {
 	
 	@Override
 	public boolean hasNext() {
-		System.out.println("-- HasNext");
-		return (this.index + 1) < (this.size / 2);
+		return this.index != (this.size / 2);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public Entry<X, Y> next() {
-		if(!this.hasNext()) {
+		if(this.index >= (this.size / 2)) {
 			throw new NoSuchElementException();
 		}
-		System.out.println("-- Next");
-		this.index++;
-		return new ImmEntry<X, Y>((X) this.objs[this.index * 2],
+		Entry<X, Y> ent = new ImmEntry<X, Y>((X) this.objs[this.index * 2],
 				(Y) this.objs[(this.index * 2) + 1]);
+		this.index++;
+		return ent;
 	}
 
 	@Override

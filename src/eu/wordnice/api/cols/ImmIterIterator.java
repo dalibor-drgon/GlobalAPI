@@ -34,7 +34,7 @@ public class ImmIterIterator<T> implements Iterator<T> {
 	
 	@Override
 	public boolean hasNext() {
-		return ((this.i + 1) < this.size) && this.it.hasNext();
+		return (this.i != this.size) && this.it.hasNext();
 	}
 
 	@Override

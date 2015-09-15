@@ -52,8 +52,13 @@ public class ImmSkipArray<X> implements List<X>, Set<X>, RandomAccess {
 	}
 	
 	public void recomputeSize(int sz) {
-		this.size = ((sz - this.start) / this.every);
-		this.maxi = ((int) this.size * this.every) + this.start; 
+		this.size = (sz - this.start);
+		if((this.size % this.every) == 0) {
+			this.size /= this.every;
+		} else {
+			this.size = (this.size / this.every) + 1;
+		}
+		this.maxi = sz;
 	}
 	
 	@Override
@@ -191,13 +196,13 @@ public class ImmSkipArray<X> implements List<X>, Set<X>, RandomAccess {
 	@Override
 	public int lastIndexOf(Object key) {
 		if(key == null) {
-			for(int i = this.maxi, pi = (this.size - 1); i <= this.start; i -= this.every, pi--) {
+			for(int i = this.maxi, pi = (this.size - 1); i >= this.start; i -= this.every, pi--) {
 				if(this.arr[i] == null) {
 					return pi;
 				}
 			}
 		} else {
-			for(int i = this.maxi, pi = (this.size - 1); i <= this.start; i -= this.every, pi--) {
+			for(int i = this.maxi, pi = (this.size - 1); i >= this.start; i -= this.every, pi--) {
 				if(key.equals(this.arr[i])) {
 					return pi;
 				}
@@ -253,6 +258,20 @@ public class ImmSkipArray<X> implements List<X>, Set<X>, RandomAccess {
 	public boolean equals(Object obj) {
 		if(obj == this) {
 			return true;
+		}
+		if(obj instanceof ImmSkipArray) {
+			ImmSkipArray<?> arr = (ImmSkipArray<?>) obj;
+			if(arr.size() == this.size() && arr.start == this.start
+					&& arr.maxi == this.maxi && arr.every == this.every) {
+				for(int i = this.start; i < this.maxi; i += this.every) {
+					Object key = this.arr[i];
+					Object seckey = arr.arr[i];
+					if((key == null) ? seckey != null : !key.equals(seckey)) {
+						return false;
+					}
+				}
+				return true;
+			}
 		}
 		if(obj instanceof Iterable) {
 			if(obj instanceof Collection) {

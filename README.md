@@ -121,6 +121,7 @@ Create immutable `Map` from one array, two arrays, or two `Iterable`s (e.g. `Lis
 In following example is also created `ImmArray` from array.
 
 ```java
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -129,61 +130,142 @@ import eu.wordnice.api.cols.ImmArray;
 import eu.wordnice.api.cols.ImmMapArray;
 import eu.wordnice.api.cols.ImmMapIterPair;
 import eu.wordnice.api.cols.ImmMapPair;
+import gnu.trove.map.hash.THashMap;
 
 public class MapsPreview {
 	
 	public static void main(String[] blah) {
+		/**************************
+		 * Trove HashMap (mutable)
+		 */
+		Map<String, Integer> map = new THashMap<String, Integer>();
+			map.put("one", 1);
+			map.put("two", 2);
+			map.put("three", 3);
+		MapsPreview.debugMap(map);
+		
+		
+		/*************************
+		 * Java HashMap (mutable)
+		 */
+		map = new HashMap<String, Integer>();
+			map.put("one", 1);
+			map.put("two", 2);
+			map.put("three", 3);
+		MapsPreview.debugMap(map);
+		
+		
 		/************
 		 * One array
 		 */
-		Map<String, Integer> map = new ImmMapArray<String, Integer>(
-				"one", 1,
-				"two", 2,
-				"three", 3);
-		
-		System.out.println("Map: " + map + " / " + map.getClass().getName());
-		
-		Iterator<Entry<String, Integer>> it = map.entrySet().iterator();
-		while(it.hasNext()) {
-			System.out.println(it.next());
-		}
+		MapsPreview.debugMap(
+				new ImmMapArray<String, Integer>(new Object[] {
+						"one", 1,
+						"two", 2,
+						"three", 3
+				}, 6)
+		);
 		
 		
 		/*******
 		 * Pair
 		 */
-		map = new ImmMapPair<String, Integer>(new Object[] {
-				"one", "two", "three"
-		}, new Object[] {
-				1, 2, 3
-		}, 3);
-		
-		System.out.println("Map: " + map + " / " + map.getClass().getName());
-		
-		it = map.entrySet().iterator();
-		while(it.hasNext()) {
-			System.out.println(it.next());
-		}
+		MapsPreview.debugMap(
+				new ImmMapPair<String, Integer>(new Object[] {
+						"one", "two", "three"
+				}, new Object[] {
+						1, 2, 3
+				}, 3)
+		);
 		
 		
 		/******************
 		 * Collection pair
 		 */
-		map = new ImmMapIterPair<String, Integer>(new ImmArray<String>(new Object[] {
-				"one", "two", "three"
-		}), new ImmArray<Integer>(new Object[] {
-				1, 2, 3
-		}), 3);
+		MapsPreview.debugMap(
+				new ImmMapIterPair<String, Integer>(new ImmArray<String>(new Object[] {
+						"one", "two", "three"
+				}), new ImmArray<Integer>(new Object[] {
+						1, 2, 3
+				}), 3)
+		);
+	}
+	
+	
+	public static void debugMap(Map<String, Integer> map) {
+		System.out.println("Map: [" + map.size() + "] " + map + " / " + map.getClass());
+		System.out.println("\tKeys   : [" + map.keySet().size() + "] " + map.keySet() + " / " + map.keySet().getClass());
+		System.out.println("\tValues : [" + map.values().size() + "] " + map.values() + " / " + map.values().getClass());
+		System.out.println("\tEntries: [" + map.entrySet().size() + "] " + map.entrySet() + " / " + map.entrySet().getClass());
 		
-		System.out.println("Map: " + map + " / " + map.getClass().getName());
-		
-		it = map.entrySet().iterator();
+		Iterator<Entry<String, Integer>> it = map.entrySet().iterator();
+		Iterator<String> keys = map.keySet().iterator();
+		Iterator<Integer> vals = map.values().iterator();
 		while(it.hasNext()) {
-			System.out.println(it.next());
+			String pref = "";
+			if(keys.hasNext()) {
+				pref += keys.next() + "=";
+			} else {
+				pref += "?=";
+			}
+			if(vals.hasNext()) {
+				pref += vals.next();
+			} else {
+				pref += "?";
+			}
+			System.out.println("- " + pref + ", " + it.next());
 		}
+		System.out.print("\n\n");
 	}
 	
 }
+```
+
+Output:
+```
+Map: [3] {three=3, one=1, two=2} / class gnu.trove.map.hash.THashMap
+	Keys   : [3] {three, one, two} / class gnu.trove.map.hash.THashMap$KeyView
+	Values : [3] {3, 1, 2} / class gnu.trove.map.hash.THashMap$ValueView
+	Entries: [3] {three=3, one=1, two=2} / class gnu.trove.map.hash.THashMap$EntryView
+- three=3, three=3
+- one=1, one=1
+- two=2, two=2
+
+
+Map: [3] {two=2, one=1, three=3} / class java.util.HashMap
+	Keys   : [3] [two, one, three] / class java.util.HashMap$KeySet
+	Values : [3] [2, 1, 3] / class java.util.HashMap$Values
+	Entries: [3] [two=2, one=1, three=3] / class java.util.HashMap$EntrySet
+- two=2, two=2
+- one=1, one=1
+- three=3, three=3
+
+
+Map: [3] {one=1, two=2, three=3} / class eu.wordnice.api.cols.ImmMapArray
+	Keys   : [3] [one, two, three] / class eu.wordnice.api.cols.ImmSkipArray
+	Values : [3] [1, 2, 3] / class eu.wordnice.api.cols.ImmSkipArray
+	Entries: [3] [one=1, two=2, three=3] / class eu.wordnice.api.cols.ImmEntryArray
+- one=1, one=1
+- two=2, two=2
+- three=3, three=3
+
+
+Map: [3] {one=1, two=2, three=3} / class eu.wordnice.api.cols.ImmMapPair
+	Keys   : [3] [one, two, three] / class eu.wordnice.api.cols.ImmArray
+	Values : [3] [1, 2, 3] / class eu.wordnice.api.cols.ImmArray
+	Entries: [3] [one=1, two=2, three=3] / class eu.wordnice.api.cols.ImmMapPair$EntrySet
+- one=1, one=1
+- two=2, two=2
+- three=3, three=3
+
+
+Map: [3] {one=1, two=2, three=3} / class eu.wordnice.api.cols.ImmMapIterPair
+	Keys   : [3] [one, two, three] / class eu.wordnice.api.cols.ImmIter
+	Values : [3] [1, 2, 3] / class eu.wordnice.api.cols.ImmIter
+	Entries: [3] [one=1, two=2, three=3] / class eu.wordnice.api.cols.ImmMapIterPair$EntrySet
+- one=1, one=1
+- two=2, two=2
+- three=3, three=3
 ```
 
 
@@ -495,4 +577,4 @@ Displaying saved posts:
 
 ### Database
 
-High-level interface for any database. *TODO, 20% Done*
+High-level interface for any database. *TODO, 70% Done*

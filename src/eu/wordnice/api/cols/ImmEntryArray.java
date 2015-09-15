@@ -157,11 +157,11 @@ public class ImmEntryArray<X, Y> implements Set<Entry<X, Y>> {
 	public String toString() {
 		int len = this.size;
 		if(len == 0) {
-			return "{}";
+			return "[]";
 		}
 
 		StringBuilder sb = new StringBuilder();
-		sb.append('{');
+		sb.append('[');
 		for(int i = 0; i < len;) {
 			Object key = this.objs[i++];
 			Object val = this.objs[i++];
@@ -172,7 +172,7 @@ public class ImmEntryArray<X, Y> implements Set<Entry<X, Y>> {
 			sb.append('=');
 			sb.append(val);
 		}
-		sb.append('}');
+		sb.append(']');
 		return sb.toString();
 	}
 	

@@ -52,13 +52,13 @@ public class ImmArrayIterator<T> implements ListIterator<T> {
 	
 	@Override
 	public boolean hasPrevious() {
-		return ((this.i - 1) < this.size);
+		return (this.i != 0);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public T next() {
-		if(!this.hasNext()) {
+		if(this.i >= this.size) {
 			throw new NoSuchElementException();
 		}
 		T ret = (T) this.arr[this.i];
@@ -69,7 +69,7 @@ public class ImmArrayIterator<T> implements ListIterator<T> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public T previous() {
-		if(!this.hasPrevious()) {
+		if(this.i <= 0) {
 			throw new NoSuchElementException();
 		}
 		this.i--;
@@ -78,7 +78,7 @@ public class ImmArrayIterator<T> implements ListIterator<T> {
 
 	@Override
 	public int nextIndex() {
-		return this.i + 1;
+		return this.i;
 	}
 
 	@Override

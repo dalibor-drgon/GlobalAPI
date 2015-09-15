@@ -324,20 +324,24 @@ public class ImmMapIterPair<X, Y> implements Map<X, Y> {
 		
 		@Override
 		public String toString() {
-			return ImmMapIterPair.this.toString();
+			return ImmMapIterPair.this.toString('[', ']');
 		}
 		
 	}
 	
 	@Override
 	public String toString() {
+		return this.toString('{', '}');
+	}
+	
+	public String toString(char start, char end) {
 		int len = this.size;
 		if(len == 0) {
-			return "{}";
+			return start + "" + end;
 		}
 
 		StringBuilder sb = new StringBuilder();
-		sb.append('{');
+		sb.append(start);
 		int i = 0;
 		Iterator<X> it = ImmMapIterPair.this.keys.iterator();
 		Iterator<Y> it2 = ImmMapIterPair.this.vals.iterator();
@@ -352,7 +356,7 @@ public class ImmMapIterPair<X, Y> implements Map<X, Y> {
 			sb.append('=');
 			sb.append(val);
 		}
-		sb.append('}');
+		sb.append(end);
 		return sb.toString();
 	}
 	

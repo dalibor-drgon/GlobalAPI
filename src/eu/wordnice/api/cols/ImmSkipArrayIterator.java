@@ -54,8 +54,13 @@ public class ImmSkipArrayIterator<X> implements ListIterator<X> {
 	}
 	
 	public void recomputeSize(int sz) {
-		this.size = ((sz - this.start) / this.every);
-		this.maxi = ((int) this.size * this.every) + this.start; 
+		this.size = (sz - this.start);
+		if((this.size % this.every) == 0) {
+			this.size /= this.every;
+		} else {
+			this.size = (this.size / this.every) + 1;
+		}
+		this.maxi = sz;
 	}
 	
 	public void recomputeIndex(int index) {
@@ -67,7 +72,7 @@ public class ImmSkipArrayIterator<X> implements ListIterator<X> {
 	
 	@Override
 	public boolean hasNext() {
-		return (this.index + this.every) < this.maxi;
+		return this.index < this.maxi;
 	}
 	
 	@Override
@@ -78,17 +83,18 @@ public class ImmSkipArrayIterator<X> implements ListIterator<X> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public X next() {
-		if(!this.hasNext()) {
+		if(this.index >= this.maxi) {
 			throw new NoSuchElementException();
 		}
+		X ret = (X) this.arr[this.index];
 		this.index += this.every;
-		return (X) this.arr[this.index];
+		return ret;
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public X previous() {
-		if(!this.hasPrevious()) {
+		if(this.index <= 0) {
 			throw new NoSuchElementException();
 		}
 		this.index -= this.every;
@@ -97,7 +103,7 @@ public class ImmSkipArrayIterator<X> implements ListIterator<X> {
 
 	@Override
 	public int nextIndex() {
-		return (this.index + this.every - this.start) / this.every;
+		return (this.index - this.start) / this.every;
 	}
 
 	@Override

@@ -31,6 +31,8 @@ import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
+import eu.wordnice.api.Api;
+
 @Immutable
 public class ImmMapPair<X, Y> implements Map<X, Y> {
 
@@ -296,20 +298,24 @@ public class ImmMapPair<X, Y> implements Map<X, Y> {
 		
 		@Override
 		public String toString() {
-			return ImmMapPair.this.toString();
+			return ImmMapPair.this.toString('[', ']');
 		}
 		
 	}
 	
 	@Override
 	public String toString() {
+		return this.toString('{', '}');
+	}
+	
+	public String toString(char start, char end) {
 		int len = this.size;
 		if(len == 0) {
-			return "{}";
+			return start + "" + end;
 		}
 
 		StringBuilder sb = new StringBuilder();
-		sb.append('{');
+		sb.append(start);
 		for(int i = 0; i < len; i++) {
 			Object key = this.keys[i];
 			Object val = this.vals[i];
@@ -317,13 +323,20 @@ public class ImmMapPair<X, Y> implements Map<X, Y> {
 			if(i != 0) {
 				sb.append(',').append(' ');
 			}
-			sb.append((key == this) ? "(this Map)" : key);
+			sb.append(key);
 			sb.append('=');
-			sb.append((val == this) ? "(this Map)" : val);
+			sb.append(val);
 		}
-		sb.append('}');
+		sb.append(end);
 		return sb.toString();
 	}
 	
+	@Override
+	public boolean equals(Object obj) {
+		if(!(obj instanceof Map)) {
+			return false;
+		}
+		return Api.equalsIterable(this.entrySet(), ((Map<?, ?>) obj).entrySet());
+	}
 	
 }
