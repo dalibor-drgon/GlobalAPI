@@ -31,6 +31,8 @@ import eu.wordnice.api.serialize.DataReader;
 import eu.wordnice.api.serialize.DataWriter;
 import eu.wordnice.db.DatabaseException;
 import eu.wordnice.db.RawUnsupportedException;
+import eu.wordnice.db.operator.AndOr;
+import eu.wordnice.db.operator.Limit;
 import eu.wordnice.db.operator.Sort;
 
 public interface ResSetDB extends ResSet, DataWriter, DataReader {
@@ -185,4 +187,20 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	public void insertRawAll(Collection<Collection<Object>> values)
 			throws RawUnsupportedException, IllegalArgumentException, DatabaseException;
 	
+	
+	
+	
+	
+	/**
+	 * @return `true` if got implemented {@link ResSetDB#get(String[], AndOr, Limit, Sort[])}
+	 */
+	public boolean hasGet();
+	
+	/**
+	 * @see {@link eu.wordnice.db.Database#get(String[], AndOr, Limit, Sort[])}
+	 * 
+	 * @throws UnsupportedOperationException When {@link ResSetDB#hasGet()} returns `false`
+	 */
+	public ResSet get(String[] columns, AndOr where, Limit limit, Sort[] sort)
+			throws UnsupportedOperationException, IllegalArgumentException, Exception;
 }

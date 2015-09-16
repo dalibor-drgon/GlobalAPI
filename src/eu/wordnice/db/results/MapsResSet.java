@@ -44,6 +44,8 @@ import eu.wordnice.api.serialize.BadResultException;
 import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.db.DatabaseException;
 import eu.wordnice.db.RawUnsupportedException;
+import eu.wordnice.db.operator.AndOr;
+import eu.wordnice.db.operator.Limit;
 import eu.wordnice.db.operator.Sort;
 
 public class MapsResSet extends ObjectResSet implements ResSetDB {
@@ -326,6 +328,18 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 		if(this.list == null) {
 			throw new BadResultException("Readed null collection!");
 		}
+	}
+	
+	
+	@Override
+	public boolean hasGet() {
+		return false;
+	}
+
+	@Override
+	public ResSet get(String[] columns, AndOr where, Limit limit, Sort[] sort)
+			throws UnsupportedOperationException, IllegalArgumentException, Exception {
+		throw new UnsupportedOperationException();
 	}
 
 }

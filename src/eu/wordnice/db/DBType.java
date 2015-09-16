@@ -31,7 +31,7 @@ import java.util.Set;
 public enum DBType {
 
 	BOOLEAN(1), BYTE(2), SHORT(3), INT(4), LONG(5), FLOAT(6), DOUBLE(7), STRING(8), BYTES(9),
-	SET(11), MAP(12), LIST(13), ARRAY(14);
+	SET(11), MAP(12), LIST(13), ARRAY(14), ID(15);
 
 	public byte b;
 
@@ -39,14 +39,12 @@ public enum DBType {
 		this.b = (byte) b;
 	}
 	
-	public static DBType getByByte(Byte b) {
-		DBType[] wnsqlvt = DBType.values();
-		for(DBType tp : wnsqlvt) {
-			if(tp.b == b) {
-				return tp;
-			}
+	public static DBType getByByte(byte b) {
+		DBType[] cur = DBType.values();
+		if(b <= 0 || b > cur.length) {
+			return null;
 		}
-		return null;
+		return cur[b + 1];
 	}
 	
 	public static boolean isAssignable(DBType typ, Object o) {
@@ -83,6 +81,9 @@ public enum DBType {
 				return c.isArray();
 			case MAP:
 				return Map.class.isAssignableFrom(c);
+			case ID:
+				return (Byte.class.isAssignableFrom(c) || Short.class.isAssignableFrom(c)
+						|| Integer.class.isAssignableFrom(c) || Long.class.isAssignableFrom(c));
 		}
 		return false;
 	}

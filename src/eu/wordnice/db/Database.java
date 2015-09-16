@@ -40,10 +40,10 @@ import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.db.operator.AndOr;
 import eu.wordnice.db.operator.Limit;
 import eu.wordnice.db.operator.Sort;
+import eu.wordnice.db.operator.Where;
 import eu.wordnice.db.results.MapsResSet;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.results.ResSetDB;
-import eu.wordnice.db.results.ResSetDBAdv;
 import eu.wordnice.db.results.ResultResSet;
 import eu.wordnice.db.results.ArraysResSet;
 import eu.wordnice.db.sql.MySQL;
@@ -339,8 +339,8 @@ public class Database {
 			}
 			return new ResultResSet(ps.executeQuery());
 		} else {
-			if(this.rs instanceof ResSetDBAdv && ((ResSetDBAdv) this.rs).hasGet()) {
-				return ((ResSetDBAdv) this.rs).get(columns, where, limit, sort);
+			if(this.rs.hasGet()) {
+				return this.rs.get(columns, where, limit, sort);
 			}
 			ResSetDB rs = this.rs.getSnapshot();
 			if(where != null) {
@@ -350,13 +350,13 @@ public class Database {
 					}
 				}
 			}
-			if(sort != null) {
+			if(sort != null && sort.length != 0) {
 				if(rs.hasSortCut() == false) {
 					rs = Database.copy(rs);
 				}
 				rs.sort(sort);
 			}
-			if(limit != null) {
+			if(limit != null && rs.size() != 0 && (limit.off != 0 || limit.len < rs.size())) {
 				if(limit.len <= 0) {
 					throw new IllegalArgumentException("Invalid limit " + limit);
 				}
@@ -496,6 +496,42 @@ public class Database {
 			}
 		} else {
 			this.rs.insertAll(names, vals);
+		}
+	}
+	
+	/**
+	 * Update entries in database
+	 * 
+	 * @param nevvals New values to change
+	 * @param where Where clause. If null, is ignored
+	 * @param limit Maximum count of updates. Zero means everything
+	 * 
+	 * @throws DatabaseException Any error with reading or writing file-based database
+	 */
+	public void update(Map<String, Object> nevvals, Where where, int limit) throws DatabaseException {
+		if(this.sql != null) {
+			//TODO
+		} else {
+			ResSetDB curs = this.rs.getSnapshot();
+			if(where != null) {
+				while(curs.next()) {
+					if(where.match(curs)) {
+						curs.update(nevvals);
+						limit--;
+						if(limit == 0) {
+							break;
+						}
+					}
+				}
+			} else {
+				while(curs.next()) {
+					curs.update(nevvals);
+					limit--;
+					if(limit == 0) {
+						break;
+					}
+				}
+			}
 		}
 	}
 	
