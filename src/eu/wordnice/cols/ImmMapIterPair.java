@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package eu.wordnice.api.cols;
+package eu.wordnice.cols;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -31,35 +31,35 @@ import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
-import eu.wordnice.api.Api;
-
 @Immutable
-public class ImmMapPair<X, Y> implements Map<X, Y> {
+public class ImmMapIterPair<X, Y> implements Map<X, Y> {
 
 	/**
 	 * Keys
-	 * Pair with {@link ImmMapPair#vals}
+	 * Pair with {@link ImmMapIterPair#vals}
 	 */
-	public Object[] keys;
+	public Iterable<X> keys;
 	
 	/**
 	 * Values
-	 * Pair with {@link ImmMapPair#keys}
+	 * Pair with {@link ImmMapIterPair#keys}
 	 */
-	public Object[] vals;
+	public Iterable<Y> vals;
 	
 	/**
 	 * Size
 	 */
 	public int size;
 	
-	public ImmMapPair(Object[] keys, Object[] vals) {
-		this.keys = keys;
-		this.vals = vals;
-		this.size = Math.min(this.keys.length, this.vals.length);
-	}
-	
-	public ImmMapPair(Object[] keys, Object[] vals, int size) {
+	/**
+	 * Create immutable map from two iterables with given size
+	 * 
+	 * @param keys Keys
+	 * @param vals Values
+	 * @param size Maximum size (real size can be smaller if
+	 *             any iterator on #hasNext() returns false)
+	 */
+	public ImmMapIterPair(Iterable<X> keys, Iterable<Y> vals, int size) {
 		this.keys = keys;
 		this.vals = vals;
 		this.size = size;
@@ -72,15 +72,17 @@ public class ImmMapPair<X, Y> implements Map<X, Y> {
 
 	@Override
 	public boolean containsKey(Object key) {
+		Iterator<X> it = this.keys.iterator();
+		int i = 0;
 		if(key == null) {
-			for(int i = 0, n = this.size; i < n; i++) {
-				if(this.keys[i] == null) {
+			while(i++ < this.size && it.hasNext()) {
+				if(it.next() == null) {
 					return true;
 				}
 			}
 		} else {
-			for(int i = 0, n = this.size; i < n; i++) {
-				if(key.equals(this.keys[i])) {
+			while(i++ < this.size && it.hasNext()) {
+				if(key.equals(it.next())) {
 					return true;
 				}
 			}
@@ -90,15 +92,17 @@ public class ImmMapPair<X, Y> implements Map<X, Y> {
 
 	@Override
 	public boolean containsValue(Object val) {
+		Iterator<Y> it = this.vals.iterator();
+		int i = 0;
 		if(val == null) {
-			for(int i = 0, n = this.size; i < n; i++) {
-				if(this.vals[i] == null) {
+			while(i++ < this.size && it.hasNext()) {
+				if(it.next() == null) {
 					return true;
 				}
 			}
 		} else {
-			for(int i = 0, n = this.size; i < n; i++) {
-				if(val.equals(this.vals[i])) {
+			while(i++ < this.size && it.hasNext()) {
+				if(val.equals(it.next())) {
 					return true;
 				}
 			}
@@ -106,19 +110,21 @@ public class ImmMapPair<X, Y> implements Map<X, Y> {
 		return false;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public Y get(Object key) {
+		Iterator<X> it = this.keys.iterator();
+		Iterator<Y> it2 = this.vals.iterator();
+		int i = 0;
 		if(key == null) {
-			for(int i = 0, n = this.size; i < n; i++) {
-				if(this.keys[i] == null) {
-					return (Y) this.vals[i];
+			while(i++ < this.size && it.hasNext() && it2.hasNext()) {
+				if(it.next() == null) {
+					return it2.next();
 				}
 			}
 		} else {
-			for(int i = 0, n = this.size; i < n; i++) {
-				if(key.equals(this.keys[i])) {
-					return (Y) this.vals[i];
+			while(i++ < this.size && it.hasNext() && it2.hasNext()) {
+				if(key.equals(it.next())) {
+					return it2.next();
 				}
 			}
 		}
@@ -152,12 +158,12 @@ public class ImmMapPair<X, Y> implements Map<X, Y> {
 	
 	@Override
 	public Set<X> keySet() {
-		return new ImmArray<X>(this.keys, this.size);
+		return new ImmIter<X>(this.keys, this.size);
 	}
 
 	@Override
 	public Collection<Y> values() {
-		return new ImmArray<Y>(this.vals, this.size);
+		return new ImmIter<Y>(this.vals, this.size);
 	}
 	
 	@Override
@@ -190,10 +196,13 @@ public class ImmMapPair<X, Y> implements Map<X, Y> {
 			Entry<?, ?> en = (Entry<?, ?>) o;
 			Object e_key = en.getKey();
 			Object e_val = en.getValue();
-			int len = ImmMapPair.this.size;
-			for(int i = 0; i < len; i++) {
-				Object key = ImmMapPair.this.keys[i];
-				Object val = ImmMapPair.this.vals[i];
+			int len = ImmMapIterPair.this.size;
+			int i = 0;
+			Iterator<X> it = ImmMapIterPair.this.keys.iterator();
+			Iterator<Y> it2 = ImmMapIterPair.this.vals.iterator();
+			while(i++ < len && it.hasNext() && it2.hasNext()) {
+				Object key = it.next();
+				Object val = it2.next();
 				
 				if((key == null) 
 						? (e_key == null)
@@ -220,7 +229,7 @@ public class ImmMapPair<X, Y> implements Map<X, Y> {
 
 		@Override
 		public boolean isEmpty() {
-			return ImmMapPair.this.isEmpty();
+			return ImmMapIterPair.this.isEmpty();
 		}
 
 		@Override
@@ -232,17 +241,25 @@ public class ImmMapPair<X, Y> implements Map<X, Y> {
 
 			public int i = -1;
 			
+			/**
+			 * Key Iterator
+			 */
+			private Iterator<X> it = ImmMapIterPair.this.keys.iterator();
+			
+			/**
+			 * Value Iterator
+			 */
+			private Iterator<Y> it2 = ImmMapIterPair.this.vals.iterator();
+			
 			@Override
 			public boolean hasNext() {
 				this.i++;
-				return this.i < ImmMapPair.this.size();
+				return (this.i < ImmMapIterPair.this.size() && this.it.hasNext() && this.it2.hasNext());
 			}
 
-			@SuppressWarnings("unchecked")
 			@Override
 			public Entry<X, Y> next() {
-				return new ImmEntry<X, Y>((X) ImmMapPair.this.keys[this.i],
-						(Y) ImmMapPair.this.vals[this.i]);
+				return new ImmEntry<X, Y>(this.it.next(), this.it2.next());
 			}
 
 			@Override
@@ -269,16 +286,20 @@ public class ImmMapPair<X, Y> implements Map<X, Y> {
 
 		@Override
 		public int size() {
-			return ImmMapPair.this.size();
+			return ImmMapIterPair.this.size();
 		}
 
-		@SuppressWarnings("unchecked")
 		@Override
 		public Object[] toArray() {
-			int len = ImmMapPair.this.size;
+			int len = ImmMapIterPair.this.size;
 			Object[] arr = new ImmEntry[len];
-			for(int i = 0; i < len; i++) {
-				arr[i] = new ImmEntry<X, Y>((X) ImmMapPair.this.keys[i], (Y) ImmMapPair.this.vals[i]);
+			int i = 0;
+			Iterator<X> it = ImmMapIterPair.this.keys.iterator();
+			Iterator<Y> it2 = ImmMapIterPair.this.vals.iterator();
+			while(i++ < len && it.hasNext() && it2.hasNext()) {
+				X key = it.next();
+				Y val = it2.next();
+				arr[i] = new ImmEntry<X, Y>(key, val);
 			}
 			return arr;
 		}
@@ -286,19 +307,24 @@ public class ImmMapPair<X, Y> implements Map<X, Y> {
 		@SuppressWarnings("unchecked")
 		@Override
 		public <T> T[] toArray(T[] arr) {
-			int len = ImmMapPair.this.size;
+			int len = ImmMapIterPair.this.size;
 			if(arr == null || arr.length < len) {
 				arr = (T[]) new ImmEntry[len];
 			}
-			for(int i = 0; i < len; i++) {
-				arr[i] = (T) new ImmEntry<X, Y>((X) ImmMapPair.this.keys[i], (Y) ImmMapPair.this.vals[i]);
+			int i = 0;
+			Iterator<X> it = ImmMapIterPair.this.keys.iterator();
+			Iterator<Y> it2 = ImmMapIterPair.this.vals.iterator();
+			while(i++ < len && it.hasNext() && it2.hasNext()) {
+				X key = it.next();
+				Y val = it2.next();
+				arr[i] = (T) new ImmEntry<X, Y>(key, val);
 			}
 			return arr;
 		}
 		
 		@Override
 		public String toString() {
-			return ImmMapPair.this.toString('[', ']');
+			return ImmMapIterPair.this.toString('[', ']');
 		}
 		
 	}
@@ -316,11 +342,14 @@ public class ImmMapPair<X, Y> implements Map<X, Y> {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append(start);
-		for(int i = 0; i < len; i++) {
-			Object key = this.keys[i];
-			Object val = this.vals[i];
+		int i = 0;
+		Iterator<X> it = ImmMapIterPair.this.keys.iterator();
+		Iterator<Y> it2 = ImmMapIterPair.this.vals.iterator();
+		while(i++ < len && it.hasNext() && it2.hasNext()) {
+			Object key = it.next();
+			Object val = it2.next();
 			
-			if(i != 0) {
+			if(i != 1) {
 				sb.append(',').append(' ');
 			}
 			sb.append(key);
@@ -331,12 +360,5 @@ public class ImmMapPair<X, Y> implements Map<X, Y> {
 		return sb.toString();
 	}
 	
-	@Override
-	public boolean equals(Object obj) {
-		if(!(obj instanceof Map)) {
-			return false;
-		}
-		return Api.equalsIterable(this.entrySet(), ((Map<?, ?>) obj).entrySet());
-	}
 	
 }

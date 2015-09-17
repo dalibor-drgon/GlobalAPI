@@ -25,14 +25,17 @@
 package eu.wordnice.db.operator;
 
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.regex.Pattern;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.ByteString;
-import eu.wordnice.api.cols.ImmArray;
+import eu.wordnice.cols.ImmArray;
+import eu.wordnice.cols.ImmMapArray;
 import eu.wordnice.db.DBType;
 import eu.wordnice.db.Database;
+import eu.wordnice.db.DatabaseException;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.results.ResSetDB;
 import eu.wordnice.db.results.ResultResSet;
@@ -155,29 +158,29 @@ public class Where {
 				return rs.getDouble(this.key) <= ((Number) this.val).doubleValue();
 				
 			case START:
-				return Where.start(rs, this.key, rs, this.sens);
+				return Where.start(rs, this.key, this.val, this.sens);
 				
 			case NOT_START:
-				return !Where.start(rs, this.key, rs, this.sens);
+				return !Where.start(rs, this.key, this.val, this.sens);
 				
 			case END:
-				return Where.end(rs, this.key, rs, this.sens);
+				return Where.end(rs, this.key, this.val, this.sens);
 				
 			case NOT_END:
-				return !Where.end(rs, this.key, rs, this.sens);
+				return !Where.end(rs, this.key, this.val, this.sens);
 				
 			case REGEX:
-				return Where.regex(rs, this.key, rs, this.sens);
+				return Where.regex(rs, this.key, this.val, this.sens);
 				
 			case NOT_REGEX:
-				return !Where.regex(rs, this.key, rs, this.sens);
+				return !Where.regex(rs, this.key, this.val, this.sens);
 				
 			case NOT_EQUAL:
-				return !Where.equals(rs, this.key, rs, this.sens);
+				return !Where.equals(rs, this.key, this.val, this.sens);
 				
 			case EQUAL:
 			default:
-				return Where.equals(rs, this.key, rs, this.sens);
+				return Where.equals(rs, this.key, this.val, this.sens);
 		}
 	}
 	
@@ -281,7 +284,7 @@ public class Where {
 	public static void main(String... lel_varargs) throws Throwable {
 		
 		//TEST!
-		boolean use_sql = true;
+		boolean use_sql = false;
 		
 		Database db = null;
 		if(use_sql) {
@@ -304,14 +307,20 @@ public class Where {
 				System.out.println(rs.getEntries());
 			}
 		} else {
-			ResSetDB wdb = WNDB.createEmptyWNDB(new String[] {"rekts", "rektd", "rektb"}, new DBType[] {DBType.STRING, DBType.DOUBLE, DBType.BYTES});
-			wdb.insertRaw(ImmArray.createObj("SHREKTB", 23.42, new byte[] {}));
-			wdb.insertRaw(ImmArray.createObj("SHREKTa", 23.42, new byte[] {}));
-			wdb.insertRaw(ImmArray.createObj("SHREKTA", 23.42, new byte[] {}));
+			ResSetDB wdb = WNDB.createEmptyWNDB(
+					new String[] {"rekts", "rektd", "rektb", "rekti"},
+					new DBType[] {DBType.STRING, DBType.DOUBLE, DBType.BYTES, DBType.INT});
+			wdb.insertRaw(ImmArray.createObj("SHREKTB", 23.42, new byte[] {}, 1));
+			wdb.insertRaw(ImmArray.createObj("SHREKTa", 23.42, new byte[] {}, 1));
+			wdb.insertRaw(ImmArray.createObj("SHREKTA", 23.42, new byte[] {}, 1));
 			db = new Database(Database.copy(Database.copy(wdb.getSnapshot()).getSnapshot()), null);
 		}
 		
-		ResSet rs = db.get(new And(
+		
+		///
+		System.out.print("\n\nSELECT:\n");
+		
+		ResSet rs = db.select(new And(
 				new Where("rekts", "SHREKT", WType.NOT_EQUAL),
 				new Where("rekts", "SHREKTy", WType.NOT_EQUAL, true),
 				new Where("rekts", "SHREKTa", WType.EQUAL, false),
@@ -323,6 +332,69 @@ public class Where {
 		});
 		while(rs.next()) {
 			System.out.println(rs.getString("rekts"));
+		}
+		
+		
+		///
+		System.out.print("\n\nSELECT:\n");
+		Where.selectAll(db);
+		
+		
+		
+		///
+		System.out.print("\n\nINSERT:\n");
+		
+		db.insert(new ImmMapArray<String, Object>(new Object[] {
+				"rekts", "HELLO!",
+				"rektb", new byte[] {1, 2, 3},
+				"rektd", Math.PI,
+				"rekti", -1
+		}));
+		
+		
+		
+		///
+		System.out.print("\n\nSELECT:\n");
+		Where.selectAll(db);
+		
+		
+		
+		///
+		System.out.print("\n\nUPDATE:\n");
+		
+		db.update(new ImmMapArray<String, Object>(new Object[] {
+				"rekts", "HELLO M8S 2!!"
+		}), new And(
+				new Where("rektd", Math.PI, WType.EQUAL)
+		));
+		
+		
+		
+		///
+		System.out.print("\n\nSELECT:\n");
+		Where.selectAll(db);
+		
+		
+		
+		///
+		System.out.print("\n\nDELETE:\n");
+		
+		db.delete(new And(
+				new Where("rektd", Math.PI, WType.EQUAL),
+				new Where("rekti", -1, WType.EQUAL)
+		));
+		
+		
+		///
+		System.out.print("\n\nSELECT:\n");
+		Where.selectAll(db);
+		
+	}
+	
+	public static void selectAll(Database db) throws SQLException, DatabaseException {
+		ResSet rs = db.select();
+		while(rs.next()) {
+			System.out.println(rs.getEntries());
 		}
 	}
 	

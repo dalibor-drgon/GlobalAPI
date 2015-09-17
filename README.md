@@ -577,4 +577,4 @@ Displaying saved posts:
 
 ### Database
 
-High-level interface for any database. *TODO, 70% Done*
+High-level interface for any database. *TODO, 90% Done (missing table creation)*

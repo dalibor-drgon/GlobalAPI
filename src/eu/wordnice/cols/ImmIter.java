@@ -22,28 +22,23 @@
  * SOFTWARE.
  */
 
-package eu.wordnice.api.cols;
+package eu.wordnice.cols;
 
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.RandomAccess;
 import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
-import eu.wordnice.api.Api;
-
 @Immutable
-public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
+public class ImmIter<T> implements Set<T> {
 	
 	/**
 	 * Array to iterate
 	 */
-	public Object[] arr;
+	public Iterable<T> arr;
 	
 	/**
 	 * Size
@@ -52,19 +47,10 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 	
 	/**
 	 * Create immutable iterable randomaccess list & set
-	 * @param arr Array to iterate
+	 * @param arr Iterable
+	 * @param size Size of iterable
 	 */
-	public ImmArray(Object[] arr) {
-		this.arr = arr;
-		this.size = arr.length;
-	}
-	
-	/**
-	 * Create immutable iterable randomaccess list & set
-	 * @param arr Array to iterate
-	 * @param size Size of array
-	 */
-	public ImmArray(Object[] arr, int size) {
+	public ImmIter(Iterable<T> arr, int size) {
 		this.arr = arr;
 		this.size = size;
 	}
@@ -75,25 +61,7 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 	 */
 	@Override
 	public Iterator<T> iterator() {
-		return new ImmArrayIterator<T>(this.arr, this.size, 0);
-	}
-	
-	/**
-	 * Create simple immutable list iterator
-	 * @see java.util.List#listIterator()
-	 */
-	@Override
-	public ListIterator<T> listIterator() {
-		return new ImmArrayIterator<T>(this.arr, this.size, 0);
-	}
-	
-	/**
-	 * Create simple immutable list iterator
-	 * @see java.util.List#listIterator(int)
-	 */
-	@Override
-	public ListIterator<T> listIterator(int start) {
-		return new ImmArrayIterator<T>(this.arr, this.size, start);
+		return new ImmIterIterator<T>(this.arr.iterator(), this.size);
 	}
 
 	@Override
@@ -108,15 +76,17 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 
 	@Override
 	public boolean contains(Object o) {
+		Iterator<T> it = this.arr.iterator();
+		int i = 0;
 		if(o == null) {
-			for(int i = 0, n = this.size; i < n; i++) {
-				if(this.arr[i] == null) {
+			while(i++ < this.size && it.hasNext()) {
+				if(it.next() == null) {
 					return true;
 				}
 			}
 		} else {
-			for(int i = 0, n = this.size; i < n; i++) {
-				if(o.equals(this.arr[i])) {
+			while(i++ < this.size && it.hasNext()) {
+				if(o.equals(it.next())) {
 					return true;
 				}
 			}
@@ -126,7 +96,17 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 
 	@Override
 	public Object[] toArray() {
-		return Arrays.copyOf((Object[]) this.arr, this.size);
+		Object[] arr = new Object[this.size];
+		int i = 0;
+		Iterator<T> it = this.arr.iterator();
+		while(i < this.size && it.hasNext()) {
+			arr[i++] = it.next();
+		}
+		i++;
+		if(arr.length != i) {
+			arr = Arrays.copyOf(arr, i);
+		}
+		return arr;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -137,7 +117,15 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 		} else if(ar.length < this.size) {
 			ar = (U[]) Array.newInstance(ar.getClass().getComponentType(), this.size);
 		}
-		Api.memcpy(ar, this.arr, this.size);
+		int i = 0;
+		Iterator<T> it = this.arr.iterator();
+		while(i < this.size && it.hasNext()) {
+			ar[i++] = (U) it.next();
+		}
+		i++;
+		if(ar.length != i) {
+			ar = (U[]) Arrays.copyOf(ar, i, (Class<? extends U[]>)ar.getClass());
+		}
 		return ar;
 	}
 
@@ -181,56 +169,6 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 	public void clear() {
 		throw new UnsupportedOperationException("Immutable collection!");
 	}
-
-	@Override
-	public void add(int arg0, T arg1) {
-		throw new UnsupportedOperationException("Immutable collection!");
-	}
-
-	@Override
-	public boolean addAll(int arg0, Collection<? extends T> arg1) {
-		throw new UnsupportedOperationException("Immutable collection!");
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public T get(int index) {
-		return (T) this.arr[index];
-	}
-
-	@Override
-	public int indexOf(Object obj) {
-		return Api.indexOf(obj, this.arr);
-	}
-
-	@Override
-	public int lastIndexOf(Object obj) {
-		return Api.lastIndexOf(obj, this.arr);
-	}
-
-	@Override
-	public T remove(int arg0) {
-		throw new UnsupportedOperationException("Immutable collection!");
-	}
-
-	@Override
-	public T set(int arg0, T arg1) {
-		throw new UnsupportedOperationException("Immutable collection!");
-	}
-
-	@Override
-	public List<T> subList(int fromIndex, int toIndex) {
-		if(fromIndex < 0 || fromIndex >= this.size()) {
-			throw new ArrayIndexOutOfBoundsException(fromIndex);
-		}
-		if(toIndex < 0 || toIndex >= this.size()) {
-			throw new ArrayIndexOutOfBoundsException(toIndex);
-		}
-		if(fromIndex > toIndex) {
-			throw new IllegalArgumentException("fromIndex > toIndex");
-		}
-		return new ImmSkipArray<T>(this.arr, (toIndex - fromIndex), fromIndex, 1);
-	}
 	
 	@Override
 	public String toString() {
@@ -241,8 +179,10 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append('[');
-		for(int i = 0; i < len;) {
-			Object key = this.arr[i++];
+		int i = 0;
+		Iterator<T> it = this.arr.iterator();
+		while(i++ < len && it.hasNext()) {
+			Object key = it.next();
 			if(i != 1) {
 				sb.append(',').append(' ');
 			}
@@ -257,23 +197,22 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 		if(obj == this) {
 			return true;
 		}
-		if(obj instanceof ImmArray) {
-			ImmArray<?> ia = (ImmArray<?>) obj;
-			return (this.size == ia.size && Api.equals(this.arr, ia.arr, this.size));
-		} else if(obj instanceof Iterable) {
+		if(obj instanceof Iterable) {
 			if(obj instanceof Collection) {
 				if(this.size != ((Collection<?>) obj).size()) {
 					return false;
 				}
 			}
 			Iterator<?> it = ((Iterable<?>) obj).iterator();
+			Iterator<?> it2 = this.iterator();
 			int i = 0;
 			while(it.hasNext()) {
-				if(i >= this.size) {
+				if(!it2.hasNext() || i >= this.size) {
 					return false;
 				}
+				i++;
 				Object cur = it.next();
-				Object tcur = this.arr[i++];
+				Object tcur = it2.next();
 				if((cur == null) ? tcur != null : !cur.equals(tcur)) {
 					return false;
 				}
@@ -281,16 +220,6 @@ public class ImmArray<T> implements List<T>, Set<T>, RandomAccess {
 			return (i == this.size);
 		}
 		return false;
-	}
-	
-	
-	@SafeVarargs
-	public static <X> ImmArray<X> create(X... vals) {
-		return new ImmArray<X>(vals);
-	}
-	
-	public static ImmArray<Object> createObj(Object... vals) {
-		return new ImmArray<Object>(vals);
 	}
 	
 }

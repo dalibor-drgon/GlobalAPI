@@ -128,6 +128,7 @@ public class WNDBEncoder {
 				}
 				return;
 				
+			case ID:
 			case LONG:
 				if(obj == null) {
 					out.writeLong((long) 0);

@@ -50,16 +50,23 @@ public abstract class ConnectionSQL implements SQL {
 	@Override
 	public ResSet query(String query) throws SQLException {
 		Statement stm = this.createStatement();
-		ResSet rs = new ResultResSet(stm.executeQuery(query));
-		stm.close();
-		return rs;
+		return new ResultResSet(stm.executeQuery(query), stm);
 	}
 
 	@Override
 	public void command(String cmd) throws SQLException {
 		Statement stm = this.createStatement();
-		stm.executeUpdate(cmd);
-		stm.close();
+		try {
+			stm.executeUpdate(cmd);
+		} catch(SQLException sqle) {
+			try {
+				stm.close();
+			} catch(Exception e) {}
+			throw sqle;
+		}
+		try {
+			stm.close();
+		} catch(Exception e) {}
 	}
 	
 	@Override

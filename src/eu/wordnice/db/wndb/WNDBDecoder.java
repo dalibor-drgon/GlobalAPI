@@ -103,6 +103,7 @@ public class WNDBDecoder {
 				return in.readShort();
 			case INT:
 				return in.readInt();
+			case ID:
 			case LONG:
 				return in.readLong();
 			case FLOAT:

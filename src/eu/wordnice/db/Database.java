@@ -40,7 +40,6 @@ import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.db.operator.AndOr;
 import eu.wordnice.db.operator.Limit;
 import eu.wordnice.db.operator.Sort;
-import eu.wordnice.db.operator.Where;
 import eu.wordnice.db.results.MapsResSet;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.results.ResSetDB;
@@ -220,60 +219,60 @@ public class Database {
 	}
 	
 	/**
-	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
 	 * @return ResSet with all values
 	 */
-	public ResSet get() throws IllegalArgumentException, Exception {
-		return this.get(null, null, null, null);
+	public ResSet select() throws SQLException, DatabaseException {
+		return this.select(null, null, null, null);
 	}
 	
 	/**
-	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
 	 */
-	public ResSet get(AndOr where) throws IllegalArgumentException, Exception {
-		return this.get(null, where, null, null);
+	public ResSet select(AndOr where) throws SQLException, DatabaseException {
+		return this.select(null, where, null, null);
 	}
 	
 	/**
-	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
 	 */
-	public ResSet get(String[] columns, AndOr where) throws IllegalArgumentException, Exception {
-		return this.get(columns, where, null, null);
+	public ResSet select(String[] columns, AndOr where) throws SQLException, DatabaseException {
+		return this.select(columns, where, null, null);
 	}
 	
 	/**
-	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
 	 */
-	public ResSet get(String[] columns, AndOr where, Sort[] sort) throws IllegalArgumentException, Exception {
-		return this.get(columns, where, sort, null);
+	public ResSet select(String[] columns, AndOr where, Sort[] sort) throws SQLException, DatabaseException {
+		return this.select(columns, where, sort, null);
 	}
 	
 	/**
-	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
 	 */
-	public ResSet get(String[] columns, AndOr where, Limit limit) throws IllegalArgumentException, Exception {
-		return this.get(columns, where, null, limit);
+	public ResSet select(String[] columns, AndOr where, Limit limit) throws SQLException, DatabaseException {
+		return this.select(columns, where, null, limit);
 	}
 	
 	/**
-	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
 	 */
-	public ResSet get(AndOr where, Sort[] sort) throws IllegalArgumentException, Exception {
-		return this.get(null, where, sort, null);
+	public ResSet select(AndOr where, Sort[] sort) throws SQLException, DatabaseException {
+		return this.select(null, where, sort, null);
 	}
 	
 	/**
-	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
 	 */
-	public ResSet get(AndOr where, Limit limit) throws IllegalArgumentException, Exception {
-		return this.get(null, where, null, limit);
+	public ResSet select(AndOr where, Limit limit) throws SQLException, DatabaseException {
+		return this.select(null, where, null, limit);
 	}
 	
 	/**
-	 * @see {@link Database#get(String[], AndOr, Limit, Sort[])}
+	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
 	 */
-	public ResSet get(AndOr where, Sort[] sort, Limit limit) throws IllegalArgumentException, Exception {
-		return this.get(null, where, sort, limit);
+	public ResSet select(AndOr where, Sort[] sort, Limit limit) throws SQLException, DatabaseException {
+		return this.select(null, where, sort, limit);
 	}
 	
 	/**
@@ -285,10 +284,11 @@ public class Database {
 	 * @param limit Offset + Limit
 	 * 
 	 * @throws IllegalArgumentException When limit != null and (limit.off < 0 or limit.len <= 0)
-	 * @throws Exception Implementation specific exception
+	 * @throws DatabaseException Implementation specific exception
+	 * @throws SQLException Exception from JDBC
 	 * @return Results
 	 */
-	public ResSet get(String[] columns, AndOr where, Sort[] sort, Limit limit) throws IllegalArgumentException, Exception {
+	public ResSet select(String[] columns, AndOr where, Sort[] sort, Limit limit) throws SQLException, DatabaseException {
 		if(this.sql != null) {
 			StringBuilder suf = new StringBuilder();
 			if(sort != null && sort.length != 0) {
@@ -332,15 +332,35 @@ public class Database {
 			
 			Val.TwoVal<String, List<Object>> whproc = where.toSQL();
 			PreparedStatement ps = this.sql.prepare(cmd + " WHERE " + whproc.one + suf.toString());
-			List<Object> list = whproc.two;
-			for(int i = 0, n = list.size(); i < n;) {
-				Object v = list.get(i++);
-				ps.setObject(i, v);
+			try {
+				List<Object> list = whproc.two;
+				for(int i = 0, n = list.size(); i < n;) {
+					Object v = list.get(i);
+					i++;
+					ps.setObject(i, v);
+				}
+			} catch(SQLException sqle) {
+				try {
+					ps.close();
+				} catch(Exception e) {}
+				throw sqle;
 			}
-			return new ResultResSet(ps.executeQuery());
+			ResSet ret = null;
+			try {
+				ret = new ResultResSet(ps.executeQuery());
+			} catch(SQLException sqle) {
+				try {
+					ps.close();
+				} catch(Exception e) {}
+				throw sqle;
+			}
+			try {
+				ps.close();
+			} catch(Exception e) {}
+			return ret;
 		} else {
-			if(this.rs.hasGet()) {
-				return this.rs.get(columns, where, limit, sort);
+			if(this.rs.hasSelectDB()) {
+				return this.rs.selectDB(columns, where, limit, sort);
 			}
 			ResSetDB rs = this.rs.getSnapshot();
 			if(where != null) {
@@ -371,6 +391,7 @@ public class Database {
 			return rs;
 		}
 	}
+	
 	
 	/**
 	 * Insert one row into database
@@ -405,16 +426,36 @@ public class Database {
 			PreparedStatement ps = this.sql.prepare("INSERT INTO " + this.sql_table + " " + sb.toString() + " VALUES " + sb_vals.toString());
 			
 			int cursize = 0;
-			it = vals.entrySet().iterator();
-			while(it.hasNext()) {
-				cursize++;
-				ps.setObject(cursize, it.next().getValue());
+			try {
+				it = vals.entrySet().iterator();
+				while(it.hasNext()) {
+					cursize++;
+					ps.setObject(cursize, it.next().getValue());
+				}
+			} catch(SQLException sql) {
+				try {
+					ps.close();
+				} catch(Exception t) {}
+				throw sql;
 			}
 			
 			if(cursize != size) {
+				try {
+					ps.close();
+				} catch(Exception t) {}
 				throw new IllegalArgumentException("Map results mismatch! After first iteration got " + size + " elements, after second " + cursize + "!");
 			}
-			ps.executeUpdate();
+			try {
+				ps.executeUpdate();
+			} catch(SQLException sqle) {
+				try {
+					ps.close();
+				} catch(Exception t) {}
+				throw sqle;
+			}
+			try {
+				ps.close();
+			} catch(Exception t) {}
 		} else {
 			this.rs.insert(vals);
 		}
@@ -471,32 +512,64 @@ public class Database {
 			
 			PreparedStatement ps = this.sql.prepare("INSERT INTO " + this.sql_table + " " + sb.toString() + " VALUES " + sb_vals.toString());
 			
-			int i = 0;
-			Iterator<Collection<Object>> vals_it = vals.iterator();
-			while(vals_it.hasNext()) {
-				Collection<Object> cur = vals_it.next();
-				Iterator<Object> it = cur.iterator();
-				int cur_size = 0;
-				while(it.hasNext() && cur_size < size) {
-					cur_size++;
-					ps.setObject(cur_size, it.next());
+			try {
+				int i = 0;
+				Iterator<Collection<Object>> vals_it = vals.iterator();
+				while(vals_it.hasNext()) {
+					Collection<Object> cur = vals_it.next();
+					Iterator<Object> it = cur.iterator();
+					int cur_size = 0;
+					while(it.hasNext() && cur_size < size) {
+						cur_size++;
+						ps.setObject(cur_size, it.next());
+					}
+					/*if(cur_size != size) {
+						throw new IllegalArgumentException("Values set at index " + i + " has less values than expected: " + cur_size + " / " + size);
+					}
+					ps.addBatch();*/
+					if(cur_size == size) {
+						ps.addBatch();
+					}
+					i++;
+					if(i == 500) {
+						ps.executeBatch();
+						i = 0;
+					}
 				}
-				if(cur_size != size) {
-					throw new IllegalArgumentException("Values set at index " + i + " has less values than expected: " + cur_size + " / " + size);
-				}
-				ps.addBatch();
-				i++;
-				if(i == 500) {
+				if(i != 0) {
 					ps.executeBatch();
-					i = 0;
 				}
-			}
-			if(i != 0) {
-				ps.executeBatch();
+			} catch(SQLException sql) {
+				try {
+					ps.close();
+				} catch(Exception t) {}
+				throw sql;
 			}
 		} else {
 			this.rs.insertAll(names, vals);
 		}
+	}
+	
+	
+	/**
+	 * @see {@link Database#update(Map, AndOr, int)}
+	 */
+	public void update(Map<String, Object> nevvals) throws DatabaseException, SQLException {
+		this.update(nevvals, null, 0);
+	}
+	
+	/**
+	 * @see {@link Database#update(Map, AndOr, int)}
+	 */
+	public void update(Map<String, Object> nevvals, int limit) throws DatabaseException, SQLException {
+		this.update(nevvals, null, limit);
+	}
+	
+	/**
+	 * @see {@link Database#update(Map, AndOr, int)}
+	 */
+	public void update(Map<String, Object> nevvals, AndOr where) throws DatabaseException, SQLException {
+		this.update(nevvals, where, 0);
 	}
 	
 	/**
@@ -504,15 +577,73 @@ public class Database {
 	 * 
 	 * @param nevvals New values to change
 	 * @param where Where clause. If null, is ignored
-	 * @param limit Maximum count of updates. Zero means everything
+	 * @param limit Maximum count of updates. Zero or lower mean all possibles
 	 * 
+	 * @throws SQLException When working with sql-based database and error while connecting was thrown
 	 * @throws DatabaseException Any error with reading or writing file-based database
 	 */
-	public void update(Map<String, Object> nevvals, Where where, int limit) throws DatabaseException {
+	public void update(Map<String, Object> nevvals, AndOr where, int limit) throws DatabaseException, SQLException {
 		if(this.sql != null) {
-			//TODO
+			StringBuilder sb = new StringBuilder();
+			Iterator<Entry<String, Object>> it = nevvals.entrySet().iterator();
+			String suf = null;
+			if(limit >= 1) {
+				suf = " LIMIT " + limit;
+			} else {
+				suf = "";
+			}
+			
+			final char[] app = new char[] {' ', '=', ' ', '?'};
+			
+			int size = 0;
+			while(it.hasNext()) {
+				if(size != 0) {
+					sb.append(',');
+				}
+				sb.append(it.next().getKey());
+				sb.append(app);
+				size++;
+			}
+			
+			String cmd = "UPDATE " + this.sql_table + " SET " + sb.toString();
+			PreparedStatement ps = null;
+			
+			try {
+				if(where != null) {
+					Val.TwoVal<String, List<Object>> whproc = where.toSQL();
+					ps = this.sql.prepare(cmd + " WHERE " + whproc.one + suf);
+					List<Object> list = whproc.two;
+					for(int i = 0, n = list.size(); i < n; ) {
+						Object v = list.get(i);
+						i++;
+						ps.setObject(size + i, v);
+					}
+				} else {
+					ps = this.sql.prepare(cmd + suf);
+				}
+				
+				it = nevvals.entrySet().iterator();
+				int secsize = 0;
+				while(it.hasNext()) {
+					secsize++;
+					ps.setObject(secsize, it.next().getValue());
+				}
+				if(secsize != size) {
+					throw new IllegalArgumentException("Map results mismatch! After first iteration got " + size + " elements, after second " + secsize + "!");
+				}
+				ps.executeUpdate();
+			} catch(SQLException sqle) {
+				try {
+					ps.close();
+				} catch(Exception e) {}
+			}
 		} else {
-			ResSetDB curs = this.rs.getSnapshot();
+			if(this.rs.hasUpdateDB()) {
+				this.rs.updateDB(nevvals, where, limit);
+				return;
+			}
+			this.rs.first();
+			ResSetDB curs = this.rs;
 			if(where != null) {
 				while(curs.next()) {
 					if(where.match(curs)) {
@@ -535,6 +666,104 @@ public class Database {
 		}
 	}
 	
+	
+	/**
+	 * Drop all data
+	 * 
+	 * @see {@link Database#delete(AndOr, int)}
+	 */
+	public void delete() throws DatabaseException, SQLException {
+		this.delete(null, 0);
+	}
+	
+	/**
+	 * @see {@link Database#delete(AndOr, int)}
+	 */
+	public void delete(int limit) throws DatabaseException, SQLException {
+		this.delete(null, limit);
+	}
+	
+	/**
+	 * @see {@link Database#delete(AndOr, int)}
+	 */
+	public void delete(AndOr where) throws DatabaseException, SQLException {
+		this.delete(where, 0);
+	}
+	
+	/**
+	 * Delete entries in database
+	 * 
+	 * @param where Where clause. If null, is ignored
+	 * @param limit Maximum count of deletes. Zero or lower mean all possibles
+	 * 
+	 * @throws SQLException When working with sql-based database and 
+	 * error while connecting was thrown
+	 * @throws DatabaseException Any error with reading or writing file-based database
+	 */
+	public void delete(AndOr where, int limit) throws DatabaseException, SQLException {
+		if(this.sql != null) {
+			String suf = null;
+			if(limit >= 1) {
+				suf = " LIMIT " + limit;
+			} else {
+				suf = "";
+			}
+						
+			String cmd = "DELETE FROM " + this.sql_table;
+			PreparedStatement ps = null;
+			
+			try {
+				if(where != null) {
+					Val.TwoVal<String, List<Object>> whproc = where.toSQL();
+					ps = this.sql.prepare(cmd + " WHERE " + whproc.one + suf);
+					List<Object> list = whproc.two;
+					for(int i = 0, n = list.size(); i < n; ) {
+						Object v = list.get(i);
+						i++;
+						ps.setObject(i, v);
+					}
+				} else {
+					ps = this.sql.prepare(cmd + suf);
+				}
+				ps.executeUpdate();
+			} catch(SQLException sqle) {
+				try {
+					ps.close();
+				} catch(Exception e) {}
+			}
+			
+		} else {
+			if(this.rs.hasDeleteDB()) {
+				this.rs.deleteDB(where, limit);
+				return;
+			}
+			this.rs.first();
+			ResSetDB curs = this.rs;
+			if(where != null) {
+				while(curs.next()) {
+					if(where.match(curs)) {
+						curs.remove();
+						limit--;
+						if(limit == 0) {
+							break;
+						}
+					}
+				}
+			} else {
+				while(curs.next()) {
+					curs.remove();
+					limit--;
+					if(limit == 0) {
+						break;
+					}
+				}
+			}
+		}
+	}
+	
+	
+	
+	
 	/**
 	 * Create copy of Entered ResSet with supported sort() and cut()
 	 * 
@@ -542,13 +771,13 @@ public class Database {
 	 * 
 	 * @return copy of Entered ResSet with supported sort() and cut()
 	 * 
-	 * @throws IllegalArgumentException
-	 * @throws Exception
+	 * @throws DatabaseException Implementation specific exception
+	 * @throws SQLException Exception from JDBC
 	 * 
 	 * @see {@link ResSetDB#insert(Map)}
 	 * @see {@link ResSetDB#insertRaw(java.util.Collection)}
 	 */
-	public static ResSetDB copy(ResSet rs) throws IllegalArgumentException, Exception {
+	public static ResSetDB copy(ResSet rs) throws SQLException, DatabaseException {
 		if(rs.isTable()) {
 			ResSetDB nev = new ArraysResSet(Api.<String>toArray(rs.getKeys(), String.class));
 			while(rs.next()) {
@@ -569,13 +798,13 @@ public class Database {
 	 * @param out Destination
 	 * @param rs Source
 	 * 
-	 * @throws IllegalArgumentException
-	 * @throws Exception
+	 * @throws DatabaseException Implementation specific exception
+	 * @throws SQLException Exception from JDBC
 	 * 
 	 * @see {@link ResSetDB#insert(Map)}
 	 * @see {@link ResSetDB#insertRaw(java.util.Collection)}
 	 */
-	public static void copy(ResSetDB out, ResSet rs) throws IllegalArgumentException, Exception {
+	public static void copy(ResSetDB out, ResSet rs) throws SQLException, DatabaseException {
 		if(rs.isTable() && out.isTable() && out.isRaw() && out.getKeys().equals(rs.getKeys())) {
 			while(rs.next()) {
 				out.insertRaw(rs.getValues());

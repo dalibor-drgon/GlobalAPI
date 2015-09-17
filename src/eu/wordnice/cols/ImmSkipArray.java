@@ -1,4 +1,4 @@
-package eu.wordnice.api.cols;
+package eu.wordnice.cols;
 
 import java.lang.reflect.Array;
 import java.util.Collection;

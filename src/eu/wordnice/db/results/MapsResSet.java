@@ -26,6 +26,7 @@ package eu.wordnice.db.results;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,11 +38,11 @@ import java.util.Map;
 
 import eu.wordnice.api.IStream;
 import eu.wordnice.api.OStream;
-import eu.wordnice.api.cols.ImmArray;
-import eu.wordnice.api.cols.ImmIter;
-import eu.wordnice.api.cols.ImmMapIterPair;
 import eu.wordnice.api.serialize.BadResultException;
 import eu.wordnice.api.serialize.SerializeException;
+import eu.wordnice.cols.ImmArray;
+import eu.wordnice.cols.ImmIter;
+import eu.wordnice.cols.ImmMapIterPair;
 import eu.wordnice.db.DatabaseException;
 import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.AndOr;
@@ -135,30 +136,17 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	}
 
 	@Override
-	public void update(Map<String, Object> vals) throws DatabaseException {
-		if(this instanceof ResSetDBSnap) {
-			((ResSetDBSnap) this).getOriginal().update(vals);
-			return;
-		}
+	public void update(Map<String, Object> vals) throws DatabaseException, SQLException {
 		this.cur.putAll(vals);
 	}
 	
 	@Override
-	public void updateAll(Map<String, Object> vals) throws DatabaseException {
-		if(this instanceof ResSetDBSnap) {
-			((ResSetDBSnap) this).getOriginal().update(vals);
-			return;
-		}
+	public void updateAll(Map<String, Object> vals) throws DatabaseException, SQLException {
 		this.it.set(vals);
 	}
 
 	@Override
-	public void insert(Map<String, Object> vals) throws DatabaseException {
-		if(this instanceof ResSetDBSnap) {
-			((ResSetDBSnap) this).getOriginal().insert(vals);
-			return;
-		}
-		
+	public void insert(Map<String, Object> vals) throws DatabaseException, SQLException {
 		if(this.it != null) {
 			this.it.add(vals);
 		} else {
@@ -168,12 +156,7 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	
 	@Override
 	public void insertAll(Collection<Map<String, Object>> vals)
-			throws DatabaseException {
-		if(this instanceof ResSetDBSnap) {
-			((ResSetDBSnap) this).getOriginal().insertAll(vals);
-			return;
-		}
-		
+			throws DatabaseException, SQLException {
 		Iterator<Map<String, Object>> it = vals.iterator();
 		if(this.list instanceof ArrayList) {
 			((ArrayList<?>) this.list).ensureCapacity(this.list.size() + vals.size());
@@ -185,12 +168,7 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 
 	@Override
 	public void insertAll(Collection<String> columns,
-			Collection<Collection<Object>> vals) throws DatabaseException {
-		if(this instanceof ResSetDBSnap) {
-			((ResSetDBSnap) this).getOriginal().insertAll(columns, vals);
-			return;
-		}
-		
+			Collection<Collection<Object>> vals) throws DatabaseException, SQLException {
 		Iterator<Collection<Object>> it = vals.iterator();
 		List<String> cols = new ImmArray<String>(columns.toArray(new String[0]));
 		if(this.list instanceof ArrayList) {
@@ -204,7 +182,7 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	}
 
 	@Override
-	public void remove() throws DatabaseException {
+	public void remove() throws DatabaseException, SQLException {
 		this.it.remove();
 	}
 
@@ -234,7 +212,7 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	
 	@Override
 	public void insertRawAll(Collection<Collection<Object>> values)
-			throws RawUnsupportedException, IllegalArgumentException, DatabaseException {
+			throws RawUnsupportedException, IllegalArgumentException, DatabaseException, SQLException {
 		throw new RawUnsupportedException();
 	}
 	
@@ -332,13 +310,35 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	
 	
 	@Override
-	public boolean hasGet() {
+	public boolean hasSelectDB() {
 		return false;
 	}
 
 	@Override
-	public ResSet get(String[] columns, AndOr where, Limit limit, Sort[] sort)
-			throws UnsupportedOperationException, IllegalArgumentException, Exception {
+	public ResSet selectDB(String[] columns, AndOr where, Limit limit, Sort[] sort)
+			throws UnsupportedOperationException, IllegalArgumentException, DatabaseException, SQLException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean hasUpdateDB() {
+		return false;
+	}
+
+	@Override
+	public void updateDB(Map<String, Object> nevvals, AndOr where, int limit)
+			throws UnsupportedOperationException, DatabaseException, SQLException {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean hasDeleteDB() {
+		return false;
+	}
+
+	@Override
+	public void deleteDB(AndOr where, int limit)
+			throws UnsupportedOperationException, DatabaseException, SQLException {
 		throw new UnsupportedOperationException();
 	}
 

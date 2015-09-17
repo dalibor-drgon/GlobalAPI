@@ -27,11 +27,12 @@ package eu.wordnice.db.results;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collection;
 import java.util.Map;
 
-import eu.wordnice.api.cols.ImmArray;
-import eu.wordnice.api.cols.ImmMapPair;
+import eu.wordnice.cols.ImmArray;
+import eu.wordnice.cols.ImmMapPair;
 import eu.wordnice.db.DatabaseException;
 
 public class ResultResSet implements ResSet {
@@ -40,11 +41,16 @@ public class ResultResSet implements ResSet {
 	public Object[] last;
 	public boolean hasLast = false;
 	public ResultSet rs;
+	public Statement sm;
 	public boolean pendingFirst = false;
 
 	public ResultResSet() {}
 
 	public ResultResSet(ResultSet rs) throws SQLException {
+		this(rs, null);
+	}
+	
+	public ResultResSet(ResultSet rs, Statement sm) throws SQLException {
 		this.rs = rs;
 		ResultSetMetaData md = rs.getMetaData();
 		int cols = md.getColumnCount();
@@ -53,6 +59,7 @@ public class ResultResSet implements ResSet {
 			this.keys[i] = md.getColumnName(i + 1);
 		}
 		this.last = new Object[cols];
+		this.sm = sm;
 	}
 	
 	@Override
@@ -235,13 +242,27 @@ public class ResultResSet implements ResSet {
 	}
 
 	@Override
-	public void close() throws DatabaseException {
+	public void close() throws SQLException, DatabaseException {
+		this.hasLast = false;
+		if(this.sm == null) {
+			this.rs.close();
+			return;
+		}
 		try {
 			this.rs.close();
-		} catch(SQLException e) {
-			throw new DatabaseException(e);
-		}
+		} catch(SQLException sqle) {}
+		this.sm.close();
+	}
+	
+	@Override
+	public void finalize() {
 		this.hasLast = false;
+		try {
+			this.rs.close();
+		} catch(Exception e) {}
+		try {
+			this.sm.close();
+		} catch(Exception e) {}
 	}
 	
 	
@@ -255,12 +276,8 @@ public class ResultResSet implements ResSet {
 	}
 
 	@Override
-	public void remove() throws DatabaseException {
-		try {
-			this.rs.deleteRow();
-		} catch(SQLException e) {
-			throw new DatabaseException(e);
-		}
+	public void remove() throws SQLException, DatabaseException {
+		this.rs.deleteRow();
 		this.hasLast = false;
 	}
 

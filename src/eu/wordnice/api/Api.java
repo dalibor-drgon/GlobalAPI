@@ -54,7 +54,7 @@ import java.util.zip.ZipInputStream;
 
 import org.apache.commons.lang3.StringUtils;
 
-import eu.wordnice.api.cols.ImmArray;
+import eu.wordnice.cols.ImmArray;
 
 public class Api {
 	

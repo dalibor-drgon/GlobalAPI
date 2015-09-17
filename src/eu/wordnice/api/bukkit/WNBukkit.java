@@ -41,7 +41,7 @@ import org.bukkit.plugin.Plugin;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.Handler;
-import eu.wordnice.api.cols.ImmArray;
+import eu.wordnice.cols.ImmArray;
 
 public class WNBukkit {
 	

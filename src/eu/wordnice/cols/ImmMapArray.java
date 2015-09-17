@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package eu.wordnice.api.cols;
+package eu.wordnice.cols;
 
 import java.util.Collection;
 import java.util.Iterator;

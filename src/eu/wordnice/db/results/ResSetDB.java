@@ -24,6 +24,7 @@
 
 package eu.wordnice.db.results;
 
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -56,8 +57,10 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * @param vals Values
 	 * 
 	 * @throws DatabaseException Implementation specific exception
+	 * @throws SQLException Exception from JDBC
 	 */
-	public void update(Map<String, Object> vals) throws DatabaseException;
+	public void update(Map<String, Object> vals)
+			throws DatabaseException, SQLException;
 	
 	/**
 	 * Replace current values with entered
@@ -66,8 +69,10 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * @param vals Values
 	 * 
 	 * @throws DatabaseException Implementation specific exception
+	 * @throws SQLException Exception from JDBC
 	 */
-	public void updateAll(Map<String, Object> vals) throws DatabaseException;
+	public void updateAll(Map<String, Object> vals)
+			throws DatabaseException, SQLException;
 	
 	/**
 	 * Insert values
@@ -76,8 +81,10 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * @param vals Values
 	 * 
 	 * @throws DatabaseException Implementation specific exception
+	 * @throws SQLException Exception from JDBC
 	 */
-	public void insert(Map<String, Object> vals) throws DatabaseException;
+	public void insert(Map<String, Object> vals)
+			throws DatabaseException, SQLException;
 	
 	/**
 	 * Insert values
@@ -86,8 +93,10 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * @param vals Multiple values (entries) to insert
 	 * 
 	 * @throws DatabaseException Implementation specific exception
+	 * @throws SQLException Exception from JDBC
 	 */
-	public void insertAll(Collection<Map<String, Object>> vals) throws DatabaseException;
+	public void insertAll(Collection<Map<String, Object>> vals)
+			throws DatabaseException, SQLException;
 	
 	/**
 	 * Insert values
@@ -97,8 +106,10 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * @param vals Multiple values (entries) to insert
 	 * 
 	 * @throws DatabaseException Implementation specific exception
+	 * @throws SQLException Exception from JDBC
 	 */
-	public void insertAll(Collection<String> columns, Collection<Collection<Object>> vals) throws DatabaseException;
+	public void insertAll(Collection<String> columns, Collection<Collection<Object>> vals)
+			throws DatabaseException, SQLException;
 	
 	/**
 	 * Get current database snapshot
@@ -129,7 +140,8 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * @throws UnsupportedOperationException
 	 *         If {@link ResSetDB#hasSort()} returns `false`                        
 	 */
-	public void sort(Sort[] sorts) throws UnsupportedOperationException;
+	public void sort(Sort[] sorts)
+			throws UnsupportedOperationException;
 	
 	/**
 	 * Cut results
@@ -142,7 +154,8 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * @throws UnsupportedOperationException
 	 *         If {@link ResSetDB#hasSort()} returns `false` 
 	 */
-	public void cut(int off, int len) throws UnsupportedOperationException;
+	public void cut(int off, int len)
+			throws UnsupportedOperationException;
 	
 	
 	/**
@@ -159,8 +172,10 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * @throws RawUnsupportedException If raw is not supported
 	 * @throws IllegalArgumentException When values to insert are invalid / instances of invalid type
 	 * @throws DatabaseException Implementation specific exception
+	 * @throws SQLException Exception from JDBC
 	 */
-	public void updateRaw(Collection<Object> values) throws RawUnsupportedException, IllegalArgumentException, DatabaseException;
+	public void updateRaw(Collection<Object> values)
+			throws RawUnsupportedException, IllegalArgumentException, DatabaseException, SQLException;
 	
 	/**
 	 * Insert values
@@ -171,8 +186,10 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * @throws RawUnsupportedException If raw is not supported
 	 * @throws IllegalArgumentException When values to insert are invalid / instances of invalid type
 	 * @throws DatabaseException Implementation specific exception
+	 * @throws SQLException Exception from JDBC
 	 */
-	public void insertRaw(Collection<Object> values) throws RawUnsupportedException, IllegalArgumentException, DatabaseException;
+	public void insertRaw(Collection<Object> values)
+			throws RawUnsupportedException, IllegalArgumentException, DatabaseException, SQLException;
 	
 	/**
 	 * Insert values
@@ -183,24 +200,53 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 * @throws RawUnsupportedException If raw is not supported
 	 * @throws IllegalArgumentException When values to insert are invalid / instances of invalid type
 	 * @throws DatabaseException Implementation specific exception
+	 * @throws SQLException Exception from JDBC
 	 */
 	public void insertRawAll(Collection<Collection<Object>> values)
-			throws RawUnsupportedException, IllegalArgumentException, DatabaseException;
+			throws RawUnsupportedException, IllegalArgumentException, DatabaseException, SQLException;
 	
 	
 	
 	
 	
 	/**
-	 * @return `true` if got implemented {@link ResSetDB#get(String[], AndOr, Limit, Sort[])}
+	 * @return `true` if got implemented {@link ResSetDB#selectDB(String[], AndOr, Limit, Sort[])}
 	 */
-	public boolean hasGet();
+	public boolean hasSelectDB();
 	
 	/**
-	 * @see {@link eu.wordnice.db.Database#get(String[], AndOr, Limit, Sort[])}
+	 * @see {@link eu.wordnice.db.Database#select(String[], AndOr, Limit, Sort[])}
 	 * 
-	 * @throws UnsupportedOperationException When {@link ResSetDB#hasGet()} returns `false`
+	 * @throws UnsupportedOperationException When {@link ResSetDB#hasSelectDB()} returns `false`
 	 */
-	public ResSet get(String[] columns, AndOr where, Limit limit, Sort[] sort)
-			throws UnsupportedOperationException, IllegalArgumentException, Exception;
+	public ResSet selectDB(String[] columns, AndOr where, Limit limit, Sort[] sort)
+			throws UnsupportedOperationException, DatabaseException, SQLException;
+	
+	
+	/**
+	 * @return `true` if got implemented {@link ResSetDB#updateDB(Map, AndOr, int)}
+	 */
+	public boolean hasUpdateDB();
+	
+	/**
+	 * @see {@link eu.wordnice.db.Database#update(Map, AndOr, int)}
+	 * 
+	 * @throws UnsupportedOperationException When {@link ResSetDB#hasUpdateDB()} returns `false`
+	 */
+	public void updateDB(Map<String, Object> nevvals, AndOr where, int limit) 
+			throws UnsupportedOperationException, DatabaseException, SQLException;
+	
+	
+	/**
+	 * @return `true` if got implemented {@link ResSetDB#deleteDB(AndOr, int)}
+	 */
+	public boolean hasDeleteDB();
+	
+	/**
+	 * @see {@link eu.wordnice.db.Database#delete(AndOr, int)}
+	 * 
+	 * @throws UnsupportedOperationException When {@link ResSetDB#hasDeleteDB()} returns `false`
+	 */
+	public void deleteDB(AndOr where, int limit) 
+			throws UnsupportedOperationException, DatabaseException, SQLException;
 }

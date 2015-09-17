@@ -24,6 +24,7 @@
 
 package eu.wordnice.db.results;
 
+import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -133,14 +134,16 @@ public interface ResSet {
 	 * Remove current entry
 	 * 
 	 * @throws DatabaseException Implementation-specific exception
+	 * @throws SQLException Exception from JDBC
 	 */
-	public void remove() throws DatabaseException;
+	public void remove() throws DatabaseException, SQLException;
 
 	/**
 	 * Close & destroy this result set
 	 * 
 	 * @throws DatabaseException Implementation-specific exception
+	 * @throws SQLException Exception from JDBC
 	 */
-	public void close() throws DatabaseException;
+	public void close() throws DatabaseException, SQLException;
 
 }

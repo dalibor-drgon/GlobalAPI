@@ -24,18 +24,7 @@
 
 package eu.wordnice.db.results;
 
-import eu.wordnice.db.DatabaseException;
-
 public abstract class ObjectResSet implements ResSet {
-	
-	@Override
-	public abstract boolean hasByIndex();
-	
-	@Override
-	public abstract Object getObject(String name);
-
-	@Override
-	public abstract Object getObject(int in);
 
 	@Override
 	public String getString(String name) {
@@ -250,20 +239,5 @@ public abstract class ObjectResSet implements ResSet {
 		} catch (Throwable t) {}
 		return 0;
 	}
-
-	@Override
-	public abstract void first();
-
-	@Override
-	public abstract boolean next();
-
-	@Override
-	public abstract void close() throws DatabaseException;
-
-	@Override
-	public abstract void remove() throws DatabaseException;
-
-	@Override
-	public abstract boolean isTable();
 
 }

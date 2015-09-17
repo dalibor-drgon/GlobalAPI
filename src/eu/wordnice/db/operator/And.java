@@ -75,11 +75,11 @@ public class And implements AndOr {
 		for(int i = 0, n = this.objects.length; i < n; i++) {
 			Object obj = this.objects[i];
 			if(obj instanceof AndOr) {
-				if(((AndOr) obj).match(rs) == false) {
+				if(!((AndOr) obj).match(rs)) {
 					return false;
 				}
 			} else if(obj instanceof Where) {
-				if(((Where) obj).match(rs) == false) {
+				if(!((Where) obj).match(rs)) {
 					return false;
 				}
 			}
