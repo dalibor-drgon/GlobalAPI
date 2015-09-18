@@ -336,7 +336,7 @@ public class ImmMapPair<X, Y> implements Map<X, Y> {
 		if(!(obj instanceof Map)) {
 			return false;
 		}
-		return Api.equalsIterable(this.entrySet(), ((Map<?, ?>) obj).entrySet());
+		return Api.equalsCollections(this.entrySet(), ((Map<?, ?>) obj).entrySet());
 	}
 	
 }

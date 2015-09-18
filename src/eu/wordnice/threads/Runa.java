@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package eu.wordnice.api.threads;
+package eu.wordnice.threads;
 
 /*** Runa.java ***/
 

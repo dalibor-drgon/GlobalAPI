@@ -68,7 +68,23 @@ public class Api {
 		return RANDOM;
 	}
 	
-	public static boolean equalsIterable(Iterable<?> i1, Iterable<?> i2) {
+	/**
+	 * Check if values in iterables are identical and in identical order
+	 * If both are instanceof Collection, this method check sizes first
+	 * Calls only once Itarable#iterator() for both iterables
+	 */
+	public static boolean equalsIterablesInOrder(Iterable<?> i1, Iterable<?> i2) {
+		if(i1 == i2) {
+			return true;
+		}
+		if(i1 == null) {
+			if(i2 == null) {
+				return true;
+			}
+			return false;
+		} else if(i2 == null) {
+			return false;
+		}
 		if(i1 instanceof Collection && i2 instanceof Collection) {
 			if(((Collection<?>) i1).size() != ((Collection<?>) i2).size()) {
 				return false;
@@ -87,6 +103,124 @@ public class Api {
 			}
 		}
 		return !it2.hasNext();
+	}
+	
+	/**
+	 * Check if values in iterables are identical (in any order)
+	 * This method check sizes first
+	 * For first collection calls Iterable#iterator() only once, and
+	 * several times for second collection (max = size of collection)
+	 */
+	public static boolean equalsCollections(Collection<?> i1, Collection<?> i2) {
+		if(i1 == i2) {
+			return true;
+		}
+		if(i1 == null) {
+			if(i2 == null) {
+				return true;
+			}
+			return false;
+		} else if(i2 == null) {
+			return false;
+		}
+		int size = i1.size();
+		if(size != i2.size()) {
+			return false;
+		}
+		boolean[] was = new boolean[size];
+		Iterator<?> it1 = i1.iterator();
+		for(int i = 0; i < size; i++) {
+			if(!it1.hasNext()) {
+				return false;
+			}
+			Object cur = it1.next();
+			Iterator<?> it2 = i2.iterator();
+			boolean wasCur = false;
+			if(cur == null) {
+				for(int seci = 0; seci < size; seci++) {
+					if(!it2.hasNext()) {
+						return false;
+					}
+					Object cur2 = it2.next();
+					if(!was[seci]) {
+						if(cur2 == null) {
+							was[seci] = true;
+							wasCur = true;
+							break;
+						}
+					}
+				}
+			} else {
+				for(int seci = 0; seci < size; seci++) {
+					if(!it2.hasNext()) {
+						return false;
+					}
+					Object cur2 = it2.next();
+					if(!was[seci]) {
+						if(cur.equals(cur2)) {
+							was[seci] = true;
+							wasCur = true;
+							break;
+						}
+					}
+				}
+			}
+			if(!wasCur || it2.hasNext()) {
+				return false;
+			}
+		}
+		return !it1.hasNext();
+	}
+	
+	/**
+	 * Check if values are identical (in any order)
+	 */
+	public static boolean equalsAnyOrder(Object[] arr1, int off1, Object[] arr2, int off2, int size) {
+		if(arr1 == arr2 && off1 == off2) {
+			return true;
+		}
+		if(arr1 == null) {
+			if(arr2 == null) {
+				return true;
+			}
+			return false;
+		} else if(arr2 == null) {
+			return false;
+		}
+		boolean[] was = new boolean[size];
+		int size1 = size + off1;
+		int size2 = size + off2;
+		for(int i = off1; i < size1; i++) {
+			Object cur = arr1[i];
+			boolean wasCur = false;
+			if(cur == null) {
+				for(int seci = off2; seci < size2; seci++) {
+					Object cur2 = arr2[seci];
+					if(!was[seci]) {
+						if(cur2 == null) {
+							was[seci] = true;
+							wasCur = true;
+							break;
+						}
+					}
+				}
+			} else {
+				for(int seci = 0; seci < size; seci++) {
+					Object cur2 = arr2[seci];
+					if(!was[seci]) {
+						if(cur.equals(cur2)) {
+							was[seci] = true;
+							wasCur = true;
+							break;
+						}
+					}
+				}
+			}
+			if(!wasCur) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -215,7 +349,7 @@ public class Api {
 	}
 	
 	public static <X, Y> boolean equals(Object[] one, int off1, Object[] two, int off2, int size) {
-		if(one == two) {
+		if(one == two && off1 == off2) {
 			return true;
 		}
 		size += off1;
