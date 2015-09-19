@@ -36,7 +36,6 @@ import java.util.Map.Entry;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.Val;
-import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.db.operator.AndOr;
 import eu.wordnice.db.operator.Limit;
 import eu.wordnice.db.operator.Sort;
@@ -44,6 +43,7 @@ import eu.wordnice.db.results.MapsResSet;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.results.ResSetDB;
 import eu.wordnice.db.results.ResultResSet;
+import eu.wordnice.db.serialize.SerializeException;
 import eu.wordnice.db.results.ArraysResSet;
 import eu.wordnice.db.sql.MySQL;
 import eu.wordnice.db.sql.SQL;

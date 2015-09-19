@@ -36,10 +36,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
-import eu.wordnice.api.IStream;
-import eu.wordnice.api.OStream;
-import eu.wordnice.api.serialize.BadResultException;
-import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.cols.ImmArray;
 import eu.wordnice.cols.ImmIter;
 import eu.wordnice.cols.ImmMapIterPair;
@@ -48,6 +44,10 @@ import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.AndOr;
 import eu.wordnice.db.operator.Limit;
 import eu.wordnice.db.operator.Sort;
+import eu.wordnice.db.serialize.BadResultException;
+import eu.wordnice.db.serialize.SerializeException;
+import eu.wordnice.streams.Input;
+import eu.wordnice.streams.Output;
 
 public class MapsResSet extends ObjectResSet implements ResSetDB {
 
@@ -296,12 +296,12 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	}
 
 	@Override
-	public void write(OStream out) throws SerializeException, IOException {
+	public void write(Output out) throws SerializeException, IOException {
 		out.writeColl(this.list);
 	}
 
 	@Override
-	public void read(IStream in) throws SerializeException, IOException {
+	public void read(Input in) throws SerializeException, IOException {
 		this.list = (List<Map<String, Object>>) in.readColl(new ArrayList<Map<String, Object>>());
 		if(this.list == null) {
 			throw new BadResultException("Readed null collection!");

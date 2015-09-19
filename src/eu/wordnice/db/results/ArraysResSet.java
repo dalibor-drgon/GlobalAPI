@@ -38,10 +38,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import eu.wordnice.api.Api;
-import eu.wordnice.api.IStream;
-import eu.wordnice.api.OStream;
-import eu.wordnice.api.serialize.BadResultException;
-import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.cols.ImmArray;
 import eu.wordnice.cols.ImmMapPair;
 import eu.wordnice.db.DatabaseException;
@@ -49,6 +45,10 @@ import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.AndOr;
 import eu.wordnice.db.operator.Limit;
 import eu.wordnice.db.operator.Sort;
+import eu.wordnice.db.serialize.BadResultException;
+import eu.wordnice.db.serialize.SerializeException;
+import eu.wordnice.streams.Input;
+import eu.wordnice.streams.Output;
 
 public class ArraysResSet extends ObjectResSet implements ResSetDB {
 
@@ -457,12 +457,12 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 	}
 
 	@Override
-	public void write(OStream out) throws SerializeException, IOException {
+	public void write(Output out) throws SerializeException, IOException {
 		out.writeColl(this.values);
 	}
 
 	@Override
-	public void read(IStream in) throws SerializeException, IOException {
+	public void read(Input in) throws SerializeException, IOException {
 		this.values = (List<Object[]>) in.readColl(new ArrayList<Object[]>());
 		if(this.values == null) {
 			throw new BadResultException("Readed null collection!");

@@ -31,13 +31,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import eu.wordnice.api.Api;
-import eu.wordnice.api.IStream;
-import eu.wordnice.api.OStream;
 import eu.wordnice.api.Val;
-import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.db.DBType;
 import eu.wordnice.db.results.ResSetDB;
 import eu.wordnice.db.results.ResSetDBSnap;
+import eu.wordnice.db.serialize.SerializeException;
+import eu.wordnice.streams.Input;
+import eu.wordnice.streams.Output;
 import eu.wordnice.db.results.ArraysResSet;
 
 public class WNDB extends ArraysResSet {
@@ -57,7 +57,7 @@ public class WNDB extends ArraysResSet {
 	/**
 	 * For hackers
 	 */
-	public WNDB(IStream in) throws SerializeException, IOException {
+	public WNDB(Input in) throws SerializeException, IOException {
 		this.changed = false;
 		this.file = null;
 		this.read(in);
@@ -83,14 +83,14 @@ public class WNDB extends ArraysResSet {
 	}
 	
 	@Override
-	public void write(OStream ost) throws SerializeException, IOException {
+	public void write(Output ost) throws SerializeException, IOException {
 		WNDBEncoder.writeOutputStreamData(ost, new Val.ThreeVal<String[], DBType[], Iterable<Object[]>>(this.names, this.types, this.values));
 		this.changed = false;
 	}
 	
 	
 	@Override
-	public void read(IStream ist) throws SerializeException, IOException {
+	public void read(Input ist) throws SerializeException, IOException {
 		Val.ThreeVal<String[], DBType[], List<Object[]>> vals = WNDBDecoder.readInputStreamRawData(ist);
 		this.names = vals.one;
 		this.types = vals.two;
@@ -264,7 +264,7 @@ public class WNDB extends ArraysResSet {
 		return ret;
 	}
 	
-	public static WNDB createWNDB(OStream out, String[] names, DBType[] types) throws SerializeException, IOException {
+	public static WNDB createWNDB(Output out, String[] names, DBType[] types) throws SerializeException, IOException {
 		List<Object[]> vals = new ArrayList<Object[]>();
 		Val.ThreeVal<String[], DBType[], Iterable<Object[]>> threevals = new Val.ThreeVal<String[], DBType[], Iterable<Object[]>>(names, types, vals);
 		WNDBEncoder.writeOutputStreamData(out, threevals);

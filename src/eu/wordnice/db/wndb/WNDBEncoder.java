@@ -24,19 +24,17 @@
 
 package eu.wordnice.db.wndb;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.Map;
 
-import eu.wordnice.api.OStream;
 import eu.wordnice.api.Val;
-import eu.wordnice.api.serialize.BadTypeException;
-import eu.wordnice.api.serialize.SerializeException;
 import eu.wordnice.db.DBType;
+import eu.wordnice.db.serialize.BadTypeException;
+import eu.wordnice.db.serialize.SerializeException;
+import eu.wordnice.streams.Output;
+import eu.wordnice.streams.OutputAdv;
 
 public class WNDBEncoder {
 
@@ -45,14 +43,12 @@ public class WNDBEncoder {
 		if(vals == null || f == null) {
 			throw new NullPointerException("File or values are null!");
 		}
-		OutputStream fout = new FileOutputStream(f);
-		OStream out = new OStream(new BufferedOutputStream(fout));
+		Output out = OutputAdv.forFile(f);
 		WNDBEncoder.writeOutputStreamData(out, vals);
 		out.close();
-		fout.close();
 	}
 	
-	public static void writeOutputStreamData(OStream out, 
+	public static void writeOutputStreamData(Output out, 
 			Val.ThreeVal<String[], DBType[], Iterable<Object[]>> vals) throws SerializeException, IOException {
 		if(out == null || vals == null || 
 				vals.one == null || vals.two == null || vals.three == null ||
@@ -65,7 +61,7 @@ public class WNDBEncoder {
 		out.writeInt(sz);
 		
 		for(int b = 0; b < sz; b++) {
-			out.writeString(vals.one[b]);
+			out.writeUTF(vals.one[b]);
 			out.writeByte(vals.two[b].b);
 		}
 		
@@ -87,11 +83,11 @@ public class WNDBEncoder {
 	 * @param ri Row number (index) - used for exception
 	 * @param vi Column index - used for exception
 	 */
-	public static void writeObject(OStream out, Object obj, Byte type, int ri, int vi) throws SerializeException, IOException {
+	public static void writeObject(Output out, Object obj, Byte type, int ri, int vi) throws SerializeException, IOException {
 		WNDBEncoder.writeObject(out, obj, DBType.getByByte(type), ri, vi);
 	}
 
-	public static void writeObject(OStream out, Object obj, DBType typ, int ri, int vi) throws SerializeException, IOException {
+	public static void writeObject(Output out, Object obj, DBType typ, int ri, int vi) throws SerializeException, IOException {
 		if(obj != null && !DBType.isAssignable(typ, obj)) {
 			throw new BadTypeException("Cannot write object at " + ri + ":" + vi + ", class " + obj.getClass().getName() + " - is not assignable for type " + typ.name());
 		}
@@ -155,15 +151,15 @@ public class WNDBEncoder {
 				
 			case STRING:
 				if(obj == null) {
-					out.writeString(null);
+					out.writeUTF((String) null);
 				} else {
-					out.writeString((String) obj.toString());
+					out.writeUTF((String) obj.toString());
 				}
 				return;
 				
 			case BYTES:
 				if(obj == null) {
-					out.writeBytes(null);
+					out.writeBytes((byte[]) null);
 				} else {
 					out.writeBytes((byte[]) obj);
 				}

@@ -41,10 +41,18 @@ public enum DBType {
 	
 	public static DBType getByByte(byte b) {
 		DBType[] cur = DBType.values();
+		/*
 		if(b <= 0 || b > cur.length) {
 			return null;
 		}
-		return cur[b + 1];
+		return cur[b + 1];*/
+		for(int i = 0, n = cur.length; i < n; i++) {
+			DBType dbt = cur[i];
+			if(dbt.b == b) {
+				return dbt;
+			}
+		}
+		return null;
 	}
 	
 	public static boolean isAssignable(DBType typ, Object o) {

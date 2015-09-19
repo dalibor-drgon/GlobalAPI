@@ -28,13 +28,13 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map;
 
-import eu.wordnice.api.serialize.DataReader;
-import eu.wordnice.api.serialize.DataWriter;
 import eu.wordnice.db.DatabaseException;
 import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.AndOr;
 import eu.wordnice.db.operator.Limit;
 import eu.wordnice.db.operator.Sort;
+import eu.wordnice.db.serialize.DataReader;
+import eu.wordnice.db.serialize.DataWriter;
 
 public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	

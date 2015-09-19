@@ -35,10 +35,12 @@ import eu.wordnice.api.Api;
 import eu.wordnice.api.ArgsDecoder;
 import eu.wordnice.api.ByteString;
 import eu.wordnice.api.Handler;
-import eu.wordnice.api.IStream;
-import eu.wordnice.api.OStream;
 import eu.wordnice.api.Val;
 import eu.wordnice.api.Val.TwoVal;
+import eu.wordnice.streams.Input;
+import eu.wordnice.streams.Output;
+import eu.wordnice.streams.InputAdv;
+import eu.wordnice.streams.OutputAdv;
 
 public class HIO implements Closeable {
 	
@@ -57,8 +59,8 @@ public class HIO implements Closeable {
 			};
 	
 	public Socket sock;
-	public IStream in;
-	public OStream out;
+	public Input in;
+	public Output out;
 	
 	public String METHOD;
 	public String PATH;
@@ -69,8 +71,11 @@ public class HIO implements Closeable {
 	
 	public HIO(Socket sock) throws IOException {
 		this.sock = sock;
-		this.in = new IStream(sock.getInputStream());
-		this.out = new OStream(sock.getOutputStream());
+		/**
+		 * Avoid Buffered streams, we are reading with 16kB buffer
+		 */
+		this.in = InputAdv.forStream(sock.getInputStream());
+		this.out = OutputAdv.forStream(sock.getOutputStream());
 	}
 	
 	public Throwable decode(boolean readPost, long to) {
