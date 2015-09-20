@@ -56,12 +56,12 @@ public class MainApi {
 			}
 		});
 		
-		this.log.info("MainAPI by wordnice for Sponge was enabled! Hello!");
+		this.log.info("MainAPI by wordnice for Sponge was enabled!");
 	}
 	
 	@org.spongepowered.api.event.Subscribe
     public void onServerStart(org.spongepowered.api.event.state.ServerStoppingEvent event) {
-		this.log.info("MainAPI was disabled! Bye!");
+		this.log.info("MainAPI was disabled!");
 	}
 	
 }

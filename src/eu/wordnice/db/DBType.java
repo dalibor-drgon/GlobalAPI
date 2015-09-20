@@ -30,13 +30,26 @@ import java.util.Set;
 
 public enum DBType {
 
-	BOOLEAN(1), BYTE(2), SHORT(3), INT(4), LONG(5), FLOAT(6), DOUBLE(7), STRING(8), BYTES(9),
-	SET(11), MAP(12), LIST(13), ARRAY(14), ID(15);
+	BOOLEAN(1, "BYTE DEFAULT 0"), BYTE(2, "TINYINT DEFAULT 0"),
+	SHORT(3, "SMALLINT DEFAULT 0"), INT(4, "INT DEFAULT 0"),
+	LONG(5, "BIGINT DEFAULT 0"),
+	
+	FLOAT(6, "FLOAT DEFAULT 0.0"), DOUBLE(7, "DOUBLE DEFAULT 0.0"),
+	
+	STRING(8, "LONGTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL"),
+	BYTES(9, "LONGBLOB DEFAULT NULL"),
+	
+	SET(11, "LONGBLOB DEFAULT NULL"), MAP(12, "LONGBLOB DEFAULT NULL"),
+	LIST(13, "LONGBLOB DEFAULT NULL"), ARRAY(14, "LONGBLOB DEFAULT NULL"),
+	
+	ID(15, "LONG NOT NULL AUTO_INCREMENT PRIMARY KEY");
 
 	public byte b;
-
-	private DBType(int b) {
+	public String sql;
+	
+	private DBType(int b, String sql) {
 		this.b = (byte) b;
+		this.sql = sql;
 	}
 	
 	public static DBType getByByte(byte b) {

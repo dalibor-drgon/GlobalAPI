@@ -50,6 +50,10 @@ public class WNBukkit {
 	 */
 	public static String NMS = null;
 	
+	protected static Method onlinePlayers = null;
+	protected static Method onlineWorlds = null;
+	protected static Method onlinePlugins = null;
+	
 	/**
 	 * Get net.minecraft.server.v___.* class name
 	 * 
@@ -81,13 +85,25 @@ public class WNBukkit {
 	 */
 	@SuppressWarnings("unchecked")
 	public static Collection<Player> getPlayers() {
+		if(WNBukkit.onlinePlayers != null) {
+			try {
+				Object ret = WNBukkit.onlinePlayers.invoke(null);
+				if(ret instanceof Player[]) {
+					return new ImmArray<Player>((Player[]) ret);
+				} else if(ret instanceof Collection<?>) {
+					return (Collection<Player>) ret;
+				}
+			} catch(Throwable t) {}
+		}
 		try {
 			Method m = Bukkit.class.getDeclaredMethod("getOnlinePlayers");
 			m.setAccessible(true);
 			Object ret = m.invoke(null);
 			if(ret instanceof Player[]) {
+				WNBukkit.onlinePlayers = m;
 				return new ImmArray<Player>((Player[]) ret);
 			} else if(ret instanceof Collection<?>) {
+				WNBukkit.onlinePlayers = m;
 				return (Collection<Player>) ret;
 			}
 		} catch(Throwable t) {
@@ -150,13 +166,25 @@ public class WNBukkit {
 	 */
 	@SuppressWarnings("unchecked")
 	public static Collection<World> getWorlds() {
+		if(WNBukkit.onlineWorlds != null) {
+			try {
+				Object ret = WNBukkit.onlineWorlds.invoke(null);
+				if(ret instanceof World[]) {
+					return new ImmArray<World>((World[]) ret);
+				} else if(ret instanceof Collection<?>) {
+					return (Collection<World>) ret;
+				}
+			} catch(Throwable t) {}
+		}
 		try {
 			Method m = Bukkit.class.getDeclaredMethod("getWorlds");
 			m.setAccessible(true);
 			Object ret = m.invoke(null);
 			if(ret instanceof World[]) {
+				WNBukkit.onlineWorlds = m;
 				return new ImmArray<World>((World[]) ret);
 			} else if(ret instanceof Collection<?>) {
+				WNBukkit.onlineWorlds = m;
 				return (Collection<World>) ret;
 			}
 		} catch(Throwable t) {
@@ -220,23 +248,34 @@ public class WNBukkit {
 	 */
 	@SuppressWarnings("unchecked")
 	public static Collection<Plugin> getPlugins() {
+		if(WNBukkit.onlinePlugins != null) {
+			try {
+				Object ret = WNBukkit.onlinePlugins.invoke(Bukkit.getPluginManager());
+				if(ret instanceof Plugin[]) {
+					return new ImmArray<Plugin>((Plugin[]) ret);
+				} else if(ret instanceof Collection<?>) {
+					return (Collection<Plugin>) ret;
+				}
+			} catch(Throwable t) {}
+		}
 		try {
 			Object inst = Bukkit.getPluginManager();
 			Class<?> clz = inst.getClass();
-			Object ret = null;
 			while(clz != null) {
 				try {
 					Method m = clz.getDeclaredMethod("getPlugins");
 					m.setAccessible(true);
-					ret = m.invoke(inst);
+					Object ret = m.invoke(inst);
+					if(ret instanceof Plugin[]) {
+						WNBukkit.onlinePlugins = m;
+						return new ImmArray<Plugin>((Plugin[]) ret);
+					} else if(ret instanceof Collection<?>) {
+						WNBukkit.onlinePlugins = m;
+						return (Collection<Plugin>) ret;
+					}
 					break;
 				} catch(Throwable t2) {}
 				clz = clz.getSuperclass();
-			}
-			if(ret instanceof Plugin[]) {
-				return new ImmArray<Plugin>((Plugin[]) ret);
-			} else if(ret instanceof Collection<?>) {
-				return (Collection<Plugin>) ret;
 			}
 		} catch(Throwable t) {
 			throw new RuntimeException("Cannot get plugins!", t);

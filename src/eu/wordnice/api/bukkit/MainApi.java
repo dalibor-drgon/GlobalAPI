@@ -37,17 +37,20 @@ public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 	 */
 	@Override
 	public void onEnable() {
+		final Logger lg = this.getLogger();
+		
 		try {
 			Set<String> clzs = Api.getClasses(Api.getClassesLocation(org.bukkit.Bukkit.class));
-			this.getLogger().info("Bukkit classes: " + clzs.size());
-			this.getLogger().info("Bukkit packages: " + Api.filterPackagesString(clzs, (String) null).size());
+			lg.info("Bukkit classes: " + clzs.size());
+			lg.info("Bukkit packages: " + Api.filterPackagesString(clzs, (String) null).size());
 		} catch(Throwable t) {}
-		
+				
 		String cpkg = org.bukkit.Bukkit.getServer().getClass().getPackage().getName();
 		WNBukkit.NMS = cpkg.substring(cpkg.lastIndexOf('.') + 1);
-		this.getLogger().info("NMS version: " + WNBukkit.NMS);
-		
-		final Logger lg = this.getLogger();
+		lg.info("NMS version: " + WNBukkit.NMS);
+		lg.info("Online players: " + WNBukkit.getPlayers());
+		lg.info("Online worlds: " + WNBukkit.getWorlds());
+		lg.info("Online plugins: " + WNBukkit.getPlugins());
 		
 		OnlyOnce.debugAll(new OnlyOnce.OnlyOnceLogger() {
 			
@@ -62,7 +65,7 @@ public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 			}
 		});
 		
-		this.getLogger().info("MainAPI by wordnice for Bukkit was enabled! Hello!");
+		lg.info("MainAPI by wordnice for Bukkit was enabled!");
 	}
 	
 	/**
@@ -70,7 +73,7 @@ public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 	 */
 	@Override
 	public void onDisable() {
-		this.getLogger().info("MainAPI was disabled! Bye!");
+		this.getLogger().info("MainAPI was disabled!");
 	}
 	
 }

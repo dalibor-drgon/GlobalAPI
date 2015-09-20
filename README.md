@@ -16,7 +16,7 @@ Utility Java library with
 	* Using Database bridge
 		* Select, Insert, Update or Delete from any ResSetDB or SQL based databases (no SQL injections)
 	* Instead of creating and allocating new collection or map, use Immutables (package `eu.wordnice.cols`)
-		* Create Map from one array (key1, val1, key2, val2, ...), two arrays or two iterables (first contains keys, second values)
+		* Create Map from one array, two arrays or two iterables
 		* Create Set (possibly List) from one array, one existing iterable, or create list from array with skipping elements
 * MultiThreading, Timeouted-threads (see package `eu.wordnice.threads`)
 	* Timeout blocks of code using TimeoutThread and Runa

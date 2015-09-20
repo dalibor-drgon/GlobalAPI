@@ -85,22 +85,24 @@ public class Database {
 	/**
 	 * @see {@link Database#init(Map)}
 	 */
-	public Database(Map<String, String> data) throws IllegalArgumentException, SerializeException, IOException, SQLException {
-		this.init(data);
+	public Database(Map<String, String> data, Map<String, Object> cols)
+			throws IllegalArgumentException, SerializeException, IOException, SQLException {
+		this.init(data, cols);
 	}
 	
 	/**
 	 * @see {@link Database#init(SQL)}
 	 */
-	public Database(SQL sql, String table) throws SQLException {
-		this.init(sql, table);
+	public Database(SQL sql, String table, Map<String, Object> cols)
+			throws SQLException {
+		this.init(sql, table, cols);
 	}
 	
 	/**
 	 * @see {@link Database#init(ResSet)}
 	 */
-	public Database(ResSetDB rs, File file) {
-		this.init(rs, file);
+	public Database(ResSetDB rs, File file, Map<String, Object> cols) {
+		this.init(rs, file, cols);
 	}
 	
 	/**
@@ -139,7 +141,8 @@ public class Database {
 	 * @throws IOException Error while reading file-based database
 	 * @throws SQLException Error while connecting or quering SQL-based database
 	 */
-	public void init(Map<String, String> data) throws IllegalArgumentException, SerializeException, IOException, SQLException {
+	public void init(Map<String, String> data, Map<String, Object> cols)
+			throws IllegalArgumentException, SerializeException, IOException, SQLException {
 		String type = data.get("type");
 		if(type == null) {
 			throw new IllegalArgumentException("Entered type is null!");
@@ -199,7 +202,8 @@ public class Database {
 	 * @param sql SQL instance
 	 * @param Table name
 	 */
-	public void init(SQL sql, String table) throws SQLException {
+	public void init(SQL sql, String table)
+			throws SQLException {
 		this.rs = null;
 		this.file = null;
 		this.sql = sql;
@@ -668,7 +672,7 @@ public class Database {
 	
 	
 	/**
-	 * Drop all data
+	 * Drop all entries
 	 * 
 	 * @see {@link Database#delete(AndOr, int)}
 	 */
