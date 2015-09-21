@@ -41,6 +41,7 @@ import eu.wordnice.db.results.ResSetDB;
 import eu.wordnice.db.results.ResultResSet;
 import eu.wordnice.db.sql.JDBCSQL;
 import eu.wordnice.db.sql.MySQL;
+import eu.wordnice.db.sql.SQLite;
 import eu.wordnice.db.wndb.WNDB;
 
 public class Where {
@@ -284,10 +285,13 @@ public class Where {
 	public static void main(String... lel_varargs) throws Throwable {
 		
 		//TEST!
-		boolean use_sql = false;
+		int type = 0;
+		//0 - MySQL
+		//1 - SQLite
+		//2 - WNDB (ResSetDB)
 		
 		Database db = null;
-		if(use_sql) {
+		if(type == 0) {
 			JDBCSQL sql = new MySQL("db.mysql-01.gsp-europe.net", "sql_1040", "sql_1040", "2qZ0h1e0nURTWbfiCQpHaz50Not8yuV");
 			sql.connect();
 			db = new Database(sql, "shets");
@@ -306,6 +310,8 @@ public class Where {
 			while(rs.next()) {
 				System.out.println(rs.getEntries());
 			}
+		} else if(type == 1) {
+			db = new Database(new SQLite("./test.sqlite"), "exam", null);
 		} else {
 			ResSetDB wdb = WNDB.createEmptyWNDB(
 					new String[] {"rekts", "rektd", "rektb", "rekti"},

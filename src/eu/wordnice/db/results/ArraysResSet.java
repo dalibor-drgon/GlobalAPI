@@ -58,8 +58,20 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 	public Object[] cur;
 	public int cols;
 
-	public ArraysResSet() {}
-
+	protected ArraysResSet() {}
+	
+	public ArraysResSet(String[] names, ResSet rs) throws DatabaseException, SQLException {
+		this(names, names.length, rs);
+	}
+	
+	public ArraysResSet(String[] names, int names_len, ResSet rs) throws DatabaseException, SQLException {
+		this.values = new ArrayList<Object[]>();
+		this.names = names;
+		this.cols = names.length;
+		this.insertAll(rs);
+		this.first();
+	}
+	
 	public ArraysResSet(List<Object[]> values, int size) {
 		this(values, null, size);
 	}
@@ -68,19 +80,25 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 		this(values, names, names.length);
 	}
 	
-	public ArraysResSet(List<Object[]> values, String[] names, int cols) {
+	public ArraysResSet(List<Object[]> values, String[] names, int names_len) {
 		this.values = values;
 		this.names = names;
-		this.cols = cols;
+		this.cols = names_len;
 		this.first();
 	}
 	
+	/**
+	 * Create empty database
+	 */
 	public ArraysResSet(String[] names) {
 		this(new ArrayList<Object[]>(), names, names.length);
 	}
 	
-	public ArraysResSet(String[] names, int cols) {
-		this(new ArrayList<Object[]>(), names, cols);
+	/**
+	 * Create empty database
+	 */
+	public ArraysResSet(String[] names, int names_len) {
+		this(new ArrayList<Object[]>(), names, names_len);
 	}
 	
 	
@@ -324,6 +342,13 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 			}
 		}
 	}
+	
+	public void insertAll(ResSet rs)
+			throws DatabaseException, SQLException {
+		while(rs.next()) {
+			this.insert(rs.getEntries());
+		}
+	}
 
 	@Override
 	public boolean isRaw() {
@@ -377,7 +402,16 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 	 * @see {@link ResSetDB#hasSort()}
 	 */
 	@Override
-	public boolean hasSortCut() {
+	public boolean hasSort() {
+		return true;
+	}
+	
+	/**
+	 * Optional, but implemented cut
+	 * @see {@link ResSetDB#hasCut()}
+	 */
+	@Override
+	public boolean hasCut() {
 		return true;
 	}
 	

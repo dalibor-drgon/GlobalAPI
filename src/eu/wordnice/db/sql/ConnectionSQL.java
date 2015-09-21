@@ -30,6 +30,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import eu.wordnice.api.Api;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.results.ResultResSet;
 
@@ -64,7 +65,14 @@ public abstract class ConnectionSQL implements SQL {
 	@Override
 	public ResSet query(String query) throws SQLException {
 		Statement stm = this.createStatement();
-		return new ResultResSet(stm.executeQuery(query), stm);
+		try {
+			return new ResultResSet(stm.executeQuery(query), stm);
+		} catch(SQLException sqle) {
+			try {
+				stm.close();
+			} catch(Exception e) {}
+			throw sqle;
+		}
 	}
 
 	@Override
@@ -115,5 +123,9 @@ public abstract class ConnectionSQL implements SQL {
 
 	@Override
 	public abstract void connect() throws SQLException;
+	
+	public static String escapeJDBC(String in) {
+		return Api.replace(in, "?", "\\?");
+	}
 
 }

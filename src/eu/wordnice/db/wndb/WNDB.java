@@ -213,13 +213,6 @@ public class WNDB extends ArraysResSet {
 	
 	public static WNDB loadOrCreateWNDB(File f, String[] names, DBType[] types) throws SerializeException, IOException {
 		if(f.exists()) {
-			return new WNDB(f);
-		}
-		return WNDB.createWNDB(f, names, types);
-	}
-	
-	public static WNDB loadOrCreateWNDBCreateOnFail(File f, String[] names, DBType[] types) throws SerializeException, IOException {
-		if(f.exists()) {
 			try {
 				return new WNDB(f);
 			} catch(SerializeException e1) {	
@@ -264,7 +257,7 @@ public class WNDB extends ArraysResSet {
 		return ret;
 	}
 	
-	public static WNDB createWNDB(Output out, String[] names, DBType[] types) throws SerializeException, IOException {
+	public static WNDB createEmptyWNDB(Output out, String[] names, DBType[] types) throws SerializeException, IOException {
 		List<Object[]> vals = new ArrayList<Object[]>();
 		Val.ThreeVal<String[], DBType[], Iterable<Object[]>> threevals = new Val.ThreeVal<String[], DBType[], Iterable<Object[]>>(names, types, vals);
 		WNDBEncoder.writeOutputStreamData(out, threevals);

@@ -9,7 +9,7 @@ public interface DataReader {
 	/**
 	 * Read and parse data from input stream
 	 * 
-	 * @param in Input stream to read
+	 * @param in Input stream to read and parse
 	 * 
 	 * @throws SerializeException Serialization problem
 	 * @throws IOException Error while reading

@@ -31,11 +31,11 @@ import eu.wordnice.api.Api;
 public class SQLite extends JDBCSQL {
 	
 	public SQLite(File file) {
-		super("jdbc:sqlite:" + Api.getRealPath(file));
+		super("jdbc:sqlite:" + ConnectionSQL.escapeJDBC(Api.getRealPath(file)) + "?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true");
 	}
 	
 	public SQLite(String file) {
-		super("jdbc:sqlite:" + file);
+		super("jdbc:sqlite:" + ConnectionSQL.escapeJDBC(file) + "?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true");
 	}
 
 }

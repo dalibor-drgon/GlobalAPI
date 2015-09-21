@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -55,11 +56,18 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	public ListIterator<Map<String, Object>> it;
 	public Map<String, Object> cur;
 
+	
 	/**
-	 * Create empty ready MapsResSet
+	 * Create empty MapsResSet
 	 */
 	public MapsResSet() {
 		this.list = new ArrayList<Map<String, Object>>();
+		this.first();
+	}
+	
+	public MapsResSet(ResSet rs) throws DatabaseException, SQLException {
+		this.list = new ArrayList<Map<String, Object>>();
+		this.insertAll(rs);
 		this.first();
 	}
 
@@ -137,7 +145,10 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 
 	@Override
 	public void update(Map<String, Object> vals) throws DatabaseException, SQLException {
-		this.cur.putAll(vals);
+		Map<String, Object> keys = new HashMap<String, Object>();
+		keys.putAll(this.cur);
+		keys.putAll(vals);
+		this.it.set(keys);
 	}
 	
 	@Override
@@ -178,6 +189,13 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 			Collection<Object> cur = it.next();
 			int cursize = Math.min(cur.size(), cols.size());
 			this.insert(new ImmMapIterPair<String, Object>(cols, new ImmIter<Object>(cur, cursize), cursize));
+		}
+	}
+	
+	public void insertAll(ResSet rs)
+			throws DatabaseException, SQLException {
+		while(rs.next()) {
+			this.insert(rs.getEntries());
 		}
 	}
 
@@ -221,7 +239,16 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 	 * @see {@link ResSetDB#hasSort()}
 	 */
 	@Override
-	public boolean hasSortCut() {
+	public boolean hasSort() {
+		return true;
+	}
+	
+	/**
+	 * Optional, but implemented cut
+	 * @see {@link ResSetDB#hasCut()}
+	 */
+	@Override
+	public boolean hasCut() {
 		return true;
 	}
 	

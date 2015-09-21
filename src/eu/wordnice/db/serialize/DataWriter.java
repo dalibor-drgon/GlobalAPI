@@ -9,7 +9,7 @@ public interface DataWriter {
 	/**
 	 * Write content to output stream
 	 * 
-	 * @param out Target output stream where
+	 * @param out Target output stream where data will be written
 	 * 
 	 * @throws SerializeException Serialization problem
 	 * @throws IOException Error while writing

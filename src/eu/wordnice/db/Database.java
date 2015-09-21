@@ -83,7 +83,7 @@ public class Database {
 	public File file;
 	
 	/**
-	 * @see {@link Database#init(Map)}
+	 * @see {@link Database#init(Map, Map)}
 	 */
 	public Database(Map<String, String> data, Map<String, Object> cols)
 			throws IllegalArgumentException, SerializeException, IOException, SQLException {
@@ -91,7 +91,15 @@ public class Database {
 	}
 	
 	/**
-	 * @see {@link Database#init(SQL)}
+	 * @see {@link Database#init(SQL, String)}
+	 */
+	public Database(SQL sql, String table)
+			throws SQLException {
+		this.init(sql, table);
+	}
+	
+	/**
+	 * @see {@link Database#init(SQL, String, Map)}
 	 */
 	public Database(SQL sql, String table, Map<String, Object> cols)
 			throws SQLException {
@@ -99,7 +107,14 @@ public class Database {
 	}
 	
 	/**
-	 * @see {@link Database#init(ResSet)}
+	 * @see {@link Database#init(ResSetDB, File)}
+	 */
+	public Database(ResSetDB rs, File file) {
+		this.init(rs, file);
+	}
+	
+	/**
+	 * @see {@link Database#init(ResSetDB, File, Map)}
 	 */
 	public Database(ResSetDB rs, File file, Map<String, Object> cols) {
 		this.init(rs, file, cols);
@@ -200,9 +215,21 @@ public class Database {
 	 * Set database type to SQL
 	 * 
 	 * @param sql SQL instance
-	 * @param Table name
+	 * @param table name
 	 */
 	public void init(SQL sql, String table)
+			throws SQLException {
+		this.init(sql, table, null);
+	}
+	
+	/**
+	 * Set database type to SQL
+	 * 
+	 * @param sql SQL instance
+	 * @param table name
+	 * @param cols columns names and types
+	 */
+	public void init(SQL sql, String table, Map<String, Object> cols)
 			throws SQLException {
 		this.rs = null;
 		this.file = null;
@@ -214,8 +241,20 @@ public class Database {
 	 * Set database type to ResSet
 	 * 
 	 * @param rs ResSet instance
+	 * @param file Output file for saving
 	 */
 	public void init(ResSetDB rs, File file) {
+		this.init(rs, file, null);
+	}
+	
+	/**
+	 * Set database type to ResSet
+	 * 
+	 * @param rs ResSet instance
+	 * @param file Output file for saving
+	 * @param cols columns names and types
+	 */
+	public void init(ResSetDB rs, File file, Map<String, Object> cols) {
 		this.sql = null;
 		this.sql_table = null;
 		this.rs = rs;
@@ -375,7 +414,7 @@ public class Database {
 				}
 			}
 			if(sort != null && sort.length != 0) {
-				if(rs.hasSortCut() == false) {
+				if(rs.hasSort() == false) {
 					rs = Database.copy(rs);
 				}
 				rs.sort(sort);
@@ -387,7 +426,7 @@ public class Database {
 				if(limit.off < 0) {
 					throw new IllegalArgumentException("Invalid offset " + limit.off);
 				}
-				if(rs.hasSortCut() == false) {
+				if(rs.hasCut() == false) {
 					rs = Database.copy(rs);
 				}
 				rs.cut(limit.off, limit.len);
