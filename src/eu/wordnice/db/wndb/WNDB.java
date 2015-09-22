@@ -32,7 +32,7 @@ import java.util.List;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.Val;
-import eu.wordnice.db.DBType;
+import eu.wordnice.db.ColType;
 import eu.wordnice.db.results.ResSetDB;
 import eu.wordnice.db.results.ResSetDBSnap;
 import eu.wordnice.db.serialize.SerializeException;
@@ -43,7 +43,7 @@ import eu.wordnice.db.results.ArraysResSet;
 public class WNDB extends ArraysResSet {
 
 	public File file = null;
-	public DBType[] types = null;
+	public ColType[] types = null;
 	public boolean changed = false;
 	
 	/**
@@ -78,20 +78,20 @@ public class WNDB extends ArraysResSet {
 		if(this.file == null) {
 			return;
 		}
-		WNDBEncoder.writeFileData(this.file, new Val.ThreeVal<String[], DBType[], Iterable<Object[]>>(this.names, this.types, this.values));
+		WNDBEncoder.writeFileData(this.file, new Val.ThreeVal<String[], ColType[], Iterable<Object[]>>(this.names, this.types, this.values));
 		this.changed = false;
 	}
 	
 	@Override
 	public void write(Output ost) throws SerializeException, IOException {
-		WNDBEncoder.writeOutputStreamData(ost, new Val.ThreeVal<String[], DBType[], Iterable<Object[]>>(this.names, this.types, this.values));
+		WNDBEncoder.writeOutputStreamData(ost, new Val.ThreeVal<String[], ColType[], Iterable<Object[]>>(this.names, this.types, this.values));
 		this.changed = false;
 	}
 	
 	
 	@Override
 	public void read(Input ist) throws SerializeException, IOException {
-		Val.ThreeVal<String[], DBType[], List<Object[]>> vals = WNDBDecoder.readInputStreamRawData(ist);
+		Val.ThreeVal<String[], ColType[], List<Object[]>> vals = WNDBDecoder.readInputStreamRawData(ist);
 		this.names = vals.one;
 		this.types = vals.two;
 		this.values = vals.three;
@@ -106,7 +106,7 @@ public class WNDB extends ArraysResSet {
 		this.save();
 	}
 	
-	public DBType getValueType(int i) {
+	public ColType getValueType(int i) {
 		this.checkSet();
 		return this.types[i];
 	}
@@ -120,7 +120,7 @@ public class WNDB extends ArraysResSet {
 	
 	@Override
 	public boolean isRawValueOK(int i, Object val) {
-		return DBType.isAssignable(this.getValueType(i), val);
+		return ColType.isAssignable(this.getValueType(i), val);
 	}
 	
 	@Override
@@ -132,7 +132,7 @@ public class WNDB extends ArraysResSet {
 		int n = 0;
 		for(; n < sz; n++) {
 			Object o = vals[n];
-			if(DBType.isAssignable(this.types[n], o) == false) {
+			if(ColType.isAssignable(this.types[n], o) == false) {
 				return false;
 			}
 		}
@@ -152,7 +152,7 @@ public class WNDB extends ArraysResSet {
 			if(this.file == null) {
 				throw new NullPointerException("File is null");
 			}
-			Val.ThreeVal<String[], DBType[], List<Object[]>> vals = WNDBDecoder.readFileRawData(this.file);
+			Val.ThreeVal<String[], ColType[], List<Object[]>> vals = WNDBDecoder.readFileRawData(this.file);
 			this.names = vals.one;
 			this.types = vals.two;
 			this.values = vals.three;
@@ -211,7 +211,7 @@ public class WNDB extends ArraysResSet {
 	
 	/*** Static CREATE ***/
 	
-	public static WNDB loadOrCreateWNDB(File f, String[] names, DBType[] types) throws SerializeException, IOException {
+	public static WNDB loadOrCreateWNDB(File f, String[] names, ColType[] types) throws SerializeException, IOException {
 		if(f.exists()) {
 			try {
 				return new WNDB(f);
@@ -223,7 +223,7 @@ public class WNDB extends ArraysResSet {
 		return WNDB.createWNDB(f, names, types);
 	}
 	
-	public static WNDB loadOrCreateWNDBSafe(File f, String[] names, DBType[] types) {
+	public static WNDB loadOrCreateWNDBSafe(File f, String[] names, ColType[] types) {
 		if(f.exists()) {
 			try {
 				return new WNDB(f);
@@ -243,10 +243,10 @@ public class WNDB extends ArraysResSet {
 		return WNDB.createEmptyWNDB(names, types);
 	}
 	
-	public static WNDB createWNDB(File f, String[] names, DBType[] types) throws SerializeException, IOException {
+	public static WNDB createWNDB(File f, String[] names, ColType[] types) throws SerializeException, IOException {
 		f.createNewFile();
 		List<Object[]> vals = new ArrayList<Object[]>();
-		Val.ThreeVal<String[], DBType[], Iterable<Object[]>> threevals = new Val.ThreeVal<String[], DBType[], Iterable<Object[]>>(names, types, vals);
+		Val.ThreeVal<String[], ColType[], Iterable<Object[]>> threevals = new Val.ThreeVal<String[], ColType[], Iterable<Object[]>>(names, types, vals);
 		WNDBEncoder.writeFileData(f, threevals);
 		WNDB ret = new WNDB(f);
 		ret.names = names;
@@ -257,9 +257,9 @@ public class WNDB extends ArraysResSet {
 		return ret;
 	}
 	
-	public static WNDB createEmptyWNDB(Output out, String[] names, DBType[] types) throws SerializeException, IOException {
+	public static WNDB createEmptyWNDB(Output out, String[] names, ColType[] types) throws SerializeException, IOException {
 		List<Object[]> vals = new ArrayList<Object[]>();
-		Val.ThreeVal<String[], DBType[], Iterable<Object[]>> threevals = new Val.ThreeVal<String[], DBType[], Iterable<Object[]>>(names, types, vals);
+		Val.ThreeVal<String[], ColType[], Iterable<Object[]>> threevals = new Val.ThreeVal<String[], ColType[], Iterable<Object[]>>(names, types, vals);
 		WNDBEncoder.writeOutputStreamData(out, threevals);
 		WNDB ret = new WNDB();
 		ret.file = null;
@@ -271,7 +271,7 @@ public class WNDB extends ArraysResSet {
 		return ret;
 	}
 	
-	public static WNDB createEmptyWNDB(String[] names, DBType[] types) {
+	public static WNDB createEmptyWNDB(String[] names, ColType[] types) {
 		WNDB ret = new WNDB();
 		ret.file = null;
 		ret.names = names;

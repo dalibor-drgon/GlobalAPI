@@ -26,11 +26,12 @@ package eu.wordnice.db.wndb;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
 import eu.wordnice.api.Val;
-import eu.wordnice.db.DBType;
+import eu.wordnice.db.ColType;
 import eu.wordnice.db.serialize.BadTypeException;
 import eu.wordnice.db.serialize.SerializeException;
 import eu.wordnice.streams.Output;
@@ -39,7 +40,7 @@ import eu.wordnice.streams.OutputAdv;
 public class WNDBEncoder {
 
 	public static void writeFileData(File f, 
-			Val.ThreeVal<String[], DBType[], Iterable<Object[]>> vals) throws SerializeException, IOException {
+			Val.ThreeVal<String[], ColType[], Iterable<Object[]>> vals) throws SerializeException, IOException {
 		if(vals == null || f == null) {
 			throw new NullPointerException("File or values are null!");
 		}
@@ -49,7 +50,7 @@ public class WNDBEncoder {
 	}
 	
 	public static void writeOutputStreamData(Output out, 
-			Val.ThreeVal<String[], DBType[], Iterable<Object[]>> vals) throws SerializeException, IOException {
+			Val.ThreeVal<String[], ColType[], Iterable<Object[]>> vals) throws SerializeException, IOException {
 		if(out == null || vals == null || 
 				vals.one == null || vals.two == null || vals.three == null ||
 				vals.one.length < 1 || vals.two.length < 1 || (vals.one.length != vals.two.length)) {
@@ -84,11 +85,11 @@ public class WNDBEncoder {
 	 * @param vi Column index - used for exception
 	 */
 	public static void writeObject(Output out, Object obj, Byte type, int ri, int vi) throws SerializeException, IOException {
-		WNDBEncoder.writeObject(out, obj, DBType.getByByte(type), ri, vi);
+		WNDBEncoder.writeObject(out, obj, ColType.getByByte(type), ri, vi);
 	}
 
-	public static void writeObject(Output out, Object obj, DBType typ, int ri, int vi) throws SerializeException, IOException {
-		if(obj != null && !DBType.isAssignable(typ, obj)) {
+	public static void writeObject(Output out, Object obj, ColType typ, int ri, int vi) throws SerializeException, IOException {
+		if(obj != null && !ColType.isAssignable(typ, obj)) {
 			throw new BadTypeException("Cannot write object at " + ri + ":" + vi + ", class " + obj.getClass().getName() + " - is not assignable for type " + typ.name());
 		}
 		switch(typ) {
@@ -165,20 +166,13 @@ public class WNDBEncoder {
 				}
 				return;
 				
-			case SET:
-			case LIST:
-				if(obj == null) {
-					out.writeColl(null);
-				} else {
-					out.writeColl((Iterable<?>) obj);
-				}
-				return;
-				
 			case ARRAY:
 				if(obj == null) {
-					out.writeArray(null);
+					out.writeColl(null);
+				} else if(obj.getClass().isArray()) {
+					out.writeCollArray((Object[]) obj);
 				} else {
-					out.writeArray((Object[]) obj);
+					out.writeColl((Collection<?>) obj);
 				}
 				return;
 				

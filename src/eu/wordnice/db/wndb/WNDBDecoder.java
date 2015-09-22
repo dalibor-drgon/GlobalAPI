@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import eu.wordnice.api.Val;
-import eu.wordnice.db.DBType;
+import eu.wordnice.db.ColType;
 import eu.wordnice.db.serialize.BadFilePrefixException;
 import eu.wordnice.db.serialize.BadTypeException;
 import eu.wordnice.db.serialize.SerializeException;
@@ -44,14 +44,14 @@ public class WNDBDecoder {
 	public static final long STATIC_DB_PREFIX = 0xDEADCAFEBEEFBABEL;
 	
 	
-	public static Val.ThreeVal<String[], DBType[], List<Object[]>> readFileRawData(File f) throws SerializeException, IOException {
+	public static Val.ThreeVal<String[], ColType[], List<Object[]>> readFileRawData(File f) throws SerializeException, IOException {
 		Input in = InputAdv.forFile(f);
-		Val.ThreeVal<String[], DBType[], List<Object[]>> ret = WNDBDecoder.readInputStreamRawData(in);
+		Val.ThreeVal<String[], ColType[], List<Object[]>> ret = WNDBDecoder.readInputStreamRawData(in);
 		in.close();
 		return ret;
 	}
 	
-	public static Val.ThreeVal<String[], DBType[], List<Object[]>> readInputStreamRawData(Input in) throws SerializeException, IOException {
+	public static Val.ThreeVal<String[], ColType[], List<Object[]>> readInputStreamRawData(Input in) throws SerializeException, IOException {
 		long type = in.readLong();
 		if (type != WNDBDecoder.STATIC_DB_PREFIX) {
 			throw new BadFilePrefixException("Not WNDB format!");
@@ -63,11 +63,11 @@ public class WNDBDecoder {
 		}
 
 		String[] names = new String[bt];
-		DBType[] types = new DBType[bt];
+		ColType[] types = new ColType[bt];
 		int i = 0;
 		for(i = 0; i < bt; i++) {
 			names[i] = in.readUTF();
-			types[i] = DBType.getByByte(in.readByte());
+			types[i] = ColType.getByByte(in.readByte());
 		}
 			
 		int b = 0;
@@ -82,14 +82,14 @@ public class WNDBDecoder {
 			i++;
 		}
 		
-		return new Val.ThreeVal<String[], DBType[], List<Object[]>>(names, types, data);
+		return new Val.ThreeVal<String[], ColType[], List<Object[]>>(names, types, data);
 	}
 	
 	public static Object readObject(Input in, Byte type, int ri, int vi) throws SerializeException, IOException {
-		return WNDBDecoder.readObject(in, DBType.getByByte(type), ri, vi);
+		return WNDBDecoder.readObject(in, ColType.getByByte(type), ri, vi);
 	}
 
-	public static Object readObject(Input in, DBType typ, int ri, int vi) throws SerializeException, IOException {
+	public static Object readObject(Input in, ColType typ, int ri, int vi) throws SerializeException, IOException {
 		switch(typ) {
 			case BOOLEAN:
 				return in.readBoolean();
@@ -110,14 +110,10 @@ public class WNDBDecoder {
 				return in.readUTF();
 			case BYTES:
 				return in.readBytes();
-			case SET:
-				return in.readColl(new HashSet<Object>());
-			case LIST:
-				return in.readColl(new ArrayList<Object>());
 			case ARRAY:
-				return in.readArray(Object.class);
+				return in.readColl();
 			case MAP:
-				return in.readMap(new HashMap<Object, Object>());
+				return in.readMap();
 		}
 		throw new BadTypeException("Cannot read object at " + ri + ":" + vi + " - unsupported type " + typ.name());
 	}

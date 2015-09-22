@@ -24,13 +24,12 @@
 
 package eu.wordnice.db;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
-public enum DBType {
+public enum ColType {
 
-	BOOLEAN(1, "BYTE DEFAULT 0"), BYTE(2, "TINYINT DEFAULT 0"),
+	BOOLEAN(1, "TINYINT DEFAULT 0"), BYTE(2, "TINYINT DEFAULT 0"),
 	SHORT(3, "SMALLINT DEFAULT 0"), INT(4, "INT DEFAULT 0"),
 	LONG(5, "BIGINT DEFAULT 0"),
 	
@@ -39,36 +38,27 @@ public enum DBType {
 	STRING(8, "LONGTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL"),
 	BYTES(9, "LONGBLOB DEFAULT NULL"),
 	
-	SET(11, "LONGBLOB DEFAULT NULL"), MAP(12, "LONGBLOB DEFAULT NULL"),
-	LIST(13, "LONGBLOB DEFAULT NULL"), ARRAY(14, "LONGBLOB DEFAULT NULL"),
+	MAP(10, "LONGBLOB DEFAULT NULL"), ARRAY(11, "LONGBLOB DEFAULT NULL"),
 	
-	ID(15, "LONG NOT NULL AUTO_INCREMENT PRIMARY KEY");
+	ID(12, "LONG NOT NULL AUTO_INCREMENT PRIMARY KEY");
 
 	public byte b;
 	public String sql;
 	
-	private DBType(int b, String sql) {
+	private ColType(int b, String sql) {
 		this.b = (byte) b;
 		this.sql = sql;
 	}
 	
-	public static DBType getByByte(byte b) {
-		DBType[] cur = DBType.values();
-		/*
+	public static ColType getByByte(int b) {
+		ColType[] cur = ColType.values();
 		if(b <= 0 || b > cur.length) {
 			return null;
 		}
-		return cur[b + 1];*/
-		for(int i = 0, n = cur.length; i < n; i++) {
-			DBType dbt = cur[i];
-			if(dbt.b == b) {
-				return dbt;
-			}
-		}
-		return null;
+		return cur[b - 1];
 	}
 	
-	public static boolean isAssignable(DBType typ, Object o) {
+	public static boolean isAssignable(ColType typ, Object o) {
 		if(typ == null) {
 			return false;
 		}
@@ -95,11 +85,8 @@ public enum DBType {
 				return String.class.isAssignableFrom(c);
 			case BYTES:
 				return (byte[].class.isAssignableFrom(c) || Byte[].class.isAssignableFrom(c));
-			case SET:
-			case LIST:
-				return Iterable.class.isAssignableFrom(c);
 			case ARRAY:
-				return c.isArray();
+				return Collection.class.isAssignableFrom(c) || c.isArray();
 			case MAP:
 				return Map.class.isAssignableFrom(c);
 			case ID:
@@ -109,14 +96,14 @@ public enum DBType {
 		return false;
 	}
 	
-	public static DBType getByObject(Object o) {
+	public static ColType getByObject(Object o) {
 		if(o == null) {
 			return BYTES;
 		}
-		return DBType.getByClass(o.getClass());
+		return ColType.getByClass(o.getClass());
 	}
 	
-	public static DBType getByClass(Class<?> c) {
+	public static ColType getByClass(Class<?> c) {
 		if(Boolean.class.isAssignableFrom(c) || boolean.class.isAssignableFrom(c)) {
 			return BOOLEAN;
 		}
@@ -144,13 +131,7 @@ public enum DBType {
 		if(Byte[].class.isAssignableFrom(c) || byte[].class.isAssignableFrom(c)) {
 			return BYTES;
 		}
-		if(Set.class.isAssignableFrom(c) && !List.class.isAssignableFrom(c)) {
-			return SET;
-		}
-		if(Iterable.class.isAssignableFrom(c)) {
-			return LIST;
-		}
-		if(c.isArray()) {
+		if(Collection.class.isAssignableFrom(c) || c.isArray()) {
 			return ARRAY;
 		}
 		if(Map.class.isAssignableFrom(c)) {
@@ -161,7 +142,7 @@ public enum DBType {
 	}
 	
 	
-	public static byte[] toBytes(DBType[] set) {
+	public static byte[] toBytes(ColType[] set) {
 		byte[] out = new byte[set.length];
 		for(int i = 0; i < set.length; i++) {
 			out[i] = set[i].b;
@@ -169,10 +150,10 @@ public enum DBType {
 		return out;
 	}
 	
-	public static DBType[] toTypes(byte[] set) {
-		DBType[] out = new DBType[set.length];
+	public static ColType[] toTypes(byte[] set) {
+		ColType[] out = new ColType[set.length];
 		for(int i = 0; i < set.length; i++) {
-			out[i] = DBType.getByByte(set[i]);
+			out[i] = ColType.getByByte(set[i]);
 		}
 		return out;
 	}

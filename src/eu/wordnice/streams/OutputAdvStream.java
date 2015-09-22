@@ -3,9 +3,10 @@ package eu.wordnice.streams;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class OutputAdvStream extends OutputAdv {
+public class OutputAdvStream extends OutputAdv implements AutoCloseable {
 
 	public OutputStream out;
+	public boolean closed = false;
 	
 	public OutputAdvStream(OutputStream out) {
 		this.out = out;
@@ -24,12 +25,27 @@ public class OutputAdvStream extends OutputAdv {
 	
 	@Override
 	public void close() throws IOException {
+		this.closed = true;
 		this.out.close();
 	}
 	
 	@Override
 	public void flush() throws IOException {
 		this.out.flush();
+	}
+
+
+	@Override
+	public boolean isOpen() {
+		if(this.closed) {
+			return false;
+		}
+		try {
+			this.out.write(new byte[0]);
+			return true;
+		} catch(Exception exc) {
+			return false;
+		}
 	}
 
 	

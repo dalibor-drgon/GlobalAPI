@@ -135,7 +135,7 @@ public interface ResSetDB extends ResSet, DataWriter, DataReader {
 	 */
 	public void insertAll(ResSet rs)
 			throws DatabaseException, SQLException, IllegalArgumentException;
-	
+
 	/**
 	 * Get current database snapshot
 	 * All inserts and updates must be ignored by snapshot,

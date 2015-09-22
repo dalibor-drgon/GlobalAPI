@@ -33,7 +33,7 @@ import eu.wordnice.api.Api;
 import eu.wordnice.api.ByteString;
 import eu.wordnice.cols.ImmArray;
 import eu.wordnice.cols.ImmMapArray;
-import eu.wordnice.db.DBType;
+import eu.wordnice.db.ColType;
 import eu.wordnice.db.Database;
 import eu.wordnice.db.DatabaseException;
 import eu.wordnice.db.results.ResSet;
@@ -315,7 +315,7 @@ public class Where {
 		} else {
 			ResSetDB wdb = WNDB.createEmptyWNDB(
 					new String[] {"rekts", "rektd", "rektb", "rekti"},
-					new DBType[] {DBType.STRING, DBType.DOUBLE, DBType.BYTES, DBType.INT});
+					new ColType[] {ColType.STRING, ColType.DOUBLE, ColType.BYTES, ColType.INT});
 			wdb.insertRaw(ImmArray.createObj("SHREKTB", 23.42, new byte[] {}, 1));
 			wdb.insertRaw(ImmArray.createObj("SHREKTa", 23.42, new byte[] {}, 1));
 			wdb.insertRaw(ImmArray.createObj("SHREKTA", 23.42, new byte[] {}, 1));

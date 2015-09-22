@@ -5,7 +5,7 @@ import java.util.Iterator;
 import eu.wordnice.db.sql.SQL;
 import gnu.trove.map.hash.THashMap;
 
-public class Columns extends THashMap<String, DBType> {
+public class Columns extends THashMap<String, ColType> {
 	
 	/**
 	 * CREATE TABLE IF NOT EXISTS [table]
@@ -19,9 +19,9 @@ public class Columns extends THashMap<String, DBType> {
 		sb.append(table);
 		sb.append(" (");
 		
-		Iterator<java.util.Map.Entry<String, DBType>> it = this.entrySet().iterator();
+		Iterator<java.util.Map.Entry<String, ColType>> it = this.entrySet().iterator();
 		while(it.hasNext()) {
-			java.util.Map.Entry<String, DBType> ent = it.next();
+			java.util.Map.Entry<String, ColType> ent = it.next();
 			sb.append(ent.getKey());
 			sb.append(" ");
 			sb.append(ent.getValue().sql);

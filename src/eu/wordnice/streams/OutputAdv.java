@@ -34,40 +34,46 @@ import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-import eu.wordnice.db.DBType;
+import eu.wordnice.db.ColType;
 import eu.wordnice.db.serialize.CollSerializer;
 import eu.wordnice.db.serialize.SerializeException;
 import eu.wordnice.db.wndb.WNDBEncoder;
 
 public abstract class OutputAdv extends OutputStream implements Output {
 	
+	@Override
 	public abstract void write(int byt) throws IOException;
 	
+	@Override
 	public void write(byte[] bytes) throws IOException {
 		this.write(bytes, 0, bytes.length);
 	}
 	
+	@Override
 	public abstract void write(byte[] bytes, int off, int len) throws IOException;
 	
-	public void write(ByteBuffer buf) throws IOException {
+	@Override
+	public int write(ByteBuffer buf) throws IOException {
 		int toWrite = buf.remaining();
 		if(buf.hasArray() && !buf.isReadOnly()) {
 			this.write(buf.array(), buf.arrayOffset() + buf.position(), toWrite);
 			buf.position(buf.position() + toWrite);
-			return;
+			return toWrite;
 		}
 		byte[] buff = new byte[Math.min(8192, toWrite)];
 		if(buff.length == toWrite) {
 			buf.get(buff);
 			this.write(buff);
-			return;
+			return toWrite;
 		}
-		while(toWrite != 0) {
-			int curWrite = Math.min(buff.length, toWrite);
+		int total = 0;
+		while(toWrite != total) {
+			int curWrite = Math.min(buff.length, toWrite - total);
 			buf.get(buff, 0, curWrite);
 			this.write(buff, 0, curWrite);
-			toWrite -= curWrite;
+			total += curWrite;
 		}
+		return toWrite;
 	}
 	
 	
@@ -301,10 +307,10 @@ public abstract class OutputAdv extends OutputStream implements Output {
 	@Override
 	public void writeObject(Object obj, int ri, int vi) throws SerializeException, IOException {
 		if(obj == null) {
-			this.writeByte(DBType.BYTES.b);
+			this.writeByte(ColType.BYTES.b);
 			this.writeInt(-1);
 		} else {
-			DBType typ = DBType.getByObject(obj);
+			ColType typ = ColType.getByObject(obj);
 			this.writeByte(typ.b);
 			WNDBEncoder.writeObject(this, obj, typ, ri, vi);
 		}

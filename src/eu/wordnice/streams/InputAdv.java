@@ -81,16 +81,61 @@ public abstract class InputAdv extends InputStream implements Input {
 			}
 			return readed;
 		}
+		byte[] buff = new byte[Math.min(16 * 1024, toRead)];
+		int curRead = this.read(buff, 0, buff.length);
+		buf.put(buff, 0, curRead);
+		return curRead;
+	}
+	
+	@Override
+	public void readFully(ByteBuffer buf) throws IOException {
+		if(buf.isReadOnly()) {
+			throw new ReadOnlyBufferException();
+		}
+		int toRead = buf.remaining();
+		if(buf.hasArray()) {
+			byte[] arr = buf.array();
+			int off = buf.arrayOffset();
+			int len = buf.remaining();
+			int pos = buf.position();
+			int n = 0;
+			while (n < len) {
+				int count = 0;
+				try {
+					count = this.read(arr, off + n, len - n);
+				} catch(IOException ioe) {
+					buf.position(pos);
+					throw ioe;
+				}
+				if(count <= 0) {
+					buf.position(pos);
+					throw new EOFException();
+				}
+				n += count;
+				if(n == len) {
+					buf.position(pos + len);
+				}
+			}
+			return;
+		}
 		byte[] buff = new byte[Math.min(8192, toRead)];
 		int total = 0;
+		int pos = buf.position();
 		while(total < toRead) {
-			int curRead = this.read(buff, 0, Math.min(buff.length, toRead - total));
+			int curRead = 0;
+			try {
+				curRead = this.read(buff, 0, Math.min(buff.length, toRead - total));
+			} catch(IOException ioe) {
+				buf.position(pos);
+				throw ioe;
+			}
 			if(curRead <= 0) {
-				break;
+				buf.position(pos);
+				throw new EOFException();
 			}
 			buf.put(buff, 0, curRead);
 		}
-		return total;
+		return;
 	}
 	
 	
@@ -199,8 +244,8 @@ public abstract class InputAdv extends InputStream implements Input {
 	
 	@Override
 	public void readFully(byte[] b, int off, int len) throws IOException {
-		if (len < 0) {
-			throw new IndexOutOfBoundsException();
+		if(len < 0) {
+			throw new IndexOutOfBoundsException("Length: " + len);
 		}
 		int n = 0;
 		while (n < len) {

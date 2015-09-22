@@ -28,20 +28,21 @@ import java.io.Closeable;
 import java.io.DataInput;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 import java.util.Collection;
 import java.util.Map;
 
 import eu.wordnice.db.serialize.SerializeException;
 
-public interface Input extends DataInput, Closeable {
+public interface Input extends DataInput, Closeable, ReadableByteChannel {
 	
 	public long skip(long bytes) throws IOException;
 	
 	public int read() throws IOException;
 	public int read(byte[] bytes) throws IOException;
 	public int read(byte[] bytes, int off, int len) throws IOException;
-	public int read(ByteBuffer buf) throws IOException;
 	
+	public void readFully(ByteBuffer buf) throws IOException;
 	public void readFully(char[] chars) throws IOException;
 	public void readFully(char[] chars, int off, int len) throws IOException;
 	
@@ -53,10 +54,9 @@ public interface Input extends DataInput, Closeable {
 	public String readLine() throws IOException;
 	
 	public <X> Collection<X> readColl(Collection<X> col) throws SerializeException, IOException;
+	public Collection<? extends Object> readColl() throws SerializeException, IOException;
 	public <X, Y> Map<X, Y> readMap(Map<X, Y> map) throws SerializeException, IOException;
-	
-	public Object[] readArray() throws SerializeException, IOException;
-	public <X> X[] readArray(Class<X> clz) throws SerializeException, IOException;
+	public Map<? extends Object, ?> readMap() throws SerializeException, IOException;
 	
 	public Object readObject() throws SerializeException, IOException;
 	public Object readObject(int ri, int vi) throws SerializeException, IOException;

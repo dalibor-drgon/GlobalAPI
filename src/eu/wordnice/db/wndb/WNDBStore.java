@@ -31,7 +31,7 @@ import java.util.Map.Entry;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.InstanceMan;
-import eu.wordnice.db.DBType;
+import eu.wordnice.db.ColType;
 
 public abstract class WNDBStore {
 	
@@ -106,7 +106,7 @@ public abstract class WNDBStore {
 	}
 	
 	public boolean loadEmptyDB(String name) {
-		DBType[] set_types = (DBType[]) InstanceMan.getValue(
+		ColType[] set_types = (ColType[]) InstanceMan.getValue(
 				this, this.getClass(), name + "_types");
 		String[] set_names = (String[]) InstanceMan.getValue(this, this.getClass(), name + "_names");
 		
@@ -125,7 +125,7 @@ public abstract class WNDBStore {
 	}
 	
 	public boolean loadDB(String name) {
-		DBType[] set_types = (DBType[]) InstanceMan.getValue(
+		ColType[] set_types = (ColType[]) InstanceMan.getValue(
 				this, this.getClass(), name + "_types");
 		String[] set_names = (String[]) InstanceMan.getValue(this, this.getClass(), name + "_names");
 		
