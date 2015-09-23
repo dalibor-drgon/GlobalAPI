@@ -46,9 +46,8 @@ import eu.wordnice.streams.OutputAdv;
 
 public class CollSerializer {
 	
-	public static final int ARRAY_PREFIX = 0x1BABE048;
-	public static final int SET_PREFIX = 0x1BABE088;
-	public static final int MAP_PREFIX = 0x1BABE0C8;
+	public static final int ARR_PREFIX = 0x1BABE101;
+	public static final int MAP_PREFIX = 0x1BABE201;
 	
 	
 	/*** Converting ***/
@@ -77,27 +76,27 @@ public class CollSerializer {
 	
 	/*** Arrays ***/
 	
-	public static void array2file(File f, Object[] arr)
+	public static void collarray2file(File f, Object[] arr)
 			throws SerializeException, IOException {
 		Output ost = OutputAdv.forFile(f);
-		CollSerializer.array2stream(ost, arr, 0, arr.length);
+		CollSerializer.collarray2stream(ost, arr, 0, arr.length);
 		ost.close();
 	}
 	
-	public static void array2file(File f, Object[] arr, int off, int len)
+	public static void collarray2file(File f, Object[] arr, int off, int len)
 			throws SerializeException, IOException {
 		Output ost = OutputAdv.forFile(f);
-		CollSerializer.array2stream(ost, arr, off, len);
+		CollSerializer.collarray2stream(ost, arr, off, len);
 		ost.close();
 	}
 	
-	public static void array2stream(Output o, Object[] arr, int off, int len)
+	public static void collarray2stream(Output o, Object[] arr, int off, int len)
 			throws SerializeException, IOException {
-		o.writeInt(CollSerializer.ARRAY_PREFIX);
-		CollSerializer.array2streamWithoutPrefix(o, arr, off, len);
+		o.writeInt(CollSerializer.ARR_PREFIX);
+		CollSerializer.collarray2streamWithoutPrefix(o, arr, off, len);
 	}
 	
-	public static void array2streamWithoutPrefix(Output o, Object[] arr, int off, int len)
+	public static void collarray2streamWithoutPrefix(Output o, Object[] arr, int off, int len)
 			throws SerializeException, IOException {
 		o.writeInt(len);
 		len += off;
@@ -117,8 +116,8 @@ public class CollSerializer {
 	public static <X> X[] stream2array(Class<X> clz, Input s)
 			throws SerializeException, IOException {
 		int l = s.readInt();
-		if(l != CollSerializer.ARRAY_PREFIX) {
-			throw new BadFilePrefixException("Not ARRAY format!");
+		if(l != CollSerializer.ARR_PREFIX) {
+			throw new BadFilePrefixException("Not ARRAY!");
 		}
 		return CollSerializer.stream2arrayWithoutPrefix(clz, s);
 	}
@@ -140,53 +139,77 @@ public class CollSerializer {
 	
 	/*** Iterable & Collection ***/
 	
-	public static void coll2file(File f, Iterable<?> set)
+	public static void coll2file(File f, Collection<?> col)
 			throws SerializeException, IOException {
 		Output ost = OutputAdv.forFile(f);
-		CollSerializer.coll2stream(ost, set);
+		CollSerializer.coll2stream(ost, col.iterator(), col.size());
 		ost.close();
 	}
 	
-	public static void coll2stream(Output o, Iterable<?> set)
+	public static void coll2file(File f, Iterator<?> it, int size)
 			throws SerializeException, IOException {
-		o.writeInt(CollSerializer.SET_PREFIX);
-		CollSerializer.coll2streamWithoutPrefix(o, set);
+		Output ost = OutputAdv.forFile(f);
+		CollSerializer.coll2stream(ost, it, size);
+		ost.close();
 	}
 	
-	public static void coll2streamWithoutPrefix(Output o, Iterable<?> set)
+	public static void coll2stream(Output o, Iterator<?> it, int size)
 			throws SerializeException, IOException {
-		Iterator<?> it = set.iterator();
+		o.writeInt(CollSerializer.ARR_PREFIX);
+		CollSerializer.coll2streamWithoutPrefix(o, it, size);
+	}
+	
+	public static void coll2streamWithoutPrefix(Output o, Iterator<?> it, int size)
+			throws SerializeException, IOException {
+		o.writeInt(size);
+		if(size == 0) {
+			return;
+		}
+		int i = 0;
 		while(it.hasNext()) {
 			o.writeObject(it.next());
+			i++;
+			if(i == size) {
+				return;
+			}
 		}
-		o.writeByte((byte) 0);
+		while(i != size) {
+			i++;
+			o.writeObject(null);
+		}
 	}
 	
-	public static <X> void file2coll(Collection<X> set, File f)
+	public static <X> Collection<X> file2coll(Collection<X> col, File f)
 			throws SerializeException, IOException {
 		Input ins = InputAdv.forFile(f);
-		CollSerializer.stream2coll(set, ins);
+		col = CollSerializer.stream2coll(col, ins);
 		ins.close();
+		return col;
 	}
 	
-	public static <X> void stream2coll(Collection<X> set, Input s)
+	public static <X> Collection<X> stream2coll(Collection<X> col, Input s)
 			throws SerializeException, IOException {
 		int l = s.readInt();
-		if(l != CollSerializer.SET_PREFIX) {
-			throw new BadFilePrefixException("Not SET format!");
+		if(l != CollSerializer.ARR_PREFIX) {
+			throw new BadFilePrefixException("Not ARRAY!");
 		}
-		CollSerializer.stream2collWithoutPrefix(set, s);
+		return CollSerializer.stream2collWithoutPrefix(col, s);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <X> void stream2collWithoutPrefix(Collection<X> set, Input s)
+	public static <X> Collection<X> stream2collWithoutPrefix(Collection<X> col, Input s)
 			throws SerializeException, IOException {
-		byte b;
-		int i = 0;
-		while((b = s.readByte()) > 0) {
-			set.add((X) WNDBDecoder.readObject(s, b, i, -1));
-			i++;
+		int len = s.readInt();
+		if(len < 0) {
+			return null;
 		}
+		if(col instanceof ArrayList) {
+			((ArrayList<?>) col).ensureCapacity(col.size() + len);
+		}
+		for(int i = 0; i < len; i++) {
+			col.add((X) s.readObject());
+		}
+		return col;
 	}
 	
 	
@@ -228,7 +251,7 @@ public class CollSerializer {
 			throws SerializeException, IOException {
 		int l = s.readInt();
 		if(l != CollSerializer.MAP_PREFIX) {
-			throw new BadFilePrefixException("Not MAP format!");
+			throw new BadFilePrefixException("Not MAP!");
 		}
 		CollSerializer.stream2mapWithoutPrefix(map, s);
 	}

@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 import eu.wordnice.db.serialize.SerializeException;
@@ -178,7 +179,8 @@ public interface Output extends DataOutput, Closeable, WritableByteChannel {
 	public void writeChars(char[] chars) throws IOException;
 	public void writeChars(char[] chars, int off, int len) throws IOException;
 	
-	public void writeColl(Collection<?> set) throws SerializeException, IOException;
+	public void writeColl(Collection<?> col) throws SerializeException, IOException;
+	public void writeColl(Iterator<?> it, int size) throws SerializeException, IOException;
 	public void writeCollArray(Object[] arr) throws SerializeException, IOException;
 	public void writeCollArray(Object[] arr, int off, int len) throws SerializeException, IOException;
 	public void writeMap(Map<?,?> map) throws SerializeException, IOException;

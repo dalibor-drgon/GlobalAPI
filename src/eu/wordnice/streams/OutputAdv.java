@@ -32,6 +32,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 import eu.wordnice.db.ColType;
@@ -264,12 +266,17 @@ public abstract class OutputAdv extends OutputStream implements Output {
 	
 	
 	@Override
-	public void writeColl(Iterable<?> set) throws SerializeException, IOException {
+	public void writeColl(Collection<?> set) throws SerializeException, IOException {
 		if(set == null) {
 			this.writeInt(-1);
 			return;
 		}
-		CollSerializer.coll2stream(this, set);
+		this.writeColl(set.iterator(), set.size());
+	}
+	
+	@Override
+	public void writeColl(Iterator<?> it, int size) throws SerializeException, IOException {
+		CollSerializer.coll2stream(this, it, size);
 	}
 	
 	@Override
@@ -282,21 +289,21 @@ public abstract class OutputAdv extends OutputStream implements Output {
 	}
 	
 	@Override
-	public void writeArray(Object[] arr) throws SerializeException, IOException {
+	public void writeCollArray(Object[] arr) throws SerializeException, IOException {
 		if(arr == null) {
 			this.writeInt(-1);
 			return;
 		}
-		this.writeArray(arr, 0, arr.length);
+		CollSerializer.collarray2stream(this, arr, 0, arr.length);
 	}
 	
 	@Override
-	public void writeArray(Object[] arr, int off, int len) throws SerializeException, IOException {
+	public void writeCollArray(Object[] arr, int off, int len) throws SerializeException, IOException {
 		if(arr == null || len < 0) {
 			this.writeInt(-1);
 			return;
 		}
-		CollSerializer.array2stream(this, arr, off, len);
+		CollSerializer.collarray2stream(this, arr, off, len);
 	}
 	
 	@Override

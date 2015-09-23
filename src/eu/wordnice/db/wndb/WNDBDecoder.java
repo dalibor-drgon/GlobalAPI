@@ -27,8 +27,6 @@ package eu.wordnice.db.wndb;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 
 import eu.wordnice.api.Val;
@@ -85,7 +83,7 @@ public class WNDBDecoder {
 		return new Val.ThreeVal<String[], ColType[], List<Object[]>>(names, types, data);
 	}
 	
-	public static Object readObject(Input in, Byte type, int ri, int vi) throws SerializeException, IOException {
+	public static Object readObject(Input in, int type, int ri, int vi) throws SerializeException, IOException {
 		return WNDBDecoder.readObject(in, ColType.getByByte(type), ri, vi);
 	}
 

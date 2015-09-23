@@ -54,9 +54,13 @@ public interface Input extends DataInput, Closeable, ReadableByteChannel {
 	public String readLine() throws IOException;
 	
 	public <X> Collection<X> readColl(Collection<X> col) throws SerializeException, IOException;
-	public Collection<? extends Object> readColl() throws SerializeException, IOException;
+	public <X> Collection<X> readColl() throws SerializeException, IOException;
+	
+	public Object[] readCollAsArray() throws SerializeException, IOException;
+	public <X> X[] readCollAsArray(Class<X> clz) throws SerializeException, IOException;
+	
 	public <X, Y> Map<X, Y> readMap(Map<X, Y> map) throws SerializeException, IOException;
-	public Map<? extends Object, ?> readMap() throws SerializeException, IOException;
+	public <X, Y> Map<X, Y> readMap() throws SerializeException, IOException;
 	
 	public Object readObject() throws SerializeException, IOException;
 	public Object readObject(int ri, int vi) throws SerializeException, IOException;
