@@ -34,15 +34,12 @@ import java.io.InputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-import eu.wordnice.db.serialize.BadFilePrefixException;
 import eu.wordnice.db.serialize.CollSerializer;
 import eu.wordnice.db.serialize.SerializeException;
 import eu.wordnice.db.wndb.WNDBDecoder;
-import gnu.trove.map.hash.THashMap;
 
 public abstract class InputAdv extends InputStream implements Input {
 	
@@ -364,51 +361,22 @@ public abstract class InputAdv extends InputStream implements Input {
 	
 	@Override
 	public <X> Collection<X> readColl(Collection<X> col) throws SerializeException, IOException {
-		int ch = this.readInt();
-		if(ch == -1) {
-			return null;
-		}
-		if(ch != CollSerializer.ARR_PREFIX) {
-			throw new BadFilePrefixException("Not ARRAY!");
-		}
-		return CollSerializer.stream2collWithoutPrefix(col, this);
-	}
-	
-	public Object[] readCollAsArray() throws SerializeException, IOException {
-		return this.readCollAsArray(Object.class);
-	}
-	public <X> X[] readCollAsArray(Class<X> clz) throws SerializeException, IOException {
-		int ch = this.readInt();
-		if(ch == -1) {
-			return null;
-		}
-		if(ch != CollSerializer.ARR_PREFIX) {
-			throw new BadFilePrefixException("Not ARRAY!");
-		}
-		return CollSerializer.stream2arrayWithoutPrefix(clz, this);
+		return CollSerializer.stream2coll(col, this);
 	}
 	
 	@Override
 	public <X, Y> Map<X, Y> readMap(Map<X, Y> map) throws SerializeException, IOException {
-		int ch = this.readInt();
-		if(ch == -1) {
-			return null;
-		}
-		if(ch != CollSerializer.MAP_PREFIX) {
-			throw new BadFilePrefixException("Not MAP!");
-		}
-		CollSerializer.stream2mapWithoutPrefix(map, this);
-		return map;
+		return CollSerializer.stream2map(map, this);
 	}
 	
 	@Override
 	public <X> Collection<X> readColl() throws SerializeException, IOException {
-		return this.readColl(new ArrayList<X>());
+		return this.readColl((Collection<X>) null);
 	}
 	
 	@Override
 	public <X, Y> Map<X, Y> readMap() throws SerializeException, IOException {
-		return this.readMap(new THashMap<X, Y>());
+		return this.readMap((Map<X, Y>) null);
 	}
 	
 	@Override

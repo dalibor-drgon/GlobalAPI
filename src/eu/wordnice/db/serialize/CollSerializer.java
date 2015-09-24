@@ -38,11 +38,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import eu.wordnice.db.wndb.WNDBDecoder;
 import eu.wordnice.streams.Input;
 import eu.wordnice.streams.Output;
 import eu.wordnice.streams.InputAdv;
 import eu.wordnice.streams.OutputAdv;
+import gnu.trove.map.hash.THashMap;
 
 public class CollSerializer {
 	
@@ -116,6 +116,9 @@ public class CollSerializer {
 	public static <X> X[] stream2array(Class<X> clz, Input s)
 			throws SerializeException, IOException {
 		int l = s.readInt();
+		if(l == -1) {
+			return null;
+		}
 		if(l != CollSerializer.ARR_PREFIX) {
 			throw new BadFilePrefixException("Not ARRAY!");
 		}
@@ -190,6 +193,9 @@ public class CollSerializer {
 	public static <X> Collection<X> stream2coll(Collection<X> col, Input s)
 			throws SerializeException, IOException {
 		int l = s.readInt();
+		if(l == -1) {
+			return null;
+		}
 		if(l != CollSerializer.ARR_PREFIX) {
 			throw new BadFilePrefixException("Not ARRAY!");
 		}
@@ -203,11 +209,13 @@ public class CollSerializer {
 		if(len < 0) {
 			return null;
 		}
-		if(col instanceof ArrayList) {
+		if(col == null) {
+			col = new ArrayList<X>(len);
+		} else if(col instanceof ArrayList) {
 			((ArrayList<?>) col).ensureCapacity(col.size() + len);
 		}
 		for(int i = 0; i < len; i++) {
-			col.add((X) s.readObject());
+			col.add((X) s.readObject(i, -1));
 		}
 		return col;
 	}
@@ -231,42 +239,62 @@ public class CollSerializer {
 	
 	public static void map2streamWithoutPrefix(Output o, Map<?,?> map)
 			throws SerializeException, IOException {
+		int sz = map.size();
+		o.writeInt(sz);
+		if(sz == 0) {
+			return;
+		}
+		int i = 0;
 		Iterator<? extends Entry<?,?>> it = map.entrySet().iterator();
 		while(it.hasNext()) {
 			Entry<?,?> ent = it.next();
 			o.writeObject(ent.getKey());
 			o.writeObject(ent.getValue());
+			i++;
+			if(i == sz) {
+				return;
+			}
 		}
-		o.writeByte((byte) 0);
+		while(i != sz) {
+			i++;
+			o.writeObject(null);
+		}
 	}
 	
-	public static <X,Y> void file2map(Map<X,Y> map, File f)
+	public static <X,Y> Map<X,Y> file2map(Map<X,Y> map, File f)
 			throws SerializeException, IOException {
 		Input ins = InputAdv.forFile(f);
-		CollSerializer.stream2map(map, ins);
+		Map<X,Y> ret = CollSerializer.stream2map(map, ins);
 		ins.close();
+		return ret;
 	}
 	
-	public static <X,Y> void stream2map(Map<X,Y> map, Input s)
+	public static <X,Y> Map<X,Y> stream2map(Map<X,Y> map, Input s)
 			throws SerializeException, IOException {
 		int l = s.readInt();
+		if(l == -1) {
+			return null;
+		}
 		if(l != CollSerializer.MAP_PREFIX) {
 			throw new BadFilePrefixException("Not MAP!");
 		}
-		CollSerializer.stream2mapWithoutPrefix(map, s);
+		return CollSerializer.stream2mapWithoutPrefix(map, s);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <X,Y> void stream2mapWithoutPrefix(Map<X,Y> map, Input s)
+	public static <X,Y> Map<X,Y> stream2mapWithoutPrefix(Map<X,Y> map, Input s)
 			throws SerializeException, IOException {
-		byte b;
 		int i = 0;
-		while((b = s.readByte()) > 0) {
-			Object key = WNDBDecoder.readObject(s, b, i, 0);
-			b = s.readByte();
-			Object val = WNDBDecoder.readObject(s, b, i, 1);
-			map.put((X) key, (Y) val);
+		int sz = s.readInt();
+		if(map == null) {
+			map = new THashMap<X, Y>(sz);
+		}
+		while(i != sz) {
+			X key = (X) s.readObject(i, 0);
+			Y val = (Y) s.readObject(i, 1);
+			map.put(key, val);
 			i++;
 		}
+		return map;
 	}
 }
