@@ -24,25 +24,22 @@
 
 package eu.wordnice.db.operator;
 
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.ByteString;
-import eu.wordnice.cols.ImmArray;
+import eu.wordnice.api.OnlyOnce;
+import eu.wordnice.api.OnlyOnce.OnlyOnceLogger;
 import eu.wordnice.cols.ImmMapArray;
 import eu.wordnice.db.ColType;
 import eu.wordnice.db.Database;
 import eu.wordnice.db.DatabaseException;
 import eu.wordnice.db.results.ResSet;
-import eu.wordnice.db.results.ResSetDB;
-import eu.wordnice.db.results.ResultResSet;
 import eu.wordnice.db.sql.JDBCSQL;
 import eu.wordnice.db.sql.MySQL;
 import eu.wordnice.db.sql.SQLite;
-import eu.wordnice.db.wndb.WNDB;
 
 public class Where {
 	
@@ -115,28 +112,34 @@ public class Where {
 		String str = this.flag.sql;
 		if(this.val instanceof Number) {
 			return Api.replace(str, new Object[]{
-					"1 ", "",
-					" 2", "",
-					"3", "",
+					"111 ", "",
+					" 222", "",
+					"333", "",
 					"$", this.key
 			});
 		} else if(this.val instanceof byte[]) {
 			return Api.replace(str, new Object[]{
-					"1", (this.sens) ? "BINARY" : "",
-					" 2", "",
-					"3", ((byte[]) this.val).length,
+					"111", (this.sens) ? "BINARY" : "",
+					" 222", "",
+					"333", ((byte[]) this.val).length,
 					"$", this.key
 			});
 		} else if(this.val instanceof String) {
 			return Api.replace(str, new Object[]{
-					"1 ", "",
-					"2", (this.sens) ? "COLLATE utf8_bin" : "",
-					"3", ((String) this.val).length(),
+					"111 ", "",
+					"222", (this.sens) ? "COLLATE utf8_bin" : "",
+					"333", ((String) this.val).length(),
+					"$", this.key
+			});
+		} else if(this.val == null) {
+			return Api.replace(str, new Object[]{
+					"111 ", "",
+					" 222", "",
+					"333", -1,
 					"$", this.key
 			});
 		} else {
-			throw new IllegalArgumentException("Unknown value type " 
-					+ ((this.val == null) ? null : this.val.getClass().getName()));
+			throw new IllegalArgumentException("Unknown value type " + this.val.getClass().getName());
 		}
 	}
 	
@@ -284,60 +287,57 @@ public class Where {
 	 */
 	public static void main(String... lel_varargs) throws Throwable {
 		
+		OnlyOnce.debugAll(new OnlyOnceLogger() {
+
+			@Override
+			public void info(String str) {
+				System.out.println(str);
+			}
+
+			@Override
+			public void severe(String str) {
+				System.err.println(str);
+			}
+			
+		});
+		
 		//TEST!
-		int type = 0;
+		int type = 1;
 		//0 - MySQL
 		//1 - SQLite
 		//2 - WNDB (ResSetDB)
 		
+		String table = "example";
+		Map<String, ColType> cols = new ImmMapArray<String, ColType>(new Object[] {
+				"id", ColType.ID,
+				"name", ColType.STRING,
+				"pass", ColType.BYTES
+		});
+		
 		Database db = null;
 		if(type == 0) {
 			JDBCSQL sql = new MySQL("db.mysql-01.gsp-europe.net", "sql_1040", "sql_1040", "2qZ0h1e0nURTWbfiCQpHaz50Not8yuV");
-			sql.connect();
-			db = new Database(sql, "shets");
-			
-			long start = System.nanoTime();
-			Statement s = sql.createStatement();
-			System.out.println("Created in " + (System.nanoTime() - start) + " ns!");
-			
-			start = System.nanoTime();
-			s.execute("SELECT * FROM shets");
-			System.out.println("Executed in " + (System.nanoTime() - start) + " ns!");
-						
-			PreparedStatement ps = sql.prepare("SELECT rekts, SUBSTR(rekts, -5, 5) as rekts_sub FROM shets");
-			//ps.setString(1, "E");
-			ResSet rs = new ResultResSet(ps.executeQuery());
-			while(rs.next()) {
-				System.out.println(rs.getEntries());
-			}
+			db = new Database(sql, table, cols);
 		} else if(type == 1) {
-			db = new Database(new SQLite("./test.sqlite"), "exam", null);
+			db = new Database(new SQLite("./test.sqlite"), table, cols);
 		} else {
-			ResSetDB wdb = WNDB.createEmptyWNDB(
-					new String[] {"rekts", "rektd", "rektb", "rekti"},
-					new ColType[] {ColType.STRING, ColType.DOUBLE, ColType.BYTES, ColType.INT});
-			wdb.insertRaw(ImmArray.createObj("SHREKTB", 23.42, new byte[] {}, 1));
-			wdb.insertRaw(ImmArray.createObj("SHREKTa", 23.42, new byte[] {}, 1));
-			wdb.insertRaw(ImmArray.createObj("SHREKTA", 23.42, new byte[] {}, 1));
-			db = new Database(Database.copy(Database.copy(wdb.getSnapshot()).getSnapshot()), null);
+			db = new Database(new ImmMapArray<String, Object>(new Object[] {
+					"type", "wndb",
+					"file", "./example.wndb"
+			}), cols);
 		}
 		
 		
 		///
 		System.out.print("\n\nSELECT:\n");
 		
-		ResSet rs = db.select(new And(
-				new Where("rekts", "SHREKT", WType.NOT_EQUAL),
-				new Where("rekts", "SHREKTy", WType.NOT_EQUAL, true),
-				new Where("rekts", "SHREKTa", WType.EQUAL, false),
-					//[UP] change to true will display only SHREKTa, otherwise SHREKTA too
-				new Where("rektb", new byte[] {}, WType.EQUAL, false),
-				new Where("rektd", 23.43, WType.SMALLER, false)
-		), new Sort[] {
-				new Sort("rekts", SType.ASC, false)
-		});
+		ResSet rs = db.select(new Or(
+				new Where("id", null),
+				new Where("id", 0),
+				new Where("id", 1)
+		));
 		while(rs.next()) {
-			System.out.println(rs.getString("rekts"));
+			System.out.println(rs.getString("id") + " / " + rs.getEntries());
 		}
 		
 		
@@ -351,10 +351,8 @@ public class Where {
 		System.out.print("\n\nINSERT:\n");
 		
 		db.insert(new ImmMapArray<String, Object>(new Object[] {
-				"rekts", "HELLO!",
-				"rektb", new byte[] {1, 2, 3},
-				"rektd", Math.PI,
-				"rekti", -1
+				"name", "DEADBEEF",
+				"pass", new byte[] {1,2,3,4,5,6,7,8}
 		}));
 		
 		
@@ -369,9 +367,9 @@ public class Where {
 		System.out.print("\n\nUPDATE:\n");
 		
 		db.update(new ImmMapArray<String, Object>(new Object[] {
-				"rekts", "HELLO M8S 2!!"
+				"name", "DEADCAFE"
 		}), new And(
-				new Where("rektd", Math.PI, WType.EQUAL)
+				new Where("name", "DEADBeeF", WType.EQUAL, false)
 		));
 		
 		
@@ -385,9 +383,9 @@ public class Where {
 		///
 		System.out.print("\n\nDELETE:\n");
 		
-		db.delete(new And(
-				new Where("rektd", Math.PI, WType.EQUAL),
-				new Where("rekti", -1, WType.EQUAL)
+		db.delete(new Or(
+				new Where("id", null),
+				new Where("id", 1, WType.BIGGER_EQUAL)
 		));
 		
 		
@@ -398,7 +396,9 @@ public class Where {
 	}
 	
 	public static void selectAll(Database db) throws SQLException, DatabaseException {
-		ResSet rs = db.select();
+		ResSet rs = db.select(new Sort[] {
+				new Sort("id", SType.ASC)
+		});
 		while(rs.next()) {
 			System.out.println(rs.getEntries());
 		}

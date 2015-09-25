@@ -24,8 +24,11 @@
 
 package eu.wordnice.db.results;
 
-public abstract class ObjectResSet implements ResSet {
+import java.util.Collection;
+import java.util.Map;
 
+public abstract class ObjectResSet implements ResSet {
+	
 	@Override
 	public String getString(String name) {
 		Object obj = this.getObject(name);
@@ -77,10 +80,10 @@ public abstract class ObjectResSet implements ResSet {
 		Object o = this.getObject(name);
 		try {
 			return (boolean) o;
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		try {
 			return Boolean.getBoolean(o.toString());
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		return false;
 	}
 
@@ -89,10 +92,10 @@ public abstract class ObjectResSet implements ResSet {
 		Object o = this.getObject(in);
 		try {
 			return (boolean) o;
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		try {
 			return Boolean.getBoolean(o.toString());
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		return false;
 	}
 
@@ -101,10 +104,10 @@ public abstract class ObjectResSet implements ResSet {
 		Object o = this.getObject(name);
 		try {
 			return (byte) o;
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		try {
 			return Byte.parseByte(o.toString());
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		return 0;
 	}
 
@@ -113,10 +116,10 @@ public abstract class ObjectResSet implements ResSet {
 		Object o = this.getObject(in);
 		try {
 			return (byte) o;
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		try {
 			return Byte.parseByte(o.toString());
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		return 0;
 	}
 
@@ -125,10 +128,10 @@ public abstract class ObjectResSet implements ResSet {
 		Object o = this.getObject(name);
 		try {
 			return (short) o;
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		try {
 			return Short.parseShort(o.toString());
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		return 0;
 	}
 
@@ -137,10 +140,10 @@ public abstract class ObjectResSet implements ResSet {
 		Object o = this.getObject(in);
 		try {
 			return (short) o;
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		try {
 			return Short.parseShort(o.toString());
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		return 0;
 	}
 
@@ -149,10 +152,10 @@ public abstract class ObjectResSet implements ResSet {
 		Object o = this.getObject(name);
 		try {
 			return (int) o;
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		try {
 			return Integer.parseInt(o.toString());
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		return 0;
 	}
 
@@ -161,10 +164,10 @@ public abstract class ObjectResSet implements ResSet {
 		Object o = this.getObject(in);
 		try {
 			return (int) o;
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		try {
 			return Integer.parseInt(o.toString());
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		return 0;
 	}
 
@@ -173,10 +176,10 @@ public abstract class ObjectResSet implements ResSet {
 		Object o = this.getObject(name);
 		try {
 			return (long) o;
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		try {
 			return Long.parseLong(o.toString());
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		return 0;
 	}
 
@@ -185,10 +188,10 @@ public abstract class ObjectResSet implements ResSet {
 		Object o = this.getObject(in);
 		try {
 			return (long) o;
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		try {
 			return Long.parseLong(o.toString());
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		return 0;
 	}
 
@@ -197,10 +200,10 @@ public abstract class ObjectResSet implements ResSet {
 		Object o = this.getObject(name);
 		try {
 			return (float) o;
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		try {
 			return Float.parseFloat(o.toString());
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		return 0;
 	}
 
@@ -209,10 +212,10 @@ public abstract class ObjectResSet implements ResSet {
 		Object o = this.getObject(in);
 		try {
 			return (float) o;
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		try {
 			return Float.parseFloat(o.toString());
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		return 0;
 	}
 
@@ -221,10 +224,10 @@ public abstract class ObjectResSet implements ResSet {
 		Object o = this.getObject(name);
 		try {
 			return (double) o;
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		try {
 			return Double.parseDouble(o.toString());
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		return 0;
 	}
 
@@ -233,11 +236,51 @@ public abstract class ObjectResSet implements ResSet {
 		Object o = this.getObject(in);
 		try {
 			return (double) o;
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		try {
 			return Double.parseDouble(o.toString());
-		} catch (Throwable t) {}
+		} catch(Exception e) {}
 		return 0;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <X> Collection<X> getColl(String name) {
+		Object o = this.getObject(name);
+		try {
+			return (Collection<X>) o;
+		} catch(Exception e) {}
+		return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <X> Collection<X> getColl(int in) {
+		Object o = this.getObject(in);
+		try {
+			return (Collection<X>) o;
+		} catch(Exception e) {}
+		return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <X, Y> Map<X, Y> getMap(String name) {
+		Object o = this.getObject(name);
+		try {
+			return (Map<X, Y>) o;
+		} catch(Exception e) {}
+		return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <X, Y> Map<X, Y> getMap(int in) {
+		Object o = this.getObject(in);
+		try {
+			return (Map<X, Y>) o;
+		} catch(Exception e) {}
+		return null;
 	}
 
 }

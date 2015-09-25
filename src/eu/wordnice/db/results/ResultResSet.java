@@ -24,6 +24,7 @@
 
 package eu.wordnice.db.results;
 
+import java.io.ByteArrayInputStream;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -34,6 +35,7 @@ import java.util.Map;
 import eu.wordnice.cols.ImmArray;
 import eu.wordnice.cols.ImmMapPair;
 import eu.wordnice.db.DatabaseException;
+import eu.wordnice.streams.InputAdv;
 
 public class ResultResSet implements ResSet {
 
@@ -66,7 +68,7 @@ public class ResultResSet implements ResSet {
 	public Object getObject(String name) {
 		try {
 			return this.rs.getObject(name);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return null;
 	}
 
@@ -74,7 +76,7 @@ public class ResultResSet implements ResSet {
 	public Object getObject(int in) {
 		try {
 			return this.rs.getObject(in);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return null;
 	}
 
@@ -82,7 +84,7 @@ public class ResultResSet implements ResSet {
 	public String getString(String name) {
 		try {
 			return this.rs.getString(name);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return null;
 	}
 
@@ -90,7 +92,7 @@ public class ResultResSet implements ResSet {
 	public String getString(int in) {
 		try {
 			return this.rs.getString(in);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return null;
 	}
 
@@ -98,7 +100,7 @@ public class ResultResSet implements ResSet {
 	public byte[] getBytes(String name) {
 		try {
 			return this.rs.getBytes(name);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return null;
 	}
 
@@ -106,7 +108,7 @@ public class ResultResSet implements ResSet {
 	public byte[] getBytes(int in) {
 		try {
 			return this.rs.getBytes(in);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return null;
 	}
 
@@ -114,7 +116,7 @@ public class ResultResSet implements ResSet {
 	public boolean getBoolean(String name) {
 		try {
 			return this.rs.getBoolean(name);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return false;
 	}
 
@@ -122,7 +124,7 @@ public class ResultResSet implements ResSet {
 	public boolean getBoolean(int in) {
 		try {
 			return this.rs.getBoolean(in);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return false;
 	}
 
@@ -130,7 +132,7 @@ public class ResultResSet implements ResSet {
 	public byte getByte(String name) {
 		try {
 			return this.rs.getByte(name);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return 0;
 	}
 
@@ -138,7 +140,7 @@ public class ResultResSet implements ResSet {
 	public byte getByte(int in) {
 		try {
 			return this.rs.getByte(in);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return 0;
 	}
 
@@ -146,7 +148,7 @@ public class ResultResSet implements ResSet {
 	public short getShort(String name) {
 		try {
 			return this.rs.getShort(name);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return 0;
 	}
 
@@ -154,7 +156,7 @@ public class ResultResSet implements ResSet {
 	public short getShort(int in) {
 		try {
 			return this.rs.getShort(in);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return 0;
 	}
 
@@ -162,7 +164,7 @@ public class ResultResSet implements ResSet {
 	public int getInt(String name) {
 		try {
 			return this.rs.getInt(name);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return 0;
 	}
 
@@ -170,7 +172,7 @@ public class ResultResSet implements ResSet {
 	public int getInt(int in) {
 		try {
 			return this.rs.getInt(in);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return 0;
 	}
 
@@ -178,7 +180,7 @@ public class ResultResSet implements ResSet {
 	public long getLong(String name) {
 		try {
 			return this.rs.getLong(name);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return 0;
 	}
 
@@ -186,7 +188,7 @@ public class ResultResSet implements ResSet {
 	public long getLong(int in) {
 		try {
 			return this.rs.getLong(in);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return 0;
 	}
 
@@ -194,7 +196,7 @@ public class ResultResSet implements ResSet {
 	public float getFloat(String name) {
 		try {
 			return this.rs.getFloat(name);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return 0;
 	}
 
@@ -202,7 +204,7 @@ public class ResultResSet implements ResSet {
 	public float getFloat(int in) {
 		try {
 			return this.rs.getFloat(in);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return 0;
 	}
 
@@ -210,7 +212,7 @@ public class ResultResSet implements ResSet {
 	public double getDouble(String name) {
 		try {
 			return this.rs.getDouble(name);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return 0;
 	}
 
@@ -218,16 +220,54 @@ public class ResultResSet implements ResSet {
 	public double getDouble(int in) {
 		try {
 			return this.rs.getDouble(in);
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return 0;
 	}
-
+	
 	@Override
-	public void first() {
-		this.hasLast = false;
-		this.pendingFirst = true;
+	public <X> Collection<X> getColl(String name) {
+		byte[] bytes = this.getBytes(name);
+		if(bytes != null) {
+			try {
+				return InputAdv.forStream(new ByteArrayInputStream(bytes)).readColl();
+			} catch(Exception e) {}
+		}
+		return null;
 	}
-
+	
+	@Override
+	public <X> Collection<X> getColl(int in) {
+		byte[] bytes = this.getBytes(in);
+		if(bytes != null) {
+			try {
+				return InputAdv.forStream(new ByteArrayInputStream(bytes)).readColl();
+			} catch(Exception e) {}
+		}
+		return null;
+	}
+	
+	@Override
+	public <X, Y> Map<X, Y> getMap(String name) {
+		byte[] bytes = this.getBytes(name);
+		if(bytes != null) {
+			try {
+				return InputAdv.forStream(new ByteArrayInputStream(bytes)).readMap();
+			} catch(Exception e) {}
+		}
+		return null;
+	}
+	
+	@Override
+	public <X, Y> Map<X, Y> getMap(int in) {
+		byte[] bytes = this.getBytes(in);
+		if(bytes != null) {
+			try {
+				return InputAdv.forStream(new ByteArrayInputStream(bytes)).readMap();
+			} catch(Exception e) {}
+		}
+		return null;
+	}
+	
 	@Override
 	public boolean next() {
 		this.hasLast = false;
@@ -237,8 +277,23 @@ public class ResultResSet implements ResSet {
 				return this.rs.first();
 			}
 			return this.rs.next();
-		} catch (Throwable t) {}
+		} catch(Exception t) {}
 		return false;
+	}
+	
+	@Override
+	public boolean forwardOnly() {
+		return true;
+	}
+	
+	@Override
+	public boolean previous() throws UnsupportedOperationException {
+		throw new UnsupportedOperationException("Forward only!");
+	}
+	
+	@Override
+	public void first() throws UnsupportedOperationException {
+		throw new UnsupportedOperationException("Forward only!");
 	}
 
 	@Override

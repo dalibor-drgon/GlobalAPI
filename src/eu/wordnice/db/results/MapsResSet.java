@@ -99,6 +99,11 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 		this.it = this.list.listIterator();
 		this.cur = null;
 	}
+	
+	@Override
+	public boolean forwardOnly() {
+		return false;
+	}
 
 	@Override
 	public boolean next() {
@@ -107,6 +112,16 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 			return false;
 		}
 		this.cur = this.it.next();
+		return true;
+	}
+	
+	@Override
+	public boolean previous() {
+		if(!this.it.hasPrevious()) {
+			this.cur = null;
+			return false;
+		}
+		this.cur = this.it.previous();
 		return true;
 	}
 

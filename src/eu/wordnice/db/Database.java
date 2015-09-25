@@ -24,7 +24,9 @@
 
 package eu.wordnice.db;
 
+import java.io.Closeable;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -45,10 +47,12 @@ import eu.wordnice.db.results.ResSetDB;
 import eu.wordnice.db.results.ResultResSet;
 import eu.wordnice.db.serialize.SerializeException;
 import eu.wordnice.db.results.ArraysResSet;
+import eu.wordnice.db.sql.JDBCSQL;
 import eu.wordnice.db.sql.MySQL;
 import eu.wordnice.db.sql.SQL;
 import eu.wordnice.db.sql.SQLite;
 import eu.wordnice.db.wndb.WNDB;
+import eu.wordnice.streams.OutputAdv;
 
 /**
  * This class allows you to easily create database of any available
@@ -56,7 +60,7 @@ import eu.wordnice.db.wndb.WNDB;
  * 
  * @author wordnice
  */
-public class Database {
+public class Database implements Closeable, AutoCloseable {
 	
 	/**
 	 * Set when MySQL, SQLite or any other SQL-based database is used
@@ -85,7 +89,7 @@ public class Database {
 	/**
 	 * @see {@link Database#init(Map, Map)}
 	 */
-	public Database(Map<String, String> data, Map<String, Object> cols)
+	public Database(Map<String, Object> data, Map<String, ColType> cols)
 			throws IllegalArgumentException, SerializeException, IOException, SQLException {
 		this.init(data, cols);
 	}
@@ -101,7 +105,7 @@ public class Database {
 	/**
 	 * @see {@link Database#init(SQL, String, Map)}
 	 */
-	public Database(SQL sql, String table, Map<String, Object> cols)
+	public Database(SQL sql, String table, Map<String, ColType> cols)
 			throws SQLException {
 		this.init(sql, table, cols);
 	}
@@ -114,18 +118,22 @@ public class Database {
 	}
 	
 	/**
-	 * @see {@link Database#init(ResSetDB, File, Map)}
-	 */
-	public Database(ResSetDB rs, File file, Map<String, Object> cols) {
-		this.init(rs, file, cols);
-	}
-	
-	/**
 	 * Create database for given type
 	 * 
 	 * Formats:
 	 * - type: sqlite
-	 * - file: ./test.sql
+	 * - file: ./test.sqlite
+	 * - table: test_table
+	 * 
+	 *  - type: mysql
+	 * - host: localhost:3306
+	 * - db: testdb
+	 * - user: admin
+	 * - pass: Passw0rd!
+	 * - table: test_table
+	 * 
+	 * - type: jdbc
+	 * - target: jdbc:sqlite:anotherway.sqlite
 	 * - table: test_table
 	 * 
 	 * - type: wndb
@@ -140,12 +148,6 @@ public class Database {
 	 * - type: json (todo)
 	 * - file: ./test.json
 	 * 
-	 * - type: mysql
-	 * - host: localhost:3306
-	 * - db: testdb
-	 * - user: admin
-	 * - pass: Passw0rd!
-	 * - table: test_table
 	 * 
 	 * 
 	 * @param data Map
@@ -156,55 +158,69 @@ public class Database {
 	 * @throws IOException Error while reading file-based database
 	 * @throws SQLException Error while connecting or quering SQL-based database
 	 */
-	public void init(Map<String, String> data, Map<String, Object> cols)
+	public void init(Map<String, Object> data, Map<String, ColType> cols)
 			throws IllegalArgumentException, SerializeException, IOException, SQLException {
-		String type = data.get("type");
-		if(type == null) {
+		Object otype = data.get("type");
+		if(otype == null) {
 			throw new IllegalArgumentException("Entered type is null!");
 		}
-		type = type.toLowerCase();
+		String type = otype.toString().toLowerCase();
 		if(type.equals("sqlite")) {
-			String file = data.get("file");
+			Object file = data.get("file");
 			if(file == null) {
 				throw new IllegalArgumentException("SQLite file is null!");
 			}
-			String table = data.get("table");
+			Object table = data.get("table");
 			if(table == null) {
 				throw new IllegalArgumentException("SQLite table is null!");
 			}
-			this.init(new SQLite(Api.getRealPath(new File(file))), table);
+			this.init(new SQLite(Api.getRealPath(new File(file.toString()))), table.toString(), cols);
 			this.sql.connect();
 		} else if(type.equals("mysql")) {
-			String host = data.get("host");
+			Object host = data.get("host");
 			if(host == null) {
 				throw new IllegalArgumentException("MySQL host is null!");
 			}
-			String db = data.get("db");
+			Object db = data.get("db");
 			if(db == null) {
 				throw new IllegalArgumentException("MySQL database name is null!");
 			}
-			String user = data.get("user");
+			Object user = data.get("user");
 			if(user == null) {
 				throw new IllegalArgumentException("MySQL user is null!");
 			}
-			String pass = data.get("pass");
+			Object pass = data.get("pass");
 			if(pass == null) {
 				throw new IllegalArgumentException("MySQL pass is null!");
 			}
-			String table = data.get("table");
+			Object table = data.get("table");
 			if(table == null) {
 				throw new IllegalArgumentException("MySQL table is null!");
 			}
 
-			this.init(new MySQL(host, db, user, pass), table);
+			this.init(new MySQL(host.toString(), db.toString(), user.toString(), pass.toString()), table.toString(), cols);
+			this.sql.connect();
+		} else if(type.equals("jdbc")) {
+			Object target = data.get("target");
+			if(target == null) {
+				throw new IllegalArgumentException("JDBC target is null!");
+			}
+			Object table = data.get("table");
+			if(table == null) {
+				throw new IllegalArgumentException("JDBC table is null!");
+			}
+			
+			this.init(new JDBCSQL(target.toString()), table.toString(), cols);
 			this.sql.connect();
 		} else if(type.equals("wndb")) {
-			String file = data.get("file");
+			Object file = data.get("file");
 			if(file == null) {
 				throw new IllegalArgumentException("SQLite file is null!");
 			}
-			File fl = new File(file);
-			this.init(new WNDB(fl), fl);
+			File fl = new File(file.toString());
+			this.init(WNDB.loadOrCreateWNDBSafe(fl, 
+					cols.keySet().toArray(new String[0]),
+					cols.values().toArray(new ColType[0])), fl);
 		} else {
 			throw new IllegalArgumentException("Unknown database type " + type);
 		}
@@ -229,12 +245,13 @@ public class Database {
 	 * @param table name
 	 * @param cols columns names and types
 	 */
-	public void init(SQL sql, String table, Map<String, Object> cols)
+	public void init(SQL sql, String table, Map<String, ColType> cols)
 			throws SQLException {
 		this.rs = null;
 		this.file = null;
 		this.sql = sql;
 		this.sql_table = table;
+		Database.createTable(cols, sql, table);
 	}
 	
 	/**
@@ -244,21 +261,34 @@ public class Database {
 	 * @param file Output file for saving
 	 */
 	public void init(ResSetDB rs, File file) {
-		this.init(rs, file, null);
-	}
-	
-	/**
-	 * Set database type to ResSet
-	 * 
-	 * @param rs ResSet instance
-	 * @param file Output file for saving
-	 * @param cols columns names and types
-	 */
-	public void init(ResSetDB rs, File file, Map<String, Object> cols) {
 		this.sql = null;
 		this.sql_table = null;
 		this.rs = rs;
 		this.file = file;
+	}
+	
+	/**
+	 * Save the database if needed (no action on sql-based databases, but required)
+	 * 
+	 * @see {@link ResSetDB#write(eu.wordnice.streams.Output)}
+	 * @see {@link OutputAdv#forFile(File)}
+	 */
+	public void save() throws SerializeException, FileNotFoundException, IOException {
+		if(this.sql == null) {
+			this.rs.write(OutputAdv.forFile(this.file));
+		}
+	}
+	
+	/**
+	 * @see java.io.Closeable#close()
+	 */
+	@Override
+	public void close() throws IOException {
+		try {
+			this.save();
+		} catch(Exception e) {
+			throw new IOException("Cannot save database!", e);
+		}
 	}
 	
 	/**
@@ -319,6 +349,34 @@ public class Database {
 	}
 	
 	/**
+	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
+	 */
+	public ResSet select(String[] columns, Sort[] sort) throws SQLException, DatabaseException {
+		return this.select(columns, null, sort, null);
+	}
+	
+	/**
+	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
+	 */
+	public ResSet select(Sort[] sort) throws SQLException, DatabaseException {
+		return this.select(null, null, sort, null);
+	}
+	
+	/**
+	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
+	 */
+	public ResSet select(Limit limit) throws SQLException, DatabaseException {
+		return this.select(null, null, null, limit);
+	}
+	
+	/**
+	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
+	 */
+	public ResSet select(Sort[] sort, Limit limit) throws SQLException, DatabaseException {
+		return this.select(null, null, sort, limit);
+	}
+	
+	/**
 	 * @param columns Columns to get. Returned value can contain more or all
 	 *                available columns.
 	 *                If null, then there are selected all available columns
@@ -374,6 +432,7 @@ public class Database {
 			}
 			
 			Val.TwoVal<String, List<Object>> whproc = where.toSQL();
+			System.out.println(cmd + " WHERE " + whproc.one + suf.toString());
 			PreparedStatement ps = this.sql.prepare(cmd + " WHERE " + whproc.one + suf.toString());
 			try {
 				List<Object> list = whproc.two;
@@ -860,5 +919,37 @@ public class Database {
 	}
 	
 	
+	/**
+	 * CREATE TABLE IF NOT EXISTS [table]
+	 * 
+	 * @param map Map with column names and types
+	 * @param sql SQL connection
+	 * @param table Table name
+	 * 
+	 * @throws SQLException Exception while processing command
+	 */
+	public static void createTable(Map<String, ColType> map, SQL sql, String table) throws SQLException {
+		StringBuilder sb = new StringBuilder();
+		sb.append("CREATE TABLE IF NOT EXISTS ");
+		sb.append(table);
+		sb.append(" (");
+		
+		Iterator<java.util.Map.Entry<String, ColType>> it = map.entrySet().iterator();
+		int i = 0;
+		while(it.hasNext()) {
+			if(i++ != 0) {
+				sb.append(',').append(' ');
+			}
+			java.util.Map.Entry<String, ColType> ent = it.next();
+			sb.append('`');
+			sb.append(ent.getKey());
+			sb.append('`').append(' ');
+			sb.append(ent.getValue().sql);
+		}
+		
+		sb.append(')');
+		System.out.println(sb.toString());
+		sql.command(sb.toString());
+	}
 	
 }

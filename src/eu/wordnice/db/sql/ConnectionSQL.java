@@ -26,7 +26,6 @@ package eu.wordnice.db.sql;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -46,20 +45,7 @@ public abstract class ConnectionSQL implements SQL {
 	
 	public Statement createStatement() throws SQLException {
 		this.checkConnection();
-		return this.con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
-                ResultSet.CONCUR_READ_ONLY);
-	}
-	
-	public Statement createStatement(int resultSetType,
-            int resultSetConcurrency) throws SQLException {
-		this.checkConnection();
-		return this.con.createStatement(resultSetType, resultSetConcurrency);
-	}
-	
-	public Statement createStatement(int resultSetType,
-            int resultSetConcurrency, int resultSetHoldability) throws SQLException {
-		this.checkConnection();
-		return this.con.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
+		return this.con.createStatement();
 	}
 	
 	@Override

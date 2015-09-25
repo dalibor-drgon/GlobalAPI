@@ -38,6 +38,12 @@ public interface ResSet {
 	public int cols();
 	
 	/**
+	 * @return `true` if calls to {@link ResSet#first()}
+	 *         and {@link ResSet#previous()} are not supported
+	 */
+	public boolean forwardOnly();
+	
+	/**
 	 * @return Current keys. Do not modify, collection should be immutable.
 	 *         If this ResSet is from table, keys should be returned at any time
 	 *         and should be same.
@@ -85,50 +91,56 @@ public interface ResSet {
 	public Object getObject(int in);
 
 	public String getString(String name);
-
 	public String getString(int in);
 
 	public byte[] getBytes(String name);
-
 	public byte[] getBytes(int in);
 
 	public boolean getBoolean(String name);
-
 	public boolean getBoolean(int in);
 
 	public byte getByte(String name);
-
 	public byte getByte(int in);
 
 	public short getShort(String name);
-
 	public short getShort(int in);
 
 	public int getInt(String name);
-
 	public int getInt(int in);
 
 	public long getLong(String name);
-
 	public long getLong(int in);
 
 	public float getFloat(String name);
-
 	public float getFloat(int in);
 
 	public double getDouble(String name);
-
 	public double getDouble(int in);
-
-	/**
-	 * Go to first value
-	 */
-	public void first();
+	
+	public <X> Collection<X> getColl(String name);
+	public <X> Collection<X> getColl(int in);
+	
+	public <X, Y> Map<X, Y> getMap(String name);
+	public <X, Y> Map<X, Y> getMap(int in);
 
 	/**
 	 * @return `true` If got next entry, otherwise `false`
 	 */
 	public boolean next();
+	
+	/**
+	 * @return `true` If got previous entry, otherwise `false`
+	 * 
+	 * @throws UnsupportedOperationException If {@link ResSet#forwardOnly()} returns `true`
+	 */
+	public boolean previous() throws UnsupportedOperationException;
+	
+	/**
+	 * Go to first value
+	 * 
+	 * @throws UnsupportedOperationException If {@link ResSet#forwardOnly()} returns `true`
+	 */
+	public void first() throws UnsupportedOperationException;
 	
 	/**
 	 * Remove current entry

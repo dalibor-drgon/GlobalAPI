@@ -184,14 +184,18 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 		if(this.names == null) {
 			return null;
 		}
-		return this.getCurrent()[this.getColumnIndex(name)];
+		int index = this.getColumnIndex(name);
+		if(index == -1) {
+			throw new IllegalArgumentException("Illegal column name '" + name + "'!");
+		}
+		return this.getCurrent()[index];
 	}
 
 	@Override
 	public Object getObject(int in) {
 		this.checkSet();
 		if(in < 0 || in >= this.cols()) {
-			return null;
+			throw new IllegalArgumentException("Illegal column index " + in + " / " + this.cols() + "!");
 		}
 		return this.getCurrent()[in];
 	}
@@ -216,6 +220,11 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 		this.it = this.values.listIterator();
 		this.cur = null;
 	}
+	
+	@Override
+	public boolean forwardOnly() {
+		return false;
+	}
 
 	@Override
 	public boolean next() {
@@ -224,6 +233,16 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 			return false;
 		}
 		this.cur = this.it.next();
+		return true;
+	}
+	
+	@Override
+	public boolean previous() {
+		if(!this.it.hasPrevious()) {
+			this.cur = null;
+			return false;
+		}
+		this.cur = this.it.previous();
 		return true;
 	}
 

@@ -29,25 +29,29 @@ import java.util.Map;
 
 public enum ColType {
 
-	BOOLEAN(1, "TINYINT DEFAULT 0"), BYTE(2, "TINYINT DEFAULT 0"),
-	SHORT(3, "SMALLINT DEFAULT 0"), INT(4, "INT DEFAULT 0"),
-	LONG(5, "BIGINT DEFAULT 0"),
+	BOOLEAN(1, "TINYINT DEFAULT 0", false), BYTE(2, "TINYINT DEFAULT 0", (byte) 0),
+	SHORT(3, "SMALLINT DEFAULT 0", (short) 0), INT(4, "INT DEFAULT 0", (int) 0),
+	LONG(5, "BIGINT DEFAULT 0", (long) 0),
 	
-	FLOAT(6, "FLOAT DEFAULT 0.0"), DOUBLE(7, "DOUBLE DEFAULT 0.0"),
+	FLOAT(6, "FLOAT DEFAULT 0.0", (float) 0), DOUBLE(7, "DOUBLE DEFAULT 0.0", (double) 0),
 	
-	STRING(8, "LONGTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL"),
-	BYTES(9, "LONGBLOB DEFAULT NULL"),
+	STRING(8, "LONGTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL", null),
+	BYTES(9, "LONGBLOB DEFAULT NULL", null),
 	
-	MAP(10, "LONGBLOB DEFAULT NULL"), ARRAY(11, "LONGBLOB DEFAULT NULL"),
+	MAP(10, "LONGBLOB DEFAULT NULL", null), ARRAY(11, "LONGBLOB DEFAULT NULL", null),
 	
-	ID(12, "LONG NOT NULL AUTO_INCREMENT PRIMARY KEY");
+	ID(12, "BIGINT PRIMARY KEY", (long) 0);
+	
+	public static String STRING_SQLITE = "LONGTEXT DEFAULT NULL";
 
 	public byte b;
 	public String sql;
+	public Object def;
 	
-	private ColType(int b, String sql) {
+	private ColType(int b, String sql, Object def) {
 		this.b = (byte) b;
 		this.sql = sql;
+		this.def = def;
 	}
 	
 	public static ColType getByByte(int b) {
@@ -76,6 +80,7 @@ public enum ColType {
 			case INT:
 				return Integer.class.isAssignableFrom(c);
 			case LONG:
+			case ID:
 				return Long.class.isAssignableFrom(c);
 			case FLOAT:
 				return Float.class.isAssignableFrom(c);
@@ -89,9 +94,6 @@ public enum ColType {
 				return Collection.class.isAssignableFrom(c) || c.isArray();
 			case MAP:
 				return Map.class.isAssignableFrom(c);
-			case ID:
-				return (Byte.class.isAssignableFrom(c) || Short.class.isAssignableFrom(c)
-						|| Integer.class.isAssignableFrom(c) || Long.class.isAssignableFrom(c));
 		}
 		return false;
 	}

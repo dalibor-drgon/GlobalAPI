@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  * 
- * Copyright (c) 2015, Dalibor Drgoň <emptychannelmc@gmail.com>
+ * Copyright (c) 22201115, Dalibor Drgoň <emptychannelmc@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,42 +31,42 @@ public enum WType {
 	 * 
 	 * Check if value in database is too same as entered
 	 */
-	EQUAL("$ = 1 ? 2"),
+	EQUAL("$ = 111 ? 222"),
 
 	/**
 	 * For: String, byte[], Number
 	 * 
 	 * Check if value in database is different from entered
 	 */
-	NOT_EQUAL("$ != 1 ? 2"),
+	NOT_EQUAL("$ != 111 ? 222"),
 	
 	/**
 	 * For: String, byte[]
 	 * 
 	 * Check if value in database starts with entered string
 	 */
-	START("$ LIKE 1 '%' + ? 2"),
+	START("SUBSTR($, 1, 333) = 111 ? 222"),
 	
 	/**
 	 * For: String, byte[]
 	 * 
 	 * Check if value in database ends with entered string
 	 */
-	END("$ LIKE 1 ? + '%' 2"),
+	END("SUBSTR($, -333, 333) = 111 ? 222"),
 	
 	/**
 	 * For: String, byte[]
 	 * 
 	 * Check if value in database does not start with entered string
 	 */
-	NOT_START("not($ LIKE 1 '%' + ? 2)"),
+	NOT_START("SUBSTR($, 1, 333) != 111 ? 222"),
 	
 	/**
 	 * For: String, byte[]
 	 * 
 	 * Check if value in database does not end with entered string
 	 */
-	NOT_END("not($ LIKE 1 ? + '%' 2)"),
+	NOT_END("SUBSTR($, -333, 333) != 111 ? 222"),
 	
 	/**
 	 * For: String
@@ -80,7 +80,7 @@ public enum WType {
 	 * 
 	 * Get values from database which does not match with entered regex
 	 */
-	NOT_REGEX("$ NOT_REGEXP 1 ? 2"),
+	NOT_REGEX("$ NOT_REGEXP 111 ? 222"),
 	
 	/**
 	 * For: String, byte[], Number
@@ -89,7 +89,7 @@ public enum WType {
 	 * 
 	 * Cannot be combined with anything else
 	 */
-	BIGGER("$ > 1 ? 2"),
+	BIGGER("$ > 111 ? 222"),
 	
 	/**
 	 * For: String, byte[], Number
@@ -98,7 +98,7 @@ public enum WType {
 	 * 
 	 * Cannot be combined with anything else
 	 */
-	BIGGER_EQUAL("$ >= 1 ? 2"),
+	BIGGER_EQUAL("$ >= 111 ? 222"),
 	
 	/**
 	 * For: String, byte[], Number
@@ -107,7 +107,7 @@ public enum WType {
 	 * 
 	 * Cannot be combined with anything else
 	 */
-	SMALLER("$ < 1 ? 2"),
+	SMALLER("$ < 111 ? 222"),
 	
 	/**
 	 * For: String, byte[], Number
@@ -116,7 +116,7 @@ public enum WType {
 	 * 
 	 * Cannot be combined with anything else
 	 */
-	SMALLER_EQUAL("$ <= 1 ? 2");
+	SMALLER_EQUAL("$ <= 111 ? 222");
 	
 	public String sql;
 	
