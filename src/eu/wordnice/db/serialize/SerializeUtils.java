@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import eu.wordnice.api.Api;
 import eu.wordnice.streams.Input;
 import eu.wordnice.streams.Output;
 import eu.wordnice.streams.InputAdv;
@@ -37,17 +38,45 @@ public class SerializeUtils {
 	
 	public static void write(DataWriter dw, File file) throws SerializeException, IOException {
 		if(file.exists() == false) {
-			file.createNewFile();
+			Api.createFileIfNot(file);
 		}
 		Output os = OutputAdv.forFile(file);
-		dw.write(os);
-		os.close();
+		try {
+			dw.write(os);
+		} catch(SerializeException e) {
+			try {
+				os.close();
+			} catch(Exception ign) {}
+			throw e;
+		} catch(IOException e) {
+			try {
+				os.close();
+			} catch(Exception ign) {}
+			throw e;
+		}
+		try {
+			os.close();
+		} catch(Exception ign) {}
 	}
 	
 	public static void read(DataReader dr, File file) throws SerializeException, FileNotFoundException, IOException {
 		Input is = InputAdv.forFile(file);
-		dr.read(is);
-		is.close();
+		try {
+			dr.read(is);
+		} catch(SerializeException e) {
+			try {
+				is.close();
+			} catch(Exception ign) {}
+			throw e;
+		} catch(IOException e) {
+			try {
+				is.close();
+			} catch(Exception ign) {}
+			throw e;
+		}
+		try {
+			is.close();
+		} catch(Exception ign) {}
 	}
 	
 }

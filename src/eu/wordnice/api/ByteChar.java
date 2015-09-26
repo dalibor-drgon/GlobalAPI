@@ -143,53 +143,53 @@ public class ByteChar {
 	 Utilities
 	 */
 	
-	public static byte toUpper(byte ch) {
-		return (byte) TRNC_UPPERCASE[ch];
+	public static byte toUpper(int ch) {
+		return (byte) (TRNC_UPPERCASE[ch & 0xFF] & 0xFF);
 	}
 	
-	public static byte toLower(byte ch) {
-		return (byte) TRNC_LOWERCASE[ch];
+	public static byte toLower(int ch) {
+		return (byte) (TRNC_LOWERCASE[ch & 0xFF] & 0xFF);
 	}
 
 
 
-	public static boolean isLower(byte cha) {
-		return ((TRNC_FLAGS_NIX[cha] & 0x0001) != 0);
+	public static boolean isLower(int cha) {
+		return ((TRNC_FLAGS_NIX[cha & 0xFF] & 0x0001) != 0);
 	}
-	public static boolean isUpper(byte cha) {
-		return ((TRNC_FLAGS_NIX[cha] & 0x0002) != 0);
+	public static boolean isUpper(int cha) {
+		return ((TRNC_FLAGS_NIX[cha & 0xFF] & 0x0002) != 0);
 	}
-	public static boolean isDigit(byte cha) {
-		return ((TRNC_FLAGS_NIX[cha] & 0x0004) != 0);
+	public static boolean isDigit(int cha) {
+		return ((TRNC_FLAGS_NIX[cha & 0xFF] & 0x0004) != 0);
 	}
-	public static boolean isAlpha(byte cha) {
-		return ((TRNC_FLAGS_NIX[cha] & 0x0003) != 0);
+	public static boolean isAlpha(int cha) {
+		return ((TRNC_FLAGS_NIX[cha & 0xFF] & 0x0003) != 0);
 	}
-	public static boolean isAlphaDigit(byte cha) {
-		return ((TRNC_FLAGS_NIX[cha] & 0x0007) != 0);
+	public static boolean isAlphaDigit(int cha) {
+		return ((TRNC_FLAGS_NIX[cha & 0xFF] & 0x0007) != 0);
 	}
-	public static boolean isNum(byte cha) {
-		return ((TRNC_FLAGS_NIX[cha] & 0x000C) != 0);
+	public static boolean isNum(int cha) {
+		return ((TRNC_FLAGS_NIX[cha & 0xFF] & 0x000C) != 0);
 	}
-	public static boolean isFloatNum(byte cha) {
-		return ((TRNC_FLAGS_NIX[cha] & 0x001C) != 0);
+	public static boolean isFloatNum(int cha) {
+		return ((TRNC_FLAGS_NIX[cha & 0xFF] & 0x001C) != 0);
 	}
-	public static boolean isGraph(byte cha) {
-		return ((TRNC_FLAGS_NIX[cha] & 0x0020) != 0);
+	public static boolean isGraph(int cha) {
+		return ((TRNC_FLAGS_NIX[cha & 0xFF] & 0x0020) != 0);
 	}
-	public static boolean isControl(byte cha) {
-		return ((TRNC_FLAGS_NIX[cha] & 0x0040) != 0);
+	public static boolean isControl(int cha) {
+		return ((TRNC_FLAGS_NIX[cha & 0xFF] & 0x0040) != 0);
 	}
-	public static boolean isSpace(byte cha) {
-		return ((TRNC_FLAGS_NIX[cha] & 0x0080) != 0);
+	public static boolean isSpace(int cha) {
+		return ((TRNC_FLAGS_NIX[cha & 0xFF] & 0x0080) != 0);
 	}
-	public static boolean isPrint(byte cha) {
-		return ((TRNC_FLAGS_NIX[cha] & 0x0100) != 0);
+	public static boolean isPrint(int cha) {
+		return ((TRNC_FLAGS_NIX[cha & 0xFF] & 0x0100) != 0);
 	}
-	public static boolean isPunct(byte cha) {
-		return ((TRNC_FLAGS_NIX[cha] & 0x0200) != 0);
+	public static boolean isPunct(int cha) {
+		return ((TRNC_FLAGS_NIX[cha & 0xFF] & 0x0200) != 0);
 	}
-	public static boolean isHex(byte cha) {
-		return ((TRNC_FLAGS_NIX[cha] & 0x0400) != 0);
+	public static boolean isHex(int cha) {
+		return ((TRNC_FLAGS_NIX[cha & 0xFF] & 0x0400) != 0);
 	}
 }

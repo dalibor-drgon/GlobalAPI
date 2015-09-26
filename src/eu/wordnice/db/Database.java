@@ -64,15 +64,23 @@ public class Database implements Closeable, AutoCloseable {
 	
 	/**
 	 * Set when MySQL, SQLite or any other SQL-based database is used
-	 * Pair with sql_table
+	 * Pair with sql_table, columns
 	 */
 	public SQL sql;
 	
 	/**
 	 * SQL table name
-	 * Part with sql
+	 * Part with sql, columns
 	 */
 	public String sql_table;
+	
+	/**
+	 * Columns {Name: Type}
+	 * Pair with sql, sql_table
+	 * 
+	 * Private to avoid differences between SQL & ResSet databases
+	 */
+	private Map<String, ColType> columns;
 	
 	/**
 	 * Set when WNDB, FLATFILE, JSON or any other ResSet-based database is used
@@ -92,14 +100,6 @@ public class Database implements Closeable, AutoCloseable {
 	public Database(Map<String, Object> data, Map<String, ColType> cols)
 			throws IllegalArgumentException, SerializeException, IOException, SQLException {
 		this.init(data, cols);
-	}
-	
-	/**
-	 * @see {@link Database#init(SQL, String)}
-	 */
-	public Database(SQL sql, String table)
-			throws SQLException {
-		this.init(sql, table);
 	}
 	
 	/**
@@ -133,7 +133,7 @@ public class Database implements Closeable, AutoCloseable {
 	 * - table: test_table
 	 * 
 	 * - type: jdbc
-	 * - target: jdbc:sqlite:anotherway.sqlite
+	 * - target: jdbc:somevendor:somedata
 	 * - table: test_table
 	 * 
 	 * - type: wndb
@@ -151,6 +151,7 @@ public class Database implements Closeable, AutoCloseable {
 	 * 
 	 * 
 	 * @param data Map
+	 * @param cols Columns names and types
 	 * 
 	 * @throws IllegalArgumentException when not enought information were provided
 	 *                                  or entered database type does not exist
@@ -232,18 +233,7 @@ public class Database implements Closeable, AutoCloseable {
 	 * 
 	 * @param sql SQL instance
 	 * @param table name
-	 */
-	public void init(SQL sql, String table)
-			throws SQLException {
-		this.init(sql, table, null);
-	}
-	
-	/**
-	 * Set database type to SQL
-	 * 
-	 * @param sql SQL instance
-	 * @param table name
-	 * @param cols columns names and types
+	 * @param cols Columns names and types
 	 */
 	public void init(SQL sql, String table, Map<String, ColType> cols)
 			throws SQLException {
@@ -251,6 +241,7 @@ public class Database implements Closeable, AutoCloseable {
 		this.file = null;
 		this.sql = sql;
 		this.sql_table = table;
+		this.columns = cols;
 		Database.createTable(cols, sql, table);
 	}
 	
@@ -396,9 +387,9 @@ public class Database implements Closeable, AutoCloseable {
 				suf.append(" ORDER BY ");
 				for(int i = 0, n = sort.length; i < n; i++) {
 					if(i != 0) {
-						suf.append(", ");
+						suf.append(',').append(' ');
 					}
-					suf.append(sort[i].toSQL());
+					suf.append(sql.getSort(sort[i], this.columns.get(sort[i].key)));
 				}
 			}
 			if(limit != null) {
@@ -431,8 +422,7 @@ public class Database implements Closeable, AutoCloseable {
 				return this.sql.query(cmd + suf.toString());
 			}
 			
-			Val.TwoVal<String, List<Object>> whproc = where.toSQL();
-			System.out.println(cmd + " WHERE " + whproc.one + suf.toString());
+			Val.TwoVal<String, List<Object>> whproc = where.toSQL(this.sql);
 			PreparedStatement ps = this.sql.prepare(cmd + " WHERE " + whproc.one + suf.toString());
 			try {
 				List<Object> list = whproc.two;
@@ -712,7 +702,7 @@ public class Database implements Closeable, AutoCloseable {
 			
 			try {
 				if(where != null) {
-					Val.TwoVal<String, List<Object>> whproc = where.toSQL();
+					Val.TwoVal<String, List<Object>> whproc = where.toSQL(this.sql);
 					ps = this.sql.prepare(cmd + " WHERE " + whproc.one + suf);
 					List<Object> list = whproc.two;
 					for(int i = 0, n = list.size(); i < n; ) {
@@ -816,7 +806,7 @@ public class Database implements Closeable, AutoCloseable {
 			
 			try {
 				if(where != null) {
-					Val.TwoVal<String, List<Object>> whproc = where.toSQL();
+					Val.TwoVal<String, List<Object>> whproc = where.toSQL(this.sql);
 					ps = this.sql.prepare(cmd + " WHERE " + whproc.one + suf);
 					List<Object> list = whproc.two;
 					for(int i = 0, n = list.size(); i < n; ) {
@@ -929,6 +919,32 @@ public class Database implements Closeable, AutoCloseable {
 	 * @throws SQLException Exception while processing command
 	 */
 	public static void createTable(Map<String, ColType> map, SQL sql, String table) throws SQLException {
+		if(!(sql instanceof SQLite)) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("CREATE TABLE IF NOT EXISTS ");
+			sb.append(table);
+			sb.append(" (");
+			
+			Iterator<java.util.Map.Entry<String, ColType>> it = map.entrySet().iterator();
+			int i = 0;
+			while(it.hasNext()) {
+				if(i++ != 0) {
+					sb.append(',').append(' ');
+				}
+				java.util.Map.Entry<String, ColType> ent = it.next();
+				sb.append('`');
+				sb.append(ent.getKey());
+				sb.append('`').append(' ');
+				sb.append(ent.getValue().sql);
+			}
+			
+			sb.append(") DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci");
+			
+			//try {
+				sql.command(sb.toString());
+				return;
+			//} catch(SQLException sqle) {}
+		}
 		StringBuilder sb = new StringBuilder();
 		sb.append("CREATE TABLE IF NOT EXISTS ");
 		sb.append(table);
@@ -944,11 +960,11 @@ public class Database implements Closeable, AutoCloseable {
 			sb.append('`');
 			sb.append(ent.getKey());
 			sb.append('`').append(' ');
-			sb.append(ent.getValue().sql);
+			sb.append(ent.getValue().sql_sqlite);
 		}
 		
-		sb.append(')');
-		System.out.println(sb.toString());
+		sb.append(") DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci");
+		
 		sql.command(sb.toString());
 	}
 	

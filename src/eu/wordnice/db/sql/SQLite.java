@@ -27,6 +27,9 @@ package eu.wordnice.db.sql;
 import java.io.File;
 
 import eu.wordnice.api.Api;
+import eu.wordnice.db.ColType;
+import eu.wordnice.db.operator.Sort;
+import eu.wordnice.db.operator.Where;
 
 public class SQLite extends JDBCSQL {
 	
@@ -36,6 +39,50 @@ public class SQLite extends JDBCSQL {
 	
 	public SQLite(String file) {
 		super("jdbc:sqlite:" + ConnectionSQL.escapeJDBC(file));
+	}
+	
+	@Override
+	public String getWhere(Where where) {
+		String str = where.flag.sql;
+		if(where.val instanceof Number) {
+			return Api.replace(str, new Object[]{
+					"111 ", "",
+					" 222", "",
+					"333", "",
+					"$", where.key
+			});
+		} else if(where.val instanceof byte[]) {
+			return Api.replace(str, new Object[]{
+					"111 ", "",
+					" 222", "",
+					"333", ((byte[]) where.val).length,
+					"$", where.key
+			});
+		} else if(where.val instanceof String) {
+			return Api.replace(str, new Object[]{
+					"111 ", "",
+					"222", (where.sens) ? "" : "COLLATE NOCASE",
+					"333", ((String) where.val).length(),
+					"$", where.key
+			});
+		} else if(where.val == null) {
+			return Api.replace(str, new Object[]{
+					"111 ", "",
+					" 222", "",
+					"333", "0",
+					"$", where.key
+			});
+		} else {
+			throw new IllegalArgumentException("Unknown value type " + where.val.getClass().getName());
+		}
+	}
+	
+	@Override
+	public String getSort(Sort sort, ColType tp) {
+		if(tp == ColType.STRING) {
+			return sort.key + " " + sort.type.sqlite_str;
+		}
+		return sort.key + " " + sort.type.sql;
 	}
 
 }

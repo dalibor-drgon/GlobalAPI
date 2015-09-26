@@ -24,6 +24,12 @@
 
 package eu.wordnice.api;
 
+/**
+ * On program start, make sure you call {@link OnlyOnce#debugAll(OnlyOnceLogger)}
+ * (except bukkit / sponge plugins)
+ * 
+ * @author wordnice
+ */
 public class OnlyOnce {
 	
 	public interface OnlyOnceLogger {
@@ -32,31 +38,33 @@ public class OnlyOnce {
 	}
 	
 	/**
-	 * On program start, make sure you call debugAll()
+	 * On program start, make sure you call this method
 	 * (except bukkit / sponge plugins)
 	 */
 	public static void debugAll(OnlyOnceLogger log) {
 		OnlyOnce.debugSQL(log);
 	}
 	
-	public static void debugDriver(OnlyOnceLogger log, String driver, String name) {
+	
+	
+	protected static void debugDriver(OnlyOnceLogger log, String driver, String name) {
 		try {
 			if(Class.forName(driver) == null) {
-				throw new NullPointerException();
+				throw new NullPointerException("JVM just returned null!");
 			}
-			log.info(name + " driver was FOUND and loaded!");
+			log.info(name + " (" + driver +") driver was FOUND AND LOADED!");
 		} catch(Throwable t) {
 			if(t instanceof LinkageError) {
-				log.severe(name + " driver was FOUND, but NOT LOADED! " 
+				log.severe(name + " (" + driver +") driver was found, but NOT LOADED! " 
 						+ t.getClass().getName() + ": " + t.getMessage() 
 						+ " This can cause problems to addons using MainAPI!");
 			} else {
-				log.severe(name + " driver was NOT FOUND! This can cause problems to addons using MainAPI!");
+				log.severe(name + " (" + driver +") driver was NOT FOUND! This can cause problems to addons using MainAPI!");
 			}
 		}
 	}
 	
-	public static void debugSQL(OnlyOnceLogger log) {
+	protected static void debugSQL(OnlyOnceLogger log) {
 		OnlyOnce.debugDriver(log, "org.sqlite.JDBC","SQLite");
 		OnlyOnce.debugDriver(log, "com.mysql.jdbc.Driver", "MySQL");
 	}

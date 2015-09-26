@@ -95,6 +95,20 @@ public class Where {
 	 * 
 	 * @param key Column name / key for val {@link Where#key}
 	 * @param val Value to find {@link Where#val}
+	 * @param sens Compare case-sensitive {@link Where#sens}
+	 */
+	public Where(String key, Object val, boolean sens) {
+		this.key = key;
+		this.val = val;
+		this.flag = WType.EQUAL;
+		this.sens = sens;
+	}
+	
+	/**
+	 * Create where comparator
+	 * 
+	 * @param key Column name / key for val {@link Where#key}
+	 * @param val Value to find {@link Where#val}
 	 * @param flag {@link WType} {@link Where#flag}
 	 * @param sens Compare case-sensitive {@link Where#sens}
 	 */
@@ -106,60 +120,34 @@ public class Where {
 	}
 	
 	/**
-	 * @return SQL format
-	 */
-	public String toSQL() {
-		String str = this.flag.sql;
-		if(this.val instanceof Number) {
-			return Api.replace(str, new Object[]{
-					"111 ", "",
-					" 222", "",
-					"333", "",
-					"$", this.key
-			});
-		} else if(this.val instanceof byte[]) {
-			return Api.replace(str, new Object[]{
-					"111", (this.sens) ? "BINARY" : "",
-					" 222", "",
-					"333", ((byte[]) this.val).length,
-					"$", this.key
-			});
-		} else if(this.val instanceof String) {
-			return Api.replace(str, new Object[]{
-					"111 ", "",
-					"222", (this.sens) ? "COLLATE utf8_bin" : "",
-					"333", ((String) this.val).length(),
-					"$", this.key
-			});
-		} else if(this.val == null) {
-			return Api.replace(str, new Object[]{
-					"111 ", "",
-					" 222", "",
-					"333", -1,
-					"$", this.key
-			});
-		} else {
-			throw new IllegalArgumentException("Unknown value type " + this.val.getClass().getName());
-		}
-	}
-	
-	/**
 	 * @param rs ResSet with values to compare
 	 * @return `true` if values match with this AndOr
 	 */
 	public boolean match(ResSet rs) {
 		switch(this.flag) {
 			case BIGGER:
-				return rs.getDouble(this.key) > ((Number) this.val).doubleValue();
+				if(this.sens) {
+					return SType.ASC.comp.compare(rs.getObject(this.key), this.val) > 0;
+				}
+				return SType.ASC_IC.comp.compare(rs.getObject(this.key), this.val) > 0;
 				
 			case BIGGER_EQUAL:
-				return rs.getDouble(this.key) >= ((Number) this.val).doubleValue();
+				if(this.sens) {
+					return SType.ASC.comp.compare(rs.getObject(this.key), this.val) >= 0;
+				}
+				return SType.ASC_IC.comp.compare(rs.getObject(this.key), this.val) >= 0;
 				
 			case SMALLER:
-				return rs.getDouble(this.key) < ((Number) this.val).doubleValue();
+				if(this.sens) {
+					return SType.ASC.comp.compare(rs.getObject(this.key), this.val) < 0;
+				}
+				return SType.ASC_IC.comp.compare(rs.getObject(this.key), this.val) < 0;
 				
 			case SMALLER_EQUAL:
-				return rs.getDouble(this.key) <= ((Number) this.val).doubleValue();
+				if(this.sens) {
+					return SType.ASC.comp.compare(rs.getObject(this.key), this.val) <= 0;
+				}
+				return SType.ASC_IC.comp.compare(rs.getObject(this.key), this.val) <= 0;
 				
 			case START:
 				return Where.start(rs, this.key, this.val, this.sens);
@@ -302,12 +290,12 @@ public class Where {
 		});
 		
 		//TEST!
-		int type = 1;
+		int type = 0;
 		//0 - MySQL
 		//1 - SQLite
 		//2 - WNDB (ResSetDB)
 		
-		String table = "example";
+		String table = "example4";
 		Map<String, ColType> cols = new ImmMapArray<String, ColType>(new Object[] {
 				"id", ColType.ID,
 				"name", ColType.STRING,
@@ -327,11 +315,16 @@ public class Where {
 			}), cols);
 		}
 		
+		ResSet rs = db.sql.query("show collation where charset = 'utf8'");
+		while(rs.next()) {
+			System.out.println(rs.getEntries());
+		}
+		
 		
 		///
-		System.out.print("\n\nSELECT:\n");
+		System.out.print("\nSELECT\n");
 		
-		ResSet rs = db.select(new Or(
+		rs = db.select(new Or(
 				new Where("id", null),
 				new Where("id", 0),
 				new Where("id", 1)
@@ -342,13 +335,13 @@ public class Where {
 		
 		
 		///
-		System.out.print("\n\nSELECT:\n");
+		System.out.print("\nSELECT\n");
 		Where.selectAll(db);
 		
 		
 		
 		///
-		System.out.print("\n\nINSERT:\n");
+		System.out.print("\nINSERT\n");
 		
 		db.insert(new ImmMapArray<String, Object>(new Object[] {
 				"name", "DEADBEEF",
@@ -358,30 +351,31 @@ public class Where {
 		
 		
 		///
-		System.out.print("\n\nSELECT:\n");
+		System.out.print("\nSELECT\n");
 		Where.selectAll(db);
 		
 		
 		
 		///
-		System.out.print("\n\nUPDATE:\n");
+		System.out.print("\nUPDATE\n");
 		
 		db.update(new ImmMapArray<String, Object>(new Object[] {
 				"name", "DEADCAFE"
 		}), new And(
-				new Where("name", "DEADBeeF", WType.EQUAL, false)
+				new Where("name", "DEADBeeF", WType.EQUAL, false),
+				new Where("pass", new byte[] {1,2,3,4,5,6,7,8}, true)
 		));
 		
 		
 		
 		///
-		System.out.print("\n\nSELECT:\n");
+		System.out.print("\nSELECT\n");
 		Where.selectAll(db);
 		
 		
 		
 		///
-		System.out.print("\n\nDELETE:\n");
+		System.out.print("\nDELETE\n");
 		
 		db.delete(new Or(
 				new Where("id", null),
@@ -390,7 +384,7 @@ public class Where {
 		
 		
 		///
-		System.out.print("\n\nSELECT:\n");
+		System.out.print("\nSELECT\n");
 		Where.selectAll(db);
 		
 	}

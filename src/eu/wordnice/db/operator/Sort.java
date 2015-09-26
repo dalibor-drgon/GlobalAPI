@@ -76,13 +76,5 @@ public class Sort {
 		this.type = SType.ASC;
 		this.bin = false;
 	}
-
-	
-	/**
-	 * @return SQL string
-	 */
-	public String toSQL() {
-		return this.key + " " + this.type.toSQL(this.bin);
-	}
 	
 }

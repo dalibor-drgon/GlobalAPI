@@ -28,13 +28,16 @@ import java.util.List;
 
 import eu.wordnice.api.Val;
 import eu.wordnice.db.results.ResSet;
+import eu.wordnice.db.sql.SQL;
 
 public interface AndOr {
 	
 	/**
+	 * @param sql SQL database for which will be SQL string created
+	 * 
 	 * @return SQL string with values needed for PreparedStatement
 	 */
-	public Val.TwoVal<String, List<Object>> toSQL();
+	public Val.TwoVal<String, List<Object>> toSQL(SQL sql);
 	
 	/**
 	 * @param rs ResSet with values to compare

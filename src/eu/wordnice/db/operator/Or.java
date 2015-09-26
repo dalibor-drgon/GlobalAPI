@@ -29,6 +29,7 @@ import java.util.List;
 
 import eu.wordnice.api.Val;
 import eu.wordnice.db.results.ResSet;
+import eu.wordnice.db.sql.SQL;
 
 public class Or implements AndOr {
 
@@ -39,7 +40,7 @@ public class Or implements AndOr {
 	}
 
 	@Override
-	public Val.TwoVal<String, List<Object>> toSQL() {
+	public Val.TwoVal<String, List<Object>> toSQL(SQL sql) {
 		StringBuilder sb = new StringBuilder();
 		List<Object> vals = new ArrayList<Object>();
 		
@@ -51,14 +52,14 @@ public class Or implements AndOr {
 			if(obj instanceof AndOr) {
 				sb.append('(');
 				
-				Val.TwoVal<String, List<Object>> tsql = ((AndOr) obj).toSQL();
+				Val.TwoVal<String, List<Object>> tsql = ((AndOr) obj).toSQL(sql);
 				sb.append(tsql.one);
 				vals.addAll(tsql.two);
 				
 				sb.append(')');
 			} else if(obj instanceof Where) {
 				Where wh = (Where) obj;
-				sb.append(wh.toSQL());
+				sb.append(sql.getWhere(wh));
 				vals.add(wh.val);
 			} else {
 				throw new IllegalArgumentException("Unknown argument " 

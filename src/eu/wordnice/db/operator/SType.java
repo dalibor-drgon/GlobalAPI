@@ -33,7 +33,7 @@ public enum SType {
 	/**
 	 * Ascending = From the smallest to the biggest
 	 */
-	ASC("ASC", new Comparator<Object>() {
+	ASC_IC("ASC", "COLLATE NOCASE ASC", "ASC", new Comparator<Object>() {
 
 		@Override
 		public int compare(Object o1, Object o2) {
@@ -71,11 +71,11 @@ public enum SType {
 				int n2 = b2.length;
 				int min = Math.min(n1, n2);
 				for(int i = 0; i < min; i++) {
-					byte c1 = b1[i];
-					byte c2 = b2[i];
+					int c1 = b1[i];
+					int c2 = b2[i];
 					if(c1 != c2) {
-						byte h1 = c1;
-						byte h2 = c2;
+						int h1 = c1;
+						int h2 = c2;
 						c1 = ByteChar.toLower(c1);
 						c2 = ByteChar.toLower(c2);
 						if(c1 != c2) {
@@ -115,11 +115,11 @@ public enum SType {
 	/**
 	 * Descending = From the biggest to the smallest
 	 */
-	DESC("DESC", new Comparator<Object>() {
+	DESC_IC("DESC", "COLLATE NOCASE DESC", "DESC", new Comparator<Object>() {
 
 		@Override
 		public int compare(Object o1, Object o2) {
-			return SType.ASC.getComp().compare(o2, o1);
+			return SType.ASC_IC.getComp().compare(o2, o1);
 		}
 		
 	}),
@@ -128,7 +128,7 @@ public enum SType {
 	 * Case-insensitive
 	 * Ascending = From the smallest to the biggest
 	 */
-	ASC_CS("COLLATE utf8_bin ASC", new Comparator<Object>() {
+	ASC("COLLATE utf8_bin ASC", "ASC", "ASC", new Comparator<Object>() {
 
 		@Override
 		public int compare(Object o1, Object o2) {
@@ -191,19 +191,29 @@ public enum SType {
 	 * Case-insensitive
 	 * Descending = From the biggest to the smallest
 	 */
-	DESC_CS("COLLATE utf8_bin DESC", new Comparator<Object>() {
+	DESC("COLLATE utf8_bin DESC", "DESC", "DESC", new Comparator<Object>() {
 
 		@Override
 		public int compare(Object o1, Object o2) {
-			return SType.ASC_CS.getComp().compare(o2, o1);
+			return SType.ASC.getComp().compare(o2, o1);
 		}
 		
 	});
 	
 	/**
-	 * SQL ORDER BY syntax for text
+	 * SQL ORDER BY syntax for string
 	 */
-	private String sql_text;
+	public String sql_str;
+	
+	/**
+	 * SQLite ORDER BY syntax for string
+	 */
+	public String sqlite_str;
+	
+	/**
+	 * SQL* ORDER BY syntax for any object
+	 */
+	public String sql;
 	
 	/**
 	 * Comparision of values
@@ -213,21 +223,15 @@ public enum SType {
 	/**
 	 * Internal creation of SType
 	 * 
-	 * @param text SQL for text and numbers
-	 * @param bin SQL for blob
+	 * @param sql SQL for text and numbers
+	 * @param sqlite SQLite for text and numbers
 	 * @param comp Comparision of values
 	 */
-	SType(String text, Comparator<Object> comp) {
-		this.sql_text = text;
+	SType(String sql_str, String sqlite_str, String sql, Comparator<Object> comp) {
+		this.sql_str = sql_str;
+		this.sqlite_str = sqlite_str;
+		this.sql = sql;
 		this.comp = comp;
-	}
-	
-	/**
-	 * @param bin Is for binary data
-	 * @return ORDER BY $table _
-	 */
-	public String toSQL(boolean bin) {
-		return this.sql_text;
 	}
 	
 	/**

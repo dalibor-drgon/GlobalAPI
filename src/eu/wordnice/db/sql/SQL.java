@@ -27,6 +27,9 @@ package eu.wordnice.db.sql;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import eu.wordnice.db.ColType;
+import eu.wordnice.db.operator.Sort;
+import eu.wordnice.db.operator.Where;
 import eu.wordnice.db.results.ResSet;
 
 public interface SQL {
@@ -78,5 +81,20 @@ public interface SQL {
 	 * @throws SQLException
 	 */
 	public void close() throws SQLException;
+	
+	/**
+	 * @param where Where to format
+	 * 
+	 * @return SQL "WHERE" string
+	 */
+	public String getWhere(Where where);
+	
+	/**
+	 * @param sort Sort to format
+	 * @param tp For which type will be sort formated
+	 * 
+	 * @return SQL "ORDER BY" string
+	 */
+	public String getSort(Sort sort, ColType tp);
 
 }

@@ -35,27 +35,43 @@ public enum ColType {
 	
 	FLOAT(6, "FLOAT DEFAULT 0.0", (float) 0), DOUBLE(7, "DOUBLE DEFAULT 0.0", (double) 0),
 	
-	STRING(8, "LONGTEXT CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL", null),
+	STRING(8, "LONGTEXT DEFAULT NULL", "LONGTEXT DEFAULT NULL", null),
 	BYTES(9, "LONGBLOB DEFAULT NULL", null),
 	
-	MAP(10, "LONGBLOB DEFAULT NULL", null), ARRAY(11, "LONGBLOB DEFAULT NULL", null),
+	MAP(10, "LONGBLOB CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL", null), ARRAY(11, "LONGBLOB DEFAULT NULL", null),
 	
-	ID(12, "BIGINT PRIMARY KEY", (long) 0);
+	ID(12, "BIGINT AUTO_INCREMENT PRIMARY KEY", "INTEGER PRIMARY KEY", (long) 0);
 	
-	public static String STRING_SQLITE = "LONGTEXT DEFAULT NULL";
+	private static ColType[] values = null;
+	
+	private static ColType[] getValues() {
+		if(ColType.values == null) {
+			ColType.values = ColType.values();
+		}
+		return ColType.values;
+	}
 
 	public byte b;
 	public String sql;
+	public String sql_sqlite;
 	public Object def;
 	
 	private ColType(int b, String sql, Object def) {
 		this.b = (byte) b;
 		this.sql = sql;
+		this.sql_sqlite = sql;
+		this.def = def;
+	}
+	
+	private ColType(int b, String sql, String sql_sqlite, Object def) {
+		this.b = (byte) b;
+		this.sql = sql;
+		this.sql_sqlite = sql_sqlite;
 		this.def = def;
 	}
 	
 	public static ColType getByByte(int b) {
-		ColType[] cur = ColType.values();
+		ColType[] cur = ColType.getValues();
 		if(b <= 0 || b > cur.length) {
 			return null;
 		}

@@ -52,8 +52,6 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.apache.commons.lang3.StringUtils;
-
 import eu.wordnice.cols.ImmArray;
 
 public class Api {
@@ -62,6 +60,7 @@ public class Api {
 	public static byte[] GENSTRING = "abcdefghijklmnopqrstuvwxyz1234567890QWERTZUIOPASDFGHJKLYXCVBNM".getBytes();
 	
 	protected static InstanceMan unsafe;
+	protected static int is64Bit = -1;
 	
 	
 	public static Random getRandom() {
@@ -578,10 +577,16 @@ public class Api {
 	}
 	
 	public static File getFreeName(File f) {
+		if(f == null) {
+			return null;
+		}
 		return Api.getFreeName(Api.getRealPath(f));
 	}
 	
 	public static File getFreeName(String old) {
+		if(old == null) {
+			return null;
+		}
 		long i = 2;
 		File nev = null;
 		while(true) {
@@ -591,6 +596,29 @@ public class Api {
 			}
 			i++;
 		}
+	}
+	
+	public static void createFileIfNot(File file) throws IOException {
+		if(!file.exists()) {
+			Api.createDirForFile(file);
+			file.createNewFile();
+		}
+	}
+	
+	public static File createDirForFile(File file) {
+		if(file == null) {
+			return null;
+		}
+		try {
+			file = file.getCanonicalFile();
+		} catch(Throwable t) {
+			file = file.getAbsoluteFile();
+		}
+		File par = file.getParentFile();
+		if(par != null && !par.exists()) {
+			par.mkdirs();
+		}
+		return par;
 	}
 	
 	
@@ -778,23 +806,57 @@ public class Api {
 	}
 	
 	
-	public static String regexReplacer(String in, String p, Handler.OneHandler<String, Matcher> han) {
-		return Api.regexReplacer(in, Pattern.compile(p), han);
+	/**
+	 * @see {@link Api#replaceRegex(String, Pattern, eu.wordnice.api.Handler.TwoHandler)}
+	 */
+	public static String replaceRegex(String in, String p, Handler.TwoHandler<CharSequence, String, Matcher> han) {
+		return Api.replaceRegex(in, Pattern.compile(p), han);
 	}
 	
-	public static String regexReplacer(String in, Pattern p, Handler.OneHandler<String, Matcher> han) {
-		StringBuilder sb = new StringBuilder();
+	/**
+	 * @param in Input string
+	 * @param p Pattern to find
+	 * @param han Handler. Input: original string and matcher, 
+	 *            output string which will be placed into found location.
+	 *            If output string is null, is ignored.
+	 *            If handler is null, all founds are removed.
+	 * 
+	 * @return String with replaced all founds
+	 */
+	public static String replaceRegex(String in, Pattern p, Handler.TwoHandler<CharSequence, String, Matcher> han) {
 		Matcher m = p.matcher(in);
-		String rep;
-		int laste = 0;
-		while(m.find()) {
-			rep = han.handle(m);
-			sb.append(in.substring(laste, m.start()));
-			sb.append(rep);
-			laste = m.end();
+		if(!m.find()) {
+			return in;
 		}
-		if(laste != 0) {
-			sb.append(in.substring(laste, in.length()));
+		StringBuilder sb = new StringBuilder(in.length());
+		int laste = 0;
+		if(han != null) {
+			while(true) {
+				if(laste != m.start()) {
+					sb.append(in, laste, m.start());
+				}
+				CharSequence rep = han.handle(in, m);
+				if(rep != null) {
+					sb.append(rep);
+				}
+				laste = m.end();
+				if(!m.find()) {
+					break;
+				}
+			}
+		} else {
+			while(true) {
+				if(laste != m.start()) {
+					sb.append(in, laste, m.start());
+				}
+				laste = m.end();
+				if(!m.find()) {
+					break;
+				}
+			}
+		}
+		if(laste != in.length()) {
+			sb.append(in, laste, in.length());
 		}
 		return sb.toString();
 	}
@@ -1072,6 +1134,9 @@ public class Api {
 		return str;
 	}
 	
+	/**
+	 * @see {@link Api#replace(String, Object[], boolean)}
+	 */
 	public static String replace(String str, Object[] args) {
 		return Api.replace(str, args, true);
 	}
@@ -1094,54 +1159,12 @@ public class Api {
 		return str;
 	}
 	
+	/**
+	 * @see {@link Api#replace(String, Map, boolean)}
+	 */
 	public static String replace(String str, Map<?, ?> args) {
 		return Api.replace(str, args, true);
 	}
-	
-	public static void main(String... blah) {
-		String str = new String(Api.genBytes(1024 * 1024));
-		//With bigger strings - (128kB, or 64MB) Api - Apache too same
-		//With smaller is Api faster
-						
-		int cycles = 256;
-		
-		long start;
-		long total;
-		
-		
-		start = System.nanoTime();
-		for(int i = 0; i < cycles; i++) {
-			Api.replace(str, new Object[] {
-					"a", "aaaa",
-					"b", 123L,
-					"c", "",
-					"I", "i",
-					"m", "M"
-			});
-		}
-		total = System.nanoTime() - start;
-		System.out.println("Api replace take " + (total / cycles) + " ns (" + total + " ns total)");
-		
-		
-		start = System.nanoTime();
-		for(int i = 0; i < cycles; i++) {
-			StringUtils.replace(StringUtils.replace(StringUtils.replace(
-					StringUtils.replace(StringUtils.replace(str, "a", "aaa"), "b", "123"),
-					"c", ""), "I", "i"), "m", "M");
-		}
-		total = System.nanoTime() - start;
-		System.out.println("Apc replace take " + (total / cycles) + " ns (" + total + " ns total)");
-		
-		
-		start = System.nanoTime();
-		for(int i = 0; i < cycles; i++) {
-			str.replace("a", "aaaa").replace("b", "123").replace("c", "").replace("I", "i").replace("m", "M");
-		}
-		total = System.nanoTime() - start;
-		System.out.println("Str replace take " + (total / cycles) + " ns (" + total + " ns total)");
-	}
-	
-	
 	
 	
 	public static String join(Object[] vals, String jch) {
@@ -1198,6 +1221,40 @@ public class Api {
 		return sb.toString();
 	}
 	
+	public static String getMultiple(int times, char c) {
+		char[] chars = new char[times];
+		int i = 0;
+		while(i < times) {
+			chars[i++] = c;
+		}
+		return new String(chars);
+	}
+	
+	public static String getMultiple(int times, String c, int off, int len) {
+		char[] chars = new char[len];
+		c.getChars(off, off + len, chars, 0);
+		return Api.getMultiple(times, chars);
+	}
+	
+	public static String getMultiple(int times, String c) {
+		return Api.getMultiple(times, c.toCharArray());
+	}
+	
+	public static String getMultiple(int times, char[] c) {
+		if(c.length == 0) {
+			return "";
+		} else if(c.length == 1) {
+			return Api.getMultiple(times, c[0]);
+		}
+		char[] chars = new char[times * c.length];
+		int i = 0;
+		while(i < times) {
+			Api.memcpy(chars, (i * c.length), c, 0, c.length);
+			i++;
+		}
+		return new String(chars);
+	}
+	
 	
 	/*** C & UNSAFE ***/
 	
@@ -1211,7 +1268,7 @@ public class Api {
 				while(it.hasNext()) {
 					Entry<String, ?> ent = it.next();
 					Object uns = ent.getValue();
-					if(uns != null) {
+					if(uns != null && im.c.isAssignableFrom(uns.getClass())) {
 						im.reinit(uns);
 						Api.unsafe = im;
 						return Api.unsafe;
@@ -1225,11 +1282,15 @@ public class Api {
 	}
 	
 	public static boolean is64() {
-		Object retv = Api.getUnsafe().getValue("ADDRESS_SIZE");
-		if(retv == null) {
-			return false;
+		if(Api.is64Bit == -1) {
+			Object retv = Api.getUnsafe().getValue("ADDRESS_SIZE");
+			if(retv == null) {
+				Api.is64Bit = 1;
+				return true;
+			}
+			Api.is64Bit = ((int) ((Integer) retv) == 8) ? 1 : 0;
 		}
-		return ((int) ((Integer) retv) == 8);
+		return Api.is64Bit != 0;
 	}
 	
 	@SuppressWarnings("unchecked")
