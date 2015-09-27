@@ -24,8 +24,6 @@
 
 package eu.wordnice.threads;
 
-import java.util.Random;
-
 import eu.wordnice.api.Handler;
 
 public class MThreading {
@@ -254,56 +252,6 @@ public class MThreading {
 				curoff += cursize;
 			}
 		}
-	}
-	
-	
-	
-	
-	
-	
-	public static void main(String[] blah) throws Exception {
-		System.out.println("Allocating...");
-		final int[] arr = new int[4 * 1024 * 1024];
-		System.out.println("Allocated " + arr.length + " integers...");
-		
-		MThreadableSize mts = new MThreadableSize() {
-			
-			@Override
-			public void run(int i, int n) {
-				n += i;
-				int sum = 0;
-				Random rd = new Random();
-				for(; i < n; i++) {
-					sum = arr[i] + 1;
-					sum += sum;
-					sum += Math.round(rd.nextDouble() * rd.nextDouble() * rd.nextDouble()
-							* rd.nextDouble() * rd.nextDouble() * rd.nextDouble());
-					sum *= Math.round(rd.nextDouble() * rd.nextDouble() * rd.nextDouble()
-							* rd.nextDouble() * rd.nextDouble() * rd.nextDouble());
-					sum -= rd.nextInt();
-					arr[i] = sum;
-				}
-			}
-			
-		};
-		
-		long start = System.nanoTime();
-		mts.run(0, arr.length);
-		System.out.println("(main thread) in " + (System.nanoTime() - start) + " ns");
-		
-		
-		start = System.nanoTime();
-		MThreading mt = new MThreading(1);
-		mt.run(mts, 0, arr.length);
-		mt.joinAll();
-		System.out.println("(single thread) in " + (System.nanoTime() - start) + " ns");
-	
-		
-		start = System.nanoTime();
-		mt = new MThreading();
-		mt.run(mts, 0, arr.length);
-		mt.joinAll();
-		System.out.println("(auto, " + mt.getLastCount() + " threads) in " + (System.nanoTime() - start) + " ns");
 	}
 	
 }

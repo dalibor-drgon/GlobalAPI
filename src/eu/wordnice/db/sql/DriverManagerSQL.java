@@ -28,30 +28,31 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class JDBCSQL extends ConnectionSQL {
+public class DriverManagerSQL extends ConnectionSQL {
 
-	protected boolean single;
+	public boolean useSQLite = false;
+	public boolean single;
 	public String db_url;
 	public String user;
 	public String pass;
 	public String db_name;
 	public String[] onConnect;
 
-	public JDBCSQL() {}
+	public DriverManagerSQL() {}
 
-	public JDBCSQL(String db_url) {
+	public DriverManagerSQL(String db_url) {
 		this.single = true;
 		this.db_url = db_url;
 	}
 
-	public JDBCSQL(String db_url, String user, String pass) {
+	public DriverManagerSQL(String db_url, String user, String pass) {
 		this.single = false;
 		this.db_url = db_url;
 		this.user = user;
 		this.pass = pass;
 	}
 
-	public JDBCSQL(String db_url, String user, String pass, boolean single) {
+	public DriverManagerSQL(String db_url, String user, String pass, boolean single) {
 		this.single = single;
 		this.db_url = db_url;
 		this.user = user;
@@ -59,7 +60,13 @@ public class JDBCSQL extends ConnectionSQL {
 	}
 
 	@Override
+	public void reconnect() throws SQLException {
+		this.connect();
+	}
+	
+	@Override
 	public void connect() throws SQLException {
+		System.out.println("Connecting...!");
 		try {
 			this.close();
 		} catch(SQLException exc) {}
@@ -88,6 +95,11 @@ public class JDBCSQL extends ConnectionSQL {
 
 	protected String getPass() {
 		return this.pass;
+	}
+	
+	@Override
+	public boolean useSQLiteSyntax() {
+		return this.useSQLite;
 	}
 
 }

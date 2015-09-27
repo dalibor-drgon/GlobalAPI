@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package eu.wordnice.api.codings;
+package eu.wordnice.codings;
 
 public class InvalidSyntaxException extends Exception {
 	

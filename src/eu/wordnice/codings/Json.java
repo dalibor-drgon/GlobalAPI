@@ -26,7 +26,7 @@
  * https://github.com/wordnice/TLibs
  */
 
-package eu.wordnice.api.codings;
+package eu.wordnice.codings;
 
 public class Json {
 	
@@ -34,7 +34,7 @@ public class Json {
 		int i = off;
 		int mi = off + len;
 		for(; i < mi; i++) {
-			//Eh, todo
+			//Eh, TODO
 		}
 		return null;
 	}

@@ -26,11 +26,16 @@ package eu.wordnice.db.sql;
 
 import java.sql.SQLException;
 
-public class MySQL extends JDBCSQL {
+public class MySQL extends DriverManagerSQL {
 	
 	public MySQL(String url, String db, String user, String pass) throws SQLException {
-		super(("jdbc:mysql://" + ConnectionSQL.escapeJDBC(url) + "/" + ConnectionSQL.escapeJDBC(db) + "?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true"), user, pass);
+		super(("jdbc:mysql://" + ConnectionSQL.escapeDM(url) + "/" + ConnectionSQL.escapeDM(db) + "?useUnicode=true&characterEncoding=UTF-8"), user, pass);
 		this.onConnect = new String[] {"SET CHARSET 'utf8'", "SET NAMES 'utf8' COLLATE 'utf8_unicode_ci'"};
+	}
+	
+	@Override
+	public boolean useSQLiteSyntax() {
+		return false;
 	}
 	
 }

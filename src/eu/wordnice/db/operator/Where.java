@@ -37,7 +37,7 @@ import eu.wordnice.db.ColType;
 import eu.wordnice.db.Database;
 import eu.wordnice.db.DatabaseException;
 import eu.wordnice.db.results.ResSet;
-import eu.wordnice.db.sql.JDBCSQL;
+import eu.wordnice.db.sql.DriverManagerSQL;
 import eu.wordnice.db.sql.MySQL;
 import eu.wordnice.db.sql.SQLite;
 
@@ -304,7 +304,7 @@ public class Where {
 		
 		Database db = null;
 		if(type == 0) {
-			JDBCSQL sql = new MySQL("db.mysql-01.gsp-europe.net", "sql_1040", "sql_1040", "2qZ0h1e0nURTWbfiCQpHaz50Not8yuV");
+			DriverManagerSQL sql = new MySQL("db.mysql-01.gsp-europe.net", "sql_1040", "sql_1040", "2qZ0h1e0nURTWbfiCQpHaz50Not8yuV");
 			db = new Database(sql, table, cols);
 		} else if(type == 1) {
 			db = new Database(new SQLite("./test.sqlite"), table, cols);

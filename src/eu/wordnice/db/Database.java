@@ -47,7 +47,7 @@ import eu.wordnice.db.results.ResSetDB;
 import eu.wordnice.db.results.ResultResSet;
 import eu.wordnice.db.serialize.SerializeException;
 import eu.wordnice.db.results.ArraysResSet;
-import eu.wordnice.db.sql.JDBCSQL;
+import eu.wordnice.db.sql.DriverManagerSQL;
 import eu.wordnice.db.sql.MySQL;
 import eu.wordnice.db.sql.SQL;
 import eu.wordnice.db.sql.SQLite;
@@ -125,16 +125,23 @@ public class Database implements Closeable, AutoCloseable {
 	 * - file: ./test.sqlite
 	 * - table: test_table
 	 * 
-	 *  - type: mysql
+	 * - type: mysql
 	 * - host: localhost:3306
 	 * - db: testdb
 	 * - user: admin
 	 * - pass: Passw0rd!
 	 * - table: test_table
 	 * 
-	 * - type: jdbc
+	 * - type: driver
 	 * - target: jdbc:somevendor:somedata
 	 * - table: test_table
+	 * - pass: Passw0rd!      # optional
+	 * - user: admin          # optional
+	 * - driver: org.hi.wrld  # optional (driver to load)
+	 * - useSQLite: false     # optional (use sqlite syntax)
+	 * - onConnect:           # optional (commands on every re-connect)
+	 *     - SET CHARSET 'utf8'
+	 *     - SET NAMES 'utf8' COLLATE 'utf8_unicode_ci'
 	 * 
 	 * - type: wndb
 	 * - file: ./test.wndb
@@ -201,7 +208,7 @@ public class Database implements Closeable, AutoCloseable {
 
 			this.init(new MySQL(host.toString(), db.toString(), user.toString(), pass.toString()), table.toString(), cols);
 			this.sql.connect();
-		} else if(type.equals("jdbc")) {
+		} else if(type.equals("driver")) {
 			Object target = data.get("target");
 			if(target == null) {
 				throw new IllegalArgumentException("JDBC target is null!");
@@ -210,8 +217,48 @@ public class Database implements Closeable, AutoCloseable {
 			if(table == null) {
 				throw new IllegalArgumentException("JDBC table is null!");
 			}
+			Object user = data.get("user");
+			Object pass = data.get("pass");
+			boolean single = true;
+			if(user != null || pass != null) {
+				single = false;
+			}
 			
-			this.init(new JDBCSQL(target.toString()), table.toString(), cols);
+			Object driver = data.get("driver");
+			if(driver != null) {
+				try {
+					if(Class.forName(driver.toString()) == null) {
+						throw new NullPointerException("JVM returned null class!");
+					}
+				} catch(Throwable t) {
+					throw new SQLException("Cannot load driver (" + driver + ")", t);
+				}
+			}
+			
+			DriverManagerSQL dmsql = new DriverManagerSQL(target.toString(), 
+					((user == null) ? null : user.toString()),
+					((pass == null) ? null : pass.toString()),
+					single);
+			
+			Object useSQLite = data.get("useSQLite");
+			if(useSQLite != null) {
+				String sqlt = "" + useSQLite;
+				if(sqlt.equalsIgnoreCase("true") || sqlt.equalsIgnoreCase("yes")
+						|| sqlt.equalsIgnoreCase("y") || sqlt.equals("1")) {
+					dmsql.useSQLite = true;
+				}
+			}
+			
+			Object onConnect = data.get("onConnect");
+			if(onConnect != null) {
+				if(onConnect instanceof String[]) {
+					dmsql.onConnect = (String[]) onConnect;
+				} else if(onConnect instanceof Collection) {
+					dmsql.onConnect = ((Collection<?>) onConnect).toArray(new String[0]);
+				}
+			}
+			
+			this.init(dmsql, table.toString(), cols);
 			this.sql.connect();
 		} else if(type.equals("wndb")) {
 			Object file = data.get("file");
@@ -919,7 +966,29 @@ public class Database implements Closeable, AutoCloseable {
 	 * @throws SQLException Exception while processing command
 	 */
 	public static void createTable(Map<String, ColType> map, SQL sql, String table) throws SQLException {
-		if(!(sql instanceof SQLite)) {
+		if(!sql.useSQLiteSyntax()) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("CREATE TABLE IF NOT EXISTS ");
+			sb.append(table);
+			sb.append(" (");
+			
+			Iterator<java.util.Map.Entry<String, ColType>> it = map.entrySet().iterator();
+			int i = 0;
+			while(it.hasNext()) {
+				if(i++ != 0) {
+					sb.append(',').append(' ');
+				}
+				java.util.Map.Entry<String, ColType> ent = it.next();
+				//sb.append('`');
+				sb.append(ent.getKey());
+				sb.append(' ');
+				sb.append(ent.getValue().sql);
+			}
+			
+			sb.append(") DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci");
+			
+			sql.command(sb.toString());
+		} else {
 			StringBuilder sb = new StringBuilder();
 			sb.append("CREATE TABLE IF NOT EXISTS ");
 			sb.append(table);
@@ -935,37 +1004,13 @@ public class Database implements Closeable, AutoCloseable {
 				sb.append('`');
 				sb.append(ent.getKey());
 				sb.append('`').append(' ');
-				sb.append(ent.getValue().sql);
+				sb.append(ent.getValue().sql_sqlite);
 			}
 			
 			sb.append(") DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci");
 			
-			//try {
-				sql.command(sb.toString());
-				return;
-			//} catch(SQLException sqle) {}
+			sql.command(sb.toString());
 		}
-		StringBuilder sb = new StringBuilder();
-		sb.append("CREATE TABLE IF NOT EXISTS ");
-		sb.append(table);
-		sb.append(" (");
-		
-		Iterator<java.util.Map.Entry<String, ColType>> it = map.entrySet().iterator();
-		int i = 0;
-		while(it.hasNext()) {
-			if(i++ != 0) {
-				sb.append(',').append(' ');
-			}
-			java.util.Map.Entry<String, ColType> ent = it.next();
-			sb.append('`');
-			sb.append(ent.getKey());
-			sb.append('`').append(' ');
-			sb.append(ent.getValue().sql_sqlite);
-		}
-		
-		sb.append(") DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci");
-		
-		sql.command(sb.toString());
 	}
 	
 }

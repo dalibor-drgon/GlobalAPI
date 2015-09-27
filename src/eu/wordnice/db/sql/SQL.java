@@ -69,7 +69,7 @@ public interface SQL {
 	public boolean isClosed();
 
 	/**
-	 * Connect to dabase (and allow auto-connect when connection is lost)
+	 * Connect to database
 	 * 
 	 * @throws SQLException
 	 */
@@ -81,6 +81,13 @@ public interface SQL {
 	 * @throws SQLException
 	 */
 	public void close() throws SQLException;
+	
+	/**
+	 * Close connection (if not already) and connect to database
+	 * 
+	 * @throws SQLException
+	 */
+	public void reconnect() throws SQLException;
 	
 	/**
 	 * @param where Where to format
@@ -96,5 +103,10 @@ public interface SQL {
 	 * @return SQL "ORDER BY" string
 	 */
 	public String getSort(Sort sort, ColType tp);
+	
+	/**
+	 * @return `true` if use second syntax (skip version 1 - mysql)
+	 */
+	public boolean useSQLiteSyntax();
 
 }

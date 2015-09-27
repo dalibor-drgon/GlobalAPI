@@ -26,7 +26,7 @@
  * https://github.com/wordnice/TLibs
  */
 
-package eu.wordnice.api.codings;
+package eu.wordnice.codings;
 
 public class Base64 {
 	
