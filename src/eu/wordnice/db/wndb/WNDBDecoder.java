@@ -31,7 +31,7 @@ import java.util.List;
 
 import eu.wordnice.api.Val;
 import eu.wordnice.db.ColType;
-import eu.wordnice.db.serialize.BadFilePrefixException;
+import eu.wordnice.db.serialize.BadPrefixException;
 import eu.wordnice.db.serialize.BadTypeException;
 import eu.wordnice.db.serialize.SerializeException;
 import eu.wordnice.streams.Input;
@@ -52,7 +52,7 @@ public class WNDBDecoder {
 	public static Val.ThreeVal<String[], ColType[], List<Object[]>> readInputStreamRawData(Input in) throws SerializeException, IOException {
 		long type = in.readLong();
 		if (type != WNDBDecoder.STATIC_DB_PREFIX) {
-			throw new BadFilePrefixException("Not WNDB format!");
+			throw new BadPrefixException("Not WNDB format!");
 		}
 
 		int bt = in.readInt();

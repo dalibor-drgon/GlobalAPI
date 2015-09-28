@@ -24,6 +24,8 @@
 
 package eu.wordnice.db.serialize;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -120,7 +122,7 @@ public class CollSerializer {
 			return null;
 		}
 		if(l != CollSerializer.ARR_PREFIX) {
-			throw new BadFilePrefixException("Not ARRAY!");
+			throw new BadPrefixException("Not ARRAY!");
 		}
 		return CollSerializer.stream2arrayWithoutPrefix(clz, s);
 	}
@@ -197,7 +199,7 @@ public class CollSerializer {
 			return null;
 		}
 		if(l != CollSerializer.ARR_PREFIX) {
-			throw new BadFilePrefixException("Not ARRAY!");
+			throw new BadPrefixException("Not ARRAY!");
 		}
 		return CollSerializer.stream2collWithoutPrefix(col, s);
 	}
@@ -276,7 +278,7 @@ public class CollSerializer {
 			return null;
 		}
 		if(l != CollSerializer.MAP_PREFIX) {
-			throw new BadFilePrefixException("Not MAP!");
+			throw new BadPrefixException("Not MAP!");
 		}
 		return CollSerializer.stream2mapWithoutPrefix(map, s);
 	}
@@ -297,4 +299,292 @@ public class CollSerializer {
 		}
 		return map;
 	}
+	
+	
+	
+	/*** UTILS ***/
+	
+	public static byte[] serializeColl(Collection<?> col) throws SerializeException {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			OutputAdv.forStream(baos).writeColl(col);
+			return baos.toByteArray();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static byte[] serializeColl(Iterator<?> it, int len) throws SerializeException {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			OutputAdv.forStream(baos).writeColl(it, len);
+			return baos.toByteArray();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static byte[] serializeCollArray(Object[] arr) throws SerializeException {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			OutputAdv.forStream(baos).writeCollArray(arr);
+			return baos.toByteArray();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static byte[] serializeCollArray(Object[] arr, int off, int len) throws SerializeException {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			OutputAdv.forStream(baos).writeCollArray(arr, off, len);
+			return baos.toByteArray();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static byte[] serializeMap(Map<?, ?> map) throws SerializeException {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			OutputAdv.forStream(baos).writeMap(map);
+			return baos.toByteArray();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	
+	
+	public static <X> Collection<X> deserializeColl(byte[] bytes) throws SerializeException {
+		try {
+			return InputAdv.forStream(new ByteArrayInputStream(bytes)).readColl();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static <X> Collection<X> deserializeColl(byte[] bytes, Collection<X> col) throws SerializeException {
+		try {
+			return InputAdv.forStream(new ByteArrayInputStream(bytes)).readColl(col);
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static <X, Y> Map<X, Y> deserializeMap(byte[] bytes) throws SerializeException {
+		try {
+			return InputAdv.forStream(new ByteArrayInputStream(bytes)).readMap();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static <X, Y> Map<X, Y> deserializeMap(byte[] bytes, Map<X, Y> map) throws SerializeException {
+		try {
+			return InputAdv.forStream(new ByteArrayInputStream(bytes)).readMap(map);
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	
+	
+	public static <X> Collection<X> deserializeColl(byte[] bytes, int off, int len) throws SerializeException {
+		try {
+			return InputAdv.forStream(new ByteArrayInputStream(bytes, off, len)).readColl();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static <X> Collection<X> deserializeColl(byte[] bytes, int off, int len, Collection<X> col) throws SerializeException {
+		try {
+			return InputAdv.forStream(new ByteArrayInputStream(bytes, off, len)).readColl(col);
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static <X, Y> Map<X, Y> deserializeMap(byte[] bytes, int off, int len) throws SerializeException {
+		try {
+			return InputAdv.forStream(new ByteArrayInputStream(bytes, off, len)).readMap();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static <X, Y> Map<X, Y> deserializeMap(byte[] bytes, int off, int len, Map<X, Y> map) throws SerializeException {
+		try {
+			return InputAdv.forStream(new ByteArrayInputStream(bytes, off, len)).readMap(map);
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	
+	
+	
+/*** UTILS ***/
+	
+	public static byte[] serializeCollSQL(Collection<?> col) throws SerializeException {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			Output out = OutputAdv.forStream(baos);
+			out.writeInt(0x71830);
+			out.writeColl(col);
+			return baos.toByteArray();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static byte[] serializeCollSQL(Iterator<?> it, int len) throws SerializeException {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			Output out = OutputAdv.forStream(baos);
+			out.writeInt(0x71830);
+			out.writeColl(it, len);
+			return baos.toByteArray();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static byte[] serializeCollArraySQL(Object[] arr) throws SerializeException {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			Output out = OutputAdv.forStream(baos);
+			out.writeInt(0x71830);
+			out.writeCollArray(arr);
+			return baos.toByteArray();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static byte[] serializeCollArraySQL(Object[] arr, int off, int len) throws SerializeException {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			Output out = OutputAdv.forStream(baos);
+			out.writeInt(0x71830);
+			out.writeCollArray(arr, off, len);
+			return baos.toByteArray();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static byte[] serializeMapSQL(Map<?, ?> map) throws SerializeException {
+		try {
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			Output out = OutputAdv.forStream(baos);
+			out.writeInt(0x71830);
+			out.writeMap(map);
+			return baos.toByteArray();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	
+	
+	public static <X> Collection<X> deserializeCollSQL(byte[] bytes) throws SerializeException {
+		try {
+			Input in = InputAdv.forStream(new ByteArrayInputStream(bytes));
+			if(in.readShort() != 0x71830) {
+				throw new BadPrefixException("Not SQL prefixed!");
+			}
+			return in.readColl();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static <X> Collection<X> deserializeCollSQL(byte[] bytes, Collection<X> col) throws SerializeException {
+		try {
+			Input in = InputAdv.forStream(new ByteArrayInputStream(bytes));
+			if(in.readShort() != 0x71830) {
+				throw new BadPrefixException("Not SQL prefixed!");
+			}
+			return in.readColl(col);
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static <X, Y> Map<X, Y> deserializeMapSQL(byte[] bytes) throws SerializeException {
+		try {
+			Input in = InputAdv.forStream(new ByteArrayInputStream(bytes));
+			if(in.readShort() != 0x71830) {
+				throw new BadPrefixException("Not SQL prefixed!");
+			}
+			return in.readMap();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static <X, Y> Map<X, Y> deserializeMapSQL(byte[] bytes, Map<X, Y> map) throws SerializeException {
+		try {
+			Input in = InputAdv.forStream(new ByteArrayInputStream(bytes));
+			if(in.readShort() != 0x71830) {
+				throw new BadPrefixException("Not SQL prefixed!");
+			}
+			return in.readMap(map);
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	
+	
+	public static <X> Collection<X> deserializeCollSQL(byte[] bytes, int off, int len) throws SerializeException {
+		try {
+			Input in = InputAdv.forStream(new ByteArrayInputStream(bytes, off, len));
+			if(in.readShort() != 0x71830) {
+				throw new BadPrefixException("Not SQL prefixed!");
+			}
+			return in.readColl();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static <X> Collection<X> deserializeCollSQL(byte[] bytes, int off, int len, Collection<X> col) throws SerializeException {
+		try {
+			Input in = InputAdv.forStream(new ByteArrayInputStream(bytes, off, len));
+			if(in.readShort() != 0x71830) {
+				throw new BadPrefixException("Not SQL prefixed!");
+			}
+			return in.readColl(col);
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static <X, Y> Map<X, Y> deserializeMapSQL(byte[] bytes, int off, int len) throws SerializeException {
+		try {
+			Input in = InputAdv.forStream(new ByteArrayInputStream(bytes, off, len));
+			if(in.readShort() != 0x71830) {
+				throw new BadPrefixException("Not SQL prefixed!");
+			}
+			return in.readMap();
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
+	public static <X, Y> Map<X, Y> deserializeMapSQL(byte[] bytes, int off, int len, Map<X, Y> map) throws SerializeException {
+		try {
+			Input in = InputAdv.forStream(new ByteArrayInputStream(bytes, off, len));
+			if(in.readShort() != 0x71830) {
+				throw new BadPrefixException("Not SQL prefixed!");
+			}
+			return in.readMap(map);
+		} catch(IOException exc) {
+			throw new SerializeException("Unexpected IO error occured", exc);
+		}
+	}
+	
 }

@@ -26,8 +26,8 @@ package eu.wordnice.db;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.Blob;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -45,7 +45,9 @@ import eu.wordnice.db.results.MapsResSet;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.results.ResSetDB;
 import eu.wordnice.db.results.ResultResSet;
+import eu.wordnice.db.serialize.CollSerializer;
 import eu.wordnice.db.serialize.SerializeException;
+import eu.wordnice.db.serialize.SerializeUtils;
 import eu.wordnice.db.results.ArraysResSet;
 import eu.wordnice.db.sql.DriverManagerSQL;
 import eu.wordnice.db.sql.MySQL;
@@ -121,15 +123,17 @@ public class Database implements Closeable, AutoCloseable {
 	 * Create database for given type
 	 * 
 	 * Formats:
-	 * - type: sqlite
-	 * - file: ./test.sqlite
-	 * - table: test_table
-	 * 
+	 * <pre>
+	 * {@code
 	 * - type: mysql
 	 * - host: localhost:3306
 	 * - db: testdb
 	 * - user: admin
 	 * - pass: Passw0rd!
+	 * - table: test_table
+	 * 
+	 * - type: sqlite
+	 * - file: ./test.sqlite
 	 * - table: test_table
 	 * 
 	 * - type: driver
@@ -143,6 +147,10 @@ public class Database implements Closeable, AutoCloseable {
 	 *     - SET CHARSET 'utf8'
 	 *     - SET NAMES 'utf8' COLLATE 'utf8_unicode_ci'
 	 * 
+	 * 
+	 * # Types below are good for small amount of data
+	 * # (under 100 MB; e.g. storing users)
+	 * 
 	 * - type: wndb
 	 * - file: ./test.wndb
 	 * 
@@ -154,6 +162,8 @@ public class Database implements Closeable, AutoCloseable {
 	 * 
 	 * - type: json (todo)
 	 * - file: ./test.json
+	 * }
+	 * </pre>
 	 * 
 	 * 
 	 * 
@@ -311,9 +321,9 @@ public class Database implements Closeable, AutoCloseable {
 	 * @see {@link ResSetDB#write(eu.wordnice.streams.Output)}
 	 * @see {@link OutputAdv#forFile(File)}
 	 */
-	public void save() throws SerializeException, FileNotFoundException, IOException {
+	public void save() throws SerializeException, IOException {
 		if(this.sql == null) {
-			this.rs.write(OutputAdv.forFile(this.file));
+			SerializeUtils.write(this.rs, this.file);
 		}
 	}
 	
@@ -474,7 +484,7 @@ public class Database implements Closeable, AutoCloseable {
 			try {
 				List<Object> list = whproc.two;
 				for(int i = 0, n = list.size(); i < n;) {
-					Object v = list.get(i);
+					Object v = Database.toSQLObject(list.get(i));
 					i++;
 					ps.setObject(i, v);
 				}
@@ -569,7 +579,7 @@ public class Database implements Closeable, AutoCloseable {
 				it = vals.entrySet().iterator();
 				while(it.hasNext()) {
 					cursize++;
-					ps.setObject(cursize, it.next().getValue());
+					ps.setObject(cursize, Database.toSQLObject(it.next().getValue()));
 				}
 			} catch(SQLException sql) {
 				try {
@@ -660,7 +670,7 @@ public class Database implements Closeable, AutoCloseable {
 					int cur_size = 0;
 					while(it.hasNext() && cur_size < size) {
 						cur_size++;
-						ps.setObject(cur_size, it.next());
+						ps.setObject(cur_size, Database.toSQLObject(it.next()));
 					}
 					/*if(cur_size != size) {
 						throw new IllegalArgumentException("Values set at index " + i + " has less values than expected: " + cur_size + " / " + size);
@@ -755,7 +765,7 @@ public class Database implements Closeable, AutoCloseable {
 					for(int i = 0, n = list.size(); i < n; ) {
 						Object v = list.get(i);
 						i++;
-						ps.setObject(size + i, v);
+						ps.setObject(size + i, Database.toSQLObject(v));
 					}
 				} else {
 					ps = this.sql.prepare(cmd + suf);
@@ -765,7 +775,7 @@ public class Database implements Closeable, AutoCloseable {
 				int secsize = 0;
 				while(it.hasNext()) {
 					secsize++;
-					ps.setObject(secsize, it.next().getValue());
+					ps.setObject(secsize, Database.toSQLObject(it.next().getValue()));
 				}
 				if(secsize != size) {
 					throw new IllegalArgumentException("Map results mismatch! After first iteration got " + size + " elements, after second " + secsize + "!");
@@ -857,7 +867,7 @@ public class Database implements Closeable, AutoCloseable {
 					ps = this.sql.prepare(cmd + " WHERE " + whproc.one + suf);
 					List<Object> list = whproc.two;
 					for(int i = 0, n = list.size(); i < n; ) {
-						Object v = list.get(i);
+						Object v = Database.toSQLObject(list.get(i));
 						i++;
 						ps.setObject(i, v);
 					}
@@ -1011,6 +1021,68 @@ public class Database implements Closeable, AutoCloseable {
 			
 			sql.command(sb.toString());
 		}
+	}
+	
+	/**
+	 * Convert sql-unsupported object types to supported (e.g. serialize collections
+	 * and maps to bytes)
+	 * 
+	 * @param out Object to convert
+	 * 
+	 * @return If given object is recognized as not supported by sql, is converted to
+	 *         any other supported type.
+	 *         
+	 * @throws SerializeException Exception during serialization
+	 *         
+	 * @see {@link Database#fromSQLObject(Object)}
+	 */
+	public static final Object toSQLObject(Object out) throws SerializeException {
+		if(out instanceof Object[]) {
+			return CollSerializer.serializeCollArraySQL((Object[]) out);
+		}
+		if(out instanceof Collection) {
+			return CollSerializer.serializeCollSQL((Collection<?>) out);
+		}
+		if(out instanceof Map) {
+			return CollSerializer.serializeMapSQL((Map<?,?>) out);
+		}
+		return out;
+	}
+	
+	/**
+	 * Convert back (possibly from serialized) sql-supported object back to original type
+	 * 
+	 * @param obj Object to convert (deserialize)
+	 * 
+	 * @return If conversion was successful, returns new converted object,
+	 *         otherwise {@code obj}
+	 * 
+	 * @see {@link Database#toSQLObject(Object)}
+	 */
+	public static final Object fromSQLObject(Object obj) {
+		if(obj instanceof byte[]) {
+			try {
+				return CollSerializer.deserializeCollSQL((byte[]) obj);
+			} catch(Exception ign) {}
+			try {
+				return CollSerializer.deserializeMapSQL((byte[]) obj);
+			} catch(Exception ign) {}
+		} else if(obj instanceof Blob) {
+			byte[] bytes = null;
+			try {
+				bytes = ((Blob) obj).getBytes(0, (int) ((Blob) obj).length());
+			} catch(Exception exc) {
+				return obj;
+			}
+			try {
+				return CollSerializer.deserializeCollSQL(bytes);
+			} catch(Exception ign) {}
+			try {
+				return CollSerializer.deserializeMapSQL(bytes);
+			} catch(Exception ign) {}
+			return bytes;
+		}
+		return obj;
 	}
 	
 }

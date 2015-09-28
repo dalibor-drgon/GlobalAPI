@@ -24,7 +24,6 @@
 
 package eu.wordnice.db.results;
 
-import java.io.ByteArrayInputStream;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -34,8 +33,9 @@ import java.util.Map;
 
 import eu.wordnice.cols.ImmArray;
 import eu.wordnice.cols.ImmMapPair;
+import eu.wordnice.db.Database;
 import eu.wordnice.db.DatabaseException;
-import eu.wordnice.streams.InputAdv;
+import eu.wordnice.db.serialize.CollSerializer;
 
 public class ResultResSet implements ResSet {
 
@@ -67,7 +67,7 @@ public class ResultResSet implements ResSet {
 	@Override
 	public Object getObject(String name) {
 		try {
-			return this.rs.getObject(name);
+			return Database.fromSQLObject(this.rs.getObject(name));
 		} catch(Exception t) {}
 		return null;
 	}
@@ -75,7 +75,7 @@ public class ResultResSet implements ResSet {
 	@Override
 	public Object getObject(int in) {
 		try {
-			return this.rs.getObject(in);
+			return Database.fromSQLObject(this.rs.getObject(in));
 		} catch(Exception t) {}
 		return null;
 	}
@@ -229,7 +229,7 @@ public class ResultResSet implements ResSet {
 		byte[] bytes = this.getBytes(name);
 		if(bytes != null) {
 			try {
-				return InputAdv.forStream(new ByteArrayInputStream(bytes)).readColl();
+				return CollSerializer.deserializeColl(bytes);
 			} catch(Exception e) {}
 		}
 		return null;
@@ -240,7 +240,7 @@ public class ResultResSet implements ResSet {
 		byte[] bytes = this.getBytes(in);
 		if(bytes != null) {
 			try {
-				return InputAdv.forStream(new ByteArrayInputStream(bytes)).readColl();
+				return CollSerializer.deserializeColl(bytes);
 			} catch(Exception e) {}
 		}
 		return null;
@@ -251,7 +251,7 @@ public class ResultResSet implements ResSet {
 		byte[] bytes = this.getBytes(name);
 		if(bytes != null) {
 			try {
-				return InputAdv.forStream(new ByteArrayInputStream(bytes)).readMap();
+				return CollSerializer.deserializeMap(bytes);
 			} catch(Exception e) {}
 		}
 		return null;
@@ -262,7 +262,7 @@ public class ResultResSet implements ResSet {
 		byte[] bytes = this.getBytes(in);
 		if(bytes != null) {
 			try {
-				return InputAdv.forStream(new ByteArrayInputStream(bytes)).readMap();
+				return CollSerializer.deserializeMap(bytes);
 			} catch(Exception e) {}
 		}
 		return null;

@@ -59,12 +59,34 @@ public class Api {
 	public static Random RANDOM = new Random();
 	public static byte[] GENSTRING = "abcdefghijklmnopqrstuvwxyz1234567890QWERTZUIOPASDFGHJKLYXCVBNM".getBytes();
 	
+	protected static long RANDOM_SEED = System.nanoTime() + 0xCAFEBEEF;
 	protected static InstanceMan unsafe;
 	protected static int is64Bit = -1;
 	
 	
 	public static Random getRandom() {
 		return RANDOM;
+	}
+	
+	
+	public static final long randomLong() {
+		long a = Api.RANDOM_SEED;
+		Api.RANDOM_SEED = xorShift64(a);
+		return a;
+	}
+
+	protected static final long xorShift64(long a) {
+		a ^= (a << 21);
+		a ^= (a >>> 35);
+		a ^= (a << 4);
+		return a;
+	}
+	
+	public static final int randomInt(int n) {
+		if(n < 0) {
+			throw new IllegalArgumentException();
+		}
+		return (int) (((Api.randomLong() >>> 32) * n) >> 32);
 	}
 	
 	/**
@@ -984,27 +1006,27 @@ public class Api {
 	/*** RANDOM ***/
 	
 	public static byte[] genBytes(int length) {
-		return genBytes(length, Api.GENSTRING);
+		return Api.genBytes(length, Api.GENSTRING);
 	}
 	
 	public static byte[] genBytes(int length, byte[] chars) {
 		byte[] out = new byte[length];
 		for (int i = 0; i < length; i++) {
-			out[i] = chars[Api.RANDOM.nextInt(chars.length)];
+			out[i] = chars[Api.randomInt(chars.length)];
 		}
 		return out;
 	}
 	
-	public static int genInt(int length) {
+	public static int genIntLength(int length) {
 		int nevi = 0;
 		for (int i = 0; i < length; i++) {
 			nevi *= 10;
-			nevi += Api.RANDOM.nextInt(9);
+			nevi += Api.randomInt(9);
 		}
 		return nevi;
 	}
 	
-	public static long genLong(int length) {
+	public static long genLongLength(int length) {
 		long nevi = 0;
 		for (int i = 0; i < length; i++) {
 			nevi *= 10;

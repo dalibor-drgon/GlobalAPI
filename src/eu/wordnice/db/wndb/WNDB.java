@@ -233,6 +233,7 @@ public class WNDB extends ArraysResSet {
 			try {
 				f.renameTo(ren);
 			} catch(Exception e) {
+				e.printStackTrace();
 				return WNDB.createEmptyWNDB(names, types);
 			}
 		}

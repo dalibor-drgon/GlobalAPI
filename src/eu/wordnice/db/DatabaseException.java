@@ -24,7 +24,9 @@
 
 package eu.wordnice.db;
 
-public class DatabaseException extends Exception {
+import java.sql.SQLException;
+
+public class DatabaseException extends SQLException {
 	
 	private static final long serialVersionUID = 1L;
 

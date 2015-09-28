@@ -60,8 +60,12 @@ public abstract class ConnectionSQL extends AbstractSQL {
 		try {
 			return new ResultResSet(stm.executeQuery(query), stm);
 		} catch(SQLRecoverableException sqlr) {
+			try {
+				stm.close();
+			} catch(Exception ign) {}
 			this.reconnect();
 			try {
+				stm = this.createStatement();
 				return new ResultResSet(stm.executeQuery(query), stm);
 			} catch(SQLException sqle) {
 				try {
@@ -84,8 +88,12 @@ public abstract class ConnectionSQL extends AbstractSQL {
 		try {
 			stm.executeUpdate(cmd);
 		} catch(SQLRecoverableException sqlr) {
+			try {
+				stm.close();
+			} catch(Exception ign) {}
 			this.reconnect();
 			try {
+				stm = this.createStatement();
 				stm.executeUpdate(cmd);
 			} catch(SQLException sqle) {
 				try {

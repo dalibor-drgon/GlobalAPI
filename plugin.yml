@@ -1,4 +1,4 @@
 name: MainAPI
-version: 2.4.1
+version: 2.4.5
 author: wordnice
 main: eu.wordnice.api.bukkit.MainApi

@@ -24,6 +24,8 @@
 
 package eu.wordnice.db.operator;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -320,6 +322,8 @@ public class Where {
 			System.out.println(rs.getEntries());
 		}
 		
+		long con = System.currentTimeMillis();
+		
 		
 		///
 		System.out.print("\nSELECT\n");
@@ -386,6 +390,14 @@ public class Where {
 		///
 		System.out.print("\nSELECT\n");
 		Where.selectAll(db);
+		
+		while(true) {
+			Thread.sleep(50L);
+			if(new BufferedReader(new InputStreamReader(System.in)).readLine() != null) {
+				System.out.println((System.currentTimeMillis() - con) + " ms from first connect!");
+				Where.selectAll(db);
+			}
+		}
 		
 	}
 	
