@@ -59,8 +59,11 @@ public class Or implements AndOr {
 				sb.append(')');
 			} else if(obj instanceof Where) {
 				Where wh = (Where) obj;
-				sb.append(sql.getWhere(wh));
-				vals.add(wh.val);
+				String sql_text = sql.getWhere(wh);
+				sb.append(sql_text);
+				if(sql_text.indexOf('?') != -1) {
+					vals.add(wh.val);
+				}
 			} else {
 				throw new IllegalArgumentException("Unknown argument " 
 						+ ((obj == null) ? null : obj.getClass().getName()) + " -> " + obj);

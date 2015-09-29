@@ -111,14 +111,14 @@ public abstract class OutputAdv extends OutputStream implements Output {
 	
 	@Override
 	public void writeLong(long v) throws IOException {
-		this.write((byte) (v >>>  0));
-		this.write((byte) (v >>>  8));
-		this.write((byte) (v >>> 16));
-		this.write((byte) (v >>> 24));
-		this.write((byte) (v >>> 32));
-		this.write((byte) (v >>> 40));
-		this.write((byte) (v >>> 48));
-		this.write((byte) (v >>> 56));
+		this.write((int) ((v >>  0) & 0xFF));
+		this.write((int) ((v >>  8) & 0xFF));
+		this.write((int) ((v >> 16) & 0xFF));
+		this.write((int) ((v >> 24) & 0xFF));
+		this.write((int) ((v >> 32) & 0xFF));
+		this.write((int) ((v >> 40) & 0xFF));
+		this.write((int) ((v >> 48) & 0xFF));
+		this.write((int) ((v >> 56) & 0xFF));
 	}
 
 	@Override

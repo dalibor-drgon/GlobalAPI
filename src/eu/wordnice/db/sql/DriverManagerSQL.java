@@ -66,7 +66,6 @@ public class DriverManagerSQL extends ConnectionSQL {
 	
 	@Override
 	public void connect() throws SQLException {
-		System.out.println("Connecting...!");
 		try {
 			this.close();
 		} catch(SQLException exc) {}

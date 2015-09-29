@@ -55,9 +55,9 @@ public abstract class ConnectionSQL extends AbstractSQL {
 	
 	@Override
 	public ResSet query(String query) throws SQLException {
-		Statement stm = this.createStatement();
-		System.out.println("Query: " + query);
+		Statement stm = null;
 		try {
+			stm = this.createStatement();
 			return new ResultResSet(stm.executeQuery(query), stm);
 		} catch(SQLRecoverableException sqlr) {
 			try {
@@ -83,14 +83,11 @@ public abstract class ConnectionSQL extends AbstractSQL {
 
 	@Override
 	public void command(String cmd) throws SQLException {
-		Statement stm = this.createStatement();
-		System.out.println("Command: " + cmd);
+		Statement stm = null;
 		try {
+			stm = this.createStatement();
 			stm.executeUpdate(cmd);
 		} catch(SQLRecoverableException sqlr) {
-			try {
-				stm.close();
-			} catch(Exception ign) {}
 			this.reconnect();
 			try {
 				stm = this.createStatement();
@@ -115,7 +112,6 @@ public abstract class ConnectionSQL extends AbstractSQL {
 	@Override
 	public PreparedStatement prepare(String cmd) throws SQLException {
 		this.checkConnection();
-		System.out.println("Prepare: " + cmd);
 		try {
 			return this.con.prepareStatement(cmd);
 		} catch(SQLRecoverableException sqlr) {

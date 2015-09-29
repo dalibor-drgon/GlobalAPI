@@ -25,8 +25,11 @@
 package eu.wordnice.db.wndb;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,6 +72,7 @@ public class WNDB extends ArraysResSet {
 	 * @param file File where is database saved
 	 */
 	public WNDB(File file) throws SerializeException, IOException {
+		this.changed = false;
 		this.file = file;
 		this.load();
 	}	
@@ -78,13 +82,13 @@ public class WNDB extends ArraysResSet {
 		if(this.file == null) {
 			return;
 		}
-		WNDBEncoder.writeFileData(this.file, new Val.ThreeVal<String[], ColType[], Iterable<Object[]>>(this.names, this.types, this.values));
+		WNDBEncoder.writeFileData(this.file, this.names, this.types, this.values);
 		this.changed = false;
 	}
 	
 	@Override
 	public void write(Output ost) throws SerializeException, IOException {
-		WNDBEncoder.writeOutputStreamData(ost, new Val.ThreeVal<String[], ColType[], Iterable<Object[]>>(this.names, this.types, this.values));
+		WNDBEncoder.writeOutputStreamData(ost, this.names, this.types, this.values);
 		this.changed = false;
 	}
 	
@@ -97,6 +101,7 @@ public class WNDB extends ArraysResSet {
 		this.values = vals.three;
 		this.changed = false;
 		this.cols = this.names.length;
+		this.first();
 	}
 	
 	public void saveIfChanged() throws SerializeException, IOException {
@@ -148,16 +153,15 @@ public class WNDB extends ArraysResSet {
 	public void checkSet() {}
 	
 	public void load() throws SerializeException, IOException {
-		if(this.values == null || this.names == null || this.types == null) {
-			if(this.file == null) {
-				throw new NullPointerException("File is null");
-			}
-			Val.ThreeVal<String[], ColType[], List<Object[]>> vals = WNDBDecoder.readFileRawData(this.file);
-			this.names = vals.one;
-			this.types = vals.two;
-			this.values = vals.three;
-			this.first();
+		if(this.file == null) {
+			throw new NullPointerException("File is null");
 		}
+		Val.ThreeVal<String[], ColType[], List<Object[]>> vals = WNDBDecoder.readFileRawData(this.file);
+		this.names = vals.one;
+		this.types = vals.two;
+		this.values = vals.three;
+		this.cols = this.names.length;
+		this.first();
 	}
 	
 	@Override
@@ -174,19 +178,9 @@ public class WNDB extends ArraysResSet {
 		
 		protected WNDB orig;
 		
-		@SuppressWarnings("unchecked")
 		protected WNDBSnapshot(WNDB orig) {
 			this.orig = orig;
-			List<Object[]> list = null;
-			try {
-				Class<?> c = orig.values.getClass();
-				Constructor<?> con = c.getDeclaredConstructor();
-				con.setAccessible(true);
-				list = (List<Object[]>) con.newInstance();
-			} catch(Throwable t) {}
-			if(list == null) {
-				list = new ArrayList<Object[]>();
-			}
+			List<Object[]> list = new ArrayList<Object[]>();
 			list.addAll(orig.values);
 			this.values = list;
 			this.names = orig.names;
@@ -215,8 +209,11 @@ public class WNDB extends ArraysResSet {
 		if(f.exists()) {
 			try {
 				return new WNDB(f);
-			} catch(SerializeException e1) {	
-			} catch(IOException e2) {}
+			} catch(Exception e) {
+				System.err.println("Error occured while loading WNDB database ("
+						+ Api.getRealPath(f) + "):");
+				e.printStackTrace();
+			}
 			File ren = Api.getFreeName(f);
 			f.renameTo(ren);
 		}
@@ -227,29 +224,50 @@ public class WNDB extends ArraysResSet {
 		if(f.exists()) {
 			try {
 				return new WNDB(f);
-			} catch(SerializeException e1) {	
-			} catch(IOException e2) {}
+			} catch(Exception e) {
+				System.err.println("Error occured while loading WNDB database (" 
+						+ Api.getRealPath(f) + "):");
+				e.printStackTrace();
+			}
 			File ren = Api.getFreeName(f);
 			try {
-				f.renameTo(ren);
+				ren.createNewFile();
+				if(!f.renameTo(ren)) {
+					byte[] buff = new byte[(int) Math.min(f.length(), 8192)];
+					InputStream in = new FileInputStream(f);
+					OutputStream out = new FileOutputStream(ren);
+					int cur = 0;
+					while((cur = in.read(buff)) > 0) {
+						out.write(buff, 0, cur);
+					}
+					in.close();
+					out.close();
+				}
 			} catch(Exception e) {
+				System.err.println("Error occured while moving corrupted WNDB database (" 
+						+ Api.getRealPath(f) + ") to (" + ren.getName() 
+						+ "). Due this unexpected error, all saved data will lost!");
 				e.printStackTrace();
 				return WNDB.createEmptyWNDB(names, types);
 			}
 		}
 		try {
 			return WNDB.createWNDB(f, names, types);
-		} catch(SerializeException e1) {	
-		} catch(IOException e2) {}
+		} catch(Exception e) {
+			System.err.println("Error occured while creating WNDB database (" 
+					+ Api.getRealPath(f) 
+					+ "). Due this unexpected error, all saved data will lost!");
+			e.printStackTrace();
+		}
 		return WNDB.createEmptyWNDB(names, types);
 	}
 	
 	public static WNDB createWNDB(File f, String[] names, ColType[] types) throws SerializeException, IOException {
 		f.createNewFile();
 		List<Object[]> vals = new ArrayList<Object[]>();
-		Val.ThreeVal<String[], ColType[], Iterable<Object[]>> threevals = new Val.ThreeVal<String[], ColType[], Iterable<Object[]>>(names, types, vals);
-		WNDBEncoder.writeFileData(f, threevals);
-		WNDB ret = new WNDB(f);
+		WNDBEncoder.writeFileData(f, names, types, vals);
+		WNDB ret = new WNDB();
+		ret.file = f;
 		ret.names = names;
 		ret.types = types;
 		ret.values = vals;
@@ -260,8 +278,7 @@ public class WNDB extends ArraysResSet {
 	
 	public static WNDB createEmptyWNDB(Output out, String[] names, ColType[] types) throws SerializeException, IOException {
 		List<Object[]> vals = new ArrayList<Object[]>();
-		Val.ThreeVal<String[], ColType[], Iterable<Object[]>> threevals = new Val.ThreeVal<String[], ColType[], Iterable<Object[]>>(names, types, vals);
-		WNDBEncoder.writeOutputStreamData(out, threevals);
+		WNDBEncoder.writeOutputStreamData(out, names, types, vals);
 		WNDB ret = new WNDB();
 		ret.file = null;
 		ret.names = names;

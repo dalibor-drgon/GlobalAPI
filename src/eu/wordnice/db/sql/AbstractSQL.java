@@ -49,23 +49,22 @@ public abstract class AbstractSQL implements SQL {
 	
 	@Override
 	public String getWhere(Where where) {
-		String str = where.flag.sql;
 		if(where.val instanceof Number) {
-			return Api.replace(str, new Object[]{
+			return Api.replace(where.flag.sql, new Object[]{
 					"111 ", "",
 					" 222", "",
 					"333", "",
 					"$", where.key
 			});
 		} else if(where.val instanceof byte[]) {
-			return Api.replace(str, new Object[]{
+			return Api.replace(where.flag.sql, new Object[]{
 					"111 ", "",
 					" 222", "",
 					"333", ((byte[]) where.val).length,
 					"$", where.key
 			});
 		} else if(where.val instanceof String) {
-			return Api.replace(str, new Object[]{
+			return Api.replace(where.flag.sql, new Object[]{
 					"111 ", "",
 					"222", ((this.useSQLiteSyntax()) 
 							? (where.sens) ? "" : "COLLATE NOCASE"
@@ -74,7 +73,7 @@ public abstract class AbstractSQL implements SQL {
 					"$", where.key
 			});
 		} else if(where.val == null) {
-			return Api.replace(str, new Object[]{
+			return Api.replace(where.flag.sql_null, new Object[]{
 					"111 ", "",
 					" 222", "",
 					"333", "0",

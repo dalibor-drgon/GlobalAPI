@@ -57,7 +57,7 @@ public class WNDBDecoder {
 
 		int bt = in.readInt();
 		if(bt < 1) {
-			throw new NullPointerException("Invalid returned number of heads: " + bt);
+			throw new SerializeException("Invalid returned number of heads: " + bt);
 		}
 
 		String[] names = new String[bt];
@@ -113,6 +113,6 @@ public class WNDBDecoder {
 			case MAP:
 				return in.readMap();
 		}
-		throw new BadTypeException("Cannot read object at " + ri + ":" + vi + " - unsupported type " + typ.name());
+		throw new BadTypeException("Cannot read object at " + ri + ":" + vi + " - unsupported type " + typ);
 	}
 }

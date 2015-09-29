@@ -29,7 +29,7 @@ import java.util.Set;
 import eu.wordnice.api.Api;
 import eu.wordnice.api.OnlyOnce;
 
-@org.spongepowered.api.plugin.Plugin(id="MainAPI", name="MainAPI", version="2.3.0")
+@org.spongepowered.api.plugin.Plugin(id="MainAPI", name="MainAPI", version="2.4.9")
 public class MainApi {
 	
 	@com.google.inject.Inject

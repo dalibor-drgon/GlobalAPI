@@ -209,18 +209,18 @@ public abstract class InputAdv extends InputStream implements Input {
 	
 	@Override
 	public long readLong() throws IOException {
-		int ch8 = this.read();
-		int ch7 = this.read();
-		int ch6 = this.read();
-		int ch5 = this.read();
-		int ch4 = this.read();
-		int ch3 = this.read();
-		int ch2 = this.read();
-		int ch1 = this.read();
+		long ch8 = this.read();
+		long ch7 = this.read();
+		long ch6 = this.read();
+		long ch5 = this.read();
+		long ch4 = this.read();
+		long ch3 = this.read();
+		long ch2 = this.read();
+		long ch1 = this.read();
 		if(ch1 < 0) {
 			throw new EOFException();
 		}
-		return (((long) ch1 << 56) | ((long)ch2 << 48) | ((long)ch3 << 40) | ((long)ch4 << 32)
+		return ((ch1 << 56) | (ch2 << 48) | (ch3 << 40) | (ch4 << 32)
 				| (ch5 << 24) | (ch6 << 16) | (ch7 << 8) | (ch8 << 0));
 	}
 	

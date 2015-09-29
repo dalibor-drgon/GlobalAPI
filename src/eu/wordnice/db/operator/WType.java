@@ -31,14 +31,14 @@ public enum WType {
 	 * 
 	 * Check if value in database is too same as entered
 	 */
-	EQUAL("$ = 111 ? 222"),
+	EQUAL("$ = 111 ? 222", "$ IS NULL"),
 
 	/**
 	 * For: String, byte[], Number
 	 * 
 	 * Check if value in database is different from entered
 	 */
-	NOT_EQUAL("$ != 111 ? 222"),
+	NOT_EQUAL("$ != 111 ? 222", "$ IS NOT NULL"),
 	
 	/**
 	 * For: String, byte[]
@@ -119,9 +119,16 @@ public enum WType {
 	SMALLER_EQUAL("$ <= 111 ? 222");
 	
 	public String sql;
+	public String sql_null;
 	
 	WType(String sql) {
 		this.sql = sql;
+		this.sql_null = sql;
+	}
+	
+	WType(String sql, String sql_null) {
+		this.sql = sql;
+		this.sql_null = sql_null;
 	}
 	
 }

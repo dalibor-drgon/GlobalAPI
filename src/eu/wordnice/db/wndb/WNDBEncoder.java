@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import eu.wordnice.api.Val;
 import eu.wordnice.db.ColType;
 import eu.wordnice.db.serialize.BadTypeException;
 import eu.wordnice.db.serialize.SerializeException;
@@ -39,41 +38,39 @@ import eu.wordnice.streams.OutputAdv;
 
 public class WNDBEncoder {
 
-	public static void writeFileData(File f, 
-			Val.ThreeVal<String[], ColType[], Iterable<Object[]>> vals) throws SerializeException, IOException {
+	public static void writeFileData(File f, String[] names, ColType[] types, Iterable<Object[]> vals) throws SerializeException, IOException {
 		if(vals == null || f == null) {
 			throw new NullPointerException("File or values are null!");
 		}
 		Output out = OutputAdv.forFile(f);
-		WNDBEncoder.writeOutputStreamData(out, vals);
+		WNDBEncoder.writeOutputStreamData(out, names, types, vals);
 		out.close();
 	}
 	
-	public static void writeOutputStreamData(Output out, 
-			Val.ThreeVal<String[], ColType[], Iterable<Object[]>> vals) throws SerializeException, IOException {
+	public static void writeOutputStreamData(Output out, String[] names, ColType[] types, Iterable<Object[]> vals) throws SerializeException, IOException {
 		if(out == null || vals == null || 
-				vals.one == null || vals.two == null || vals.three == null ||
-				vals.one.length < 1 || vals.two.length < 1 || (vals.one.length != vals.two.length)) {
+				names == null || types == null ||
+						names.length == 0 || names.length != types.length) {
 			throw new NullPointerException("File or values are null, or the lengths "
 					+ "of names and types do not match!");
 		}
 		out.writeLong(WNDBDecoder.STATIC_DB_PREFIX);
-		int sz = vals.one.length;
+		int sz = names.length;
 		out.writeInt(sz);
 		
 		for(int b = 0; b < sz; b++) {
-			out.writeUTF(vals.one[b]);
-			out.writeByte(vals.two[b].b);
+			out.writeUTF(names[b]);
+			out.writeByte(types[b].b);
 		}
 		
-		Iterator<Object[]> it = vals.three.iterator();
+		Iterator<Object[]> it = vals.iterator();
 		int i = 0;
 		while(it.hasNext()) {
 			Object[] cur = it.next();
 			out.writeBoolean(true);
 			int i2 = 0;
 			for(; i2 < sz; i2++) {
-				WNDBEncoder.writeObject(out, cur[i2], vals.two[i2], i, i2);
+				WNDBEncoder.writeObject(out, cur[i2], types[i2], i, i2);
 			}
 			i++;
 		}

@@ -24,6 +24,8 @@
 
 package eu.wordnice.db;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +47,6 @@ import eu.wordnice.db.results.MapsResSet;
 import eu.wordnice.db.results.ResSet;
 import eu.wordnice.db.results.ResSetDB;
 import eu.wordnice.db.results.ResultResSet;
-import eu.wordnice.db.serialize.CollSerializer;
 import eu.wordnice.db.serialize.SerializeException;
 import eu.wordnice.db.serialize.SerializeUtils;
 import eu.wordnice.db.results.ArraysResSet;
@@ -54,6 +55,9 @@ import eu.wordnice.db.sql.MySQL;
 import eu.wordnice.db.sql.SQL;
 import eu.wordnice.db.sql.SQLite;
 import eu.wordnice.db.wndb.WNDB;
+import eu.wordnice.streams.Input;
+import eu.wordnice.streams.InputAdv;
+import eu.wordnice.streams.Output;
 import eu.wordnice.streams.OutputAdv;
 
 /**
@@ -273,7 +277,7 @@ public class Database implements Closeable, AutoCloseable {
 		} else if(type.equals("wndb")) {
 			Object file = data.get("file");
 			if(file == null) {
-				throw new IllegalArgumentException("SQLite file is null!");
+				throw new IllegalArgumentException("WNDB file is null!");
 			}
 			File fl = new File(file.toString());
 			this.init(WNDB.loadOrCreateWNDBSafe(fl, 
@@ -480,9 +484,13 @@ public class Database implements Closeable, AutoCloseable {
 			}
 			
 			Val.TwoVal<String, List<Object>> whproc = where.toSQL(this.sql);
-			PreparedStatement ps = this.sql.prepare(cmd + " WHERE " + whproc.one + suf.toString());
+			List<Object> list = whproc.two;
+			cmd = cmd + " WHERE " + whproc.one + suf.toString();
+			if(list == null || list.size() == 0) {
+				return this.sql.query(cmd);
+			}
+			PreparedStatement ps = this.sql.prepare(cmd);
 			try {
-				List<Object> list = whproc.two;
 				for(int i = 0, n = list.size(); i < n;) {
 					Object v = Database.toSQLObject(list.get(i));
 					i++;
@@ -760,8 +768,8 @@ public class Database implements Closeable, AutoCloseable {
 			try {
 				if(where != null) {
 					Val.TwoVal<String, List<Object>> whproc = where.toSQL(this.sql);
-					ps = this.sql.prepare(cmd + " WHERE " + whproc.one + suf);
 					List<Object> list = whproc.two;
+					ps = this.sql.prepare(cmd + " WHERE " + whproc.one + suf);
 					for(int i = 0, n = list.size(); i < n; ) {
 						Object v = list.get(i);
 						i++;
@@ -773,7 +781,7 @@ public class Database implements Closeable, AutoCloseable {
 				
 				it = nevvals.entrySet().iterator();
 				int secsize = 0;
-				while(it.hasNext()) {
+				while(it.hasNext() && secsize < size) {
 					secsize++;
 					ps.setObject(secsize, Database.toSQLObject(it.next().getValue()));
 				}
@@ -1017,7 +1025,7 @@ public class Database implements Closeable, AutoCloseable {
 				sb.append(ent.getValue().sql_sqlite);
 			}
 			
-			sb.append(") DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci");
+			sb.append(')');
 			
 			sql.command(sb.toString());
 		}
@@ -1027,7 +1035,7 @@ public class Database implements Closeable, AutoCloseable {
 	 * Convert sql-unsupported object types to supported (e.g. serialize collections
 	 * and maps to bytes)
 	 * 
-	 * @param out Object to convert
+	 * @param obj Object to convert
 	 * 
 	 * @return If given object is recognized as not supported by sql, is converted to
 	 *         any other supported type.
@@ -1036,17 +1044,41 @@ public class Database implements Closeable, AutoCloseable {
 	 *         
 	 * @see {@link Database#fromSQLObject(Object)}
 	 */
-	public static final Object toSQLObject(Object out) throws SerializeException {
-		if(out instanceof Object[]) {
-			return CollSerializer.serializeCollArraySQL((Object[]) out);
+	public static final Object toSQLObject(Object obj) throws SerializeException {
+		if(obj instanceof Object[]) {
+			try {
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				Output out = OutputAdv.forStream(baos);
+				out.writeInt(0x71830);
+				out.writeObject((Object[]) obj);
+				return baos.toByteArray();
+			} catch(IOException ioe) {
+				throw new SerializeException("Unexpected IO error occured", ioe);
+			}
 		}
-		if(out instanceof Collection) {
-			return CollSerializer.serializeCollSQL((Collection<?>) out);
+		if(obj instanceof Collection) {
+			try {
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				Output out = OutputAdv.forStream(baos);
+				out.writeInt(0x71830);
+				out.writeObject((Collection<?>) obj);
+				return baos.toByteArray();
+			} catch(IOException ioe) {
+				throw new SerializeException("Unexpected IO error occured", ioe);
+			}
 		}
-		if(out instanceof Map) {
-			return CollSerializer.serializeMapSQL((Map<?,?>) out);
+		if(obj instanceof Map) {
+			try {
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				Output out = OutputAdv.forStream(baos);
+				out.writeInt(0x71830);
+				out.writeObject((Map<?, ?>) obj);
+				return baos.toByteArray();
+			} catch(IOException ioe) {
+				throw new SerializeException("Unexpected IO error occured", ioe);
+			}
 		}
-		return out;
+		return obj;
 	}
 	
 	/**
@@ -1062,25 +1094,21 @@ public class Database implements Closeable, AutoCloseable {
 	public static final Object fromSQLObject(Object obj) {
 		if(obj instanceof byte[]) {
 			try {
-				return CollSerializer.deserializeCollSQL((byte[]) obj);
-			} catch(Exception ign) {}
-			try {
-				return CollSerializer.deserializeMapSQL((byte[]) obj);
+				Input in = InputAdv.forStream(new ByteArrayInputStream((byte[]) obj));
+				if(in.readInt() != 0x71830) {
+					return obj;
+				}
+				Object readed = in.readObject();
+				if(readed instanceof Collection || readed instanceof Map) {
+					return readed;
+				}
 			} catch(Exception ign) {}
 		} else if(obj instanceof Blob) {
-			byte[] bytes = null;
 			try {
-				bytes = ((Blob) obj).getBytes(0, (int) ((Blob) obj).length());
+				return Database.fromSQLObject((byte[]) ((Blob) obj).getBytes(0, (int) ((Blob) obj).length()));
 			} catch(Exception exc) {
 				return obj;
 			}
-			try {
-				return CollSerializer.deserializeCollSQL(bytes);
-			} catch(Exception ign) {}
-			try {
-				return CollSerializer.deserializeMapSQL(bytes);
-			} catch(Exception ign) {}
-			return bytes;
 		}
 		return obj;
 	}

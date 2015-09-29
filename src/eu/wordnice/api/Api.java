@@ -31,6 +31,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.lang.reflect.Array;
 import java.net.URISyntaxException;
@@ -413,6 +414,27 @@ public class Api {
 		return -1;
 	}
 	
+	public static int indexOf(Object o, Object[] vals, int i, int size) {
+		if(vals == null || size == 0) {
+			return -1;
+		}
+		size += i;
+		if(o == null) {
+			for(; i < size; i++) {
+				if(vals[i] == null) {
+					return i;
+				}
+			}
+		} else {
+			for(; i < size; i++) {
+				if(o.equals(vals[i])) {
+					return i;
+				}
+			}
+		}
+		return -1;
+	}
+	
 	public static int indexOfInsensitive(String o, String[] vals) {
 		return Api.indexOfInsensitive(o, vals, 0);
 	}
@@ -422,6 +444,27 @@ public class Api {
 			return -1;
 		}
 		int size = vals.length;
+		if(o == null) {
+			for(; i < size; i++) {
+				if(vals[i] == null) {
+					return i;
+				}
+			}
+		} else {
+			for(; i < size; i++) {
+				if(o.equalsIgnoreCase(vals[i])) {
+					return i;
+				}
+			}
+		}
+		return -1;
+	}
+	
+	public static int indexOfInsensitive(String o, String[] vals, int i, int size) {
+		if(vals == null || size == 0) {
+			return -1;
+		}
+		size += i;
 		if(o == null) {
 			for(; i < size; i++) {
 				if(vals[i] == null) {
@@ -641,6 +684,23 @@ public class Api {
 			par.mkdirs();
 		}
 		return par;
+	}
+	
+	public static void moveFile(File from, File to) throws IOException {
+		if(!from.renameTo(to)) {
+			byte[] buff = new byte[(int) Math.min(from.length(), 8192)];
+			InputStream in = new FileInputStream(from);
+			OutputStream out = new FileOutputStream(to);
+			int cur = 0;
+			while((cur = in.read(buff)) > 0) {
+				out.write(buff, 0, cur);
+			}
+			in.close();
+			out.close();
+		}
+		if(from.exists()) {
+			from.delete();
+		}
 	}
 	
 	

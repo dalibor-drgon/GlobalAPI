@@ -37,6 +37,17 @@ public enum SType {
 
 		@Override
 		public int compare(Object o1, Object o2) {
+			if(o1 instanceof Number && o2 instanceof Number) {
+				double d1 = ((Number) o1).doubleValue();
+				double d2 = ((Number) o2).doubleValue();
+				if(d1 > d2) {
+					return 1;
+				} else if(d1 < d2) {
+					return -1;
+				} else {
+					return 0;
+				}
+			}
 			if(o1 instanceof CharSequence && o2 instanceof CharSequence) {
 				CharSequence s1 = (CharSequence) o1;
 				CharSequence s2 = (CharSequence) o2;
@@ -87,17 +98,6 @@ public enum SType {
 				}
 				return n1 - n2;
 			}
-			if(o1 instanceof Number && o2 instanceof Number) {
-				double d1 = ((Number) o1).doubleValue();
-				double d2 = ((Number) o2).doubleValue();
-				if(d1 > d2) {
-					return 1;
-				} else if(d1 < d2) {
-					return -1;
-				} else {
-					return 0;
-				}
-			}
 			
 			if(o1 != null && o2 != null) {
 				return o1.hashCode() - o2.hashCode();
@@ -132,6 +132,17 @@ public enum SType {
 
 		@Override
 		public int compare(Object o1, Object o2) {
+			if(o1 instanceof Number && o2 instanceof Number) {
+				double d1 = ((Number) o1).doubleValue();
+				double d2 = ((Number) o2).doubleValue();
+				if(d1 > d2) {
+					return 1;
+				} else if(d1 < d2) {
+					return -1;
+				} else {
+					return 0;
+				}
+			}
 			if(o1 instanceof CharSequence && o2 instanceof CharSequence) {
 				CharSequence s1 = (CharSequence) o1;
 				CharSequence s2 = (CharSequence) o2;
@@ -161,17 +172,6 @@ public enum SType {
 					}
 				}
 				return n1 - n2;
-			}
-			if(o1 instanceof Number && o2 instanceof Number) {
-				double d1 = ((Number) o1).doubleValue();
-				double d2 = ((Number) o2).doubleValue();
-				if(d1 > d2) {
-					return 1;
-				} else if(d1 < d2) {
-					return -1;
-				} else {
-					return 0;
-				}
 			}
 			
 			if(o1 != null && o2 != null) {

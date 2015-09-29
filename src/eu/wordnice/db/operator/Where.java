@@ -24,24 +24,11 @@
 
 package eu.wordnice.db.operator;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.sql.SQLException;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.ByteString;
-import eu.wordnice.api.OnlyOnce;
-import eu.wordnice.api.OnlyOnce.OnlyOnceLogger;
-import eu.wordnice.cols.ImmMapArray;
-import eu.wordnice.db.ColType;
-import eu.wordnice.db.Database;
-import eu.wordnice.db.DatabaseException;
 import eu.wordnice.db.results.ResSet;
-import eu.wordnice.db.sql.DriverManagerSQL;
-import eu.wordnice.db.sql.MySQL;
-import eu.wordnice.db.sql.SQLite;
 
 public class Where {
 	
@@ -83,7 +70,7 @@ public class Where {
 	 * 
 	 * @param key Column name / key for val {@link Where#key}
 	 * @param val Value to find {@link Where#val}
-	 * @param flag {@link WType} {@link Where#flag}
+	 * @param flag Where flag {@link WType} {@link Where#flag}
 	 */
 	public Where(String key, Object val, WType flag) {
 		this.key = key;
@@ -111,7 +98,7 @@ public class Where {
 	 * 
 	 * @param key Column name / key for val {@link Where#key}
 	 * @param val Value to find {@link Where#val}
-	 * @param flag {@link WType} {@link Where#flag}
+	 * @param flag Where flag {@link WType} {@link Where#flag}
 	 * @param sens Compare case-sensitive {@link Where#sens}
 	 */
 	public Where(String key, Object val, WType flag, boolean sens) {
@@ -269,144 +256,6 @@ public class Where {
 				return ((String) val).equalsIgnoreCase(rs.getString(key));
 			}
 			return val.equals(rs.getObject(key));
-		}
-	}
-	
-	/**
-	 * Test
-	 */
-	public static void main(String... lel_varargs) throws Throwable {
-		
-		OnlyOnce.debugAll(new OnlyOnceLogger() {
-
-			@Override
-			public void info(String str) {
-				System.out.println(str);
-			}
-
-			@Override
-			public void severe(String str) {
-				System.err.println(str);
-			}
-			
-		});
-		
-		//TEST!
-		int type = 0;
-		//0 - MySQL
-		//1 - SQLite
-		//2 - WNDB (ResSetDB)
-		
-		String table = "example4";
-		Map<String, ColType> cols = new ImmMapArray<String, ColType>(new Object[] {
-				"id", ColType.ID,
-				"name", ColType.STRING,
-				"pass", ColType.BYTES
-		});
-		
-		Database db = null;
-		if(type == 0) {
-			DriverManagerSQL sql = new MySQL("db.mysql-01.gsp-europe.net", "sql_1040", "sql_1040", "2qZ0h1e0nURTWbfiCQpHaz50Not8yuV");
-			db = new Database(sql, table, cols);
-		} else if(type == 1) {
-			db = new Database(new SQLite("./test.sqlite"), table, cols);
-		} else {
-			db = new Database(new ImmMapArray<String, Object>(new Object[] {
-					"type", "wndb",
-					"file", "./example.wndb"
-			}), cols);
-		}
-		
-		ResSet rs = db.sql.query("show collation where charset = 'utf8'");
-		while(rs.next()) {
-			System.out.println(rs.getEntries());
-		}
-		
-		long con = System.currentTimeMillis();
-		
-		
-		///
-		System.out.print("\nSELECT\n");
-		
-		rs = db.select(new Or(
-				new Where("id", null),
-				new Where("id", 0),
-				new Where("id", 1)
-		));
-		while(rs.next()) {
-			System.out.println(rs.getString("id") + " / " + rs.getEntries());
-		}
-		
-		
-		///
-		System.out.print("\nSELECT\n");
-		Where.selectAll(db);
-		
-		
-		
-		///
-		System.out.print("\nINSERT\n");
-		
-		db.insert(new ImmMapArray<String, Object>(new Object[] {
-				"name", "DEADBEEF",
-				"pass", new byte[] {1,2,3,4,5,6,7,8}
-		}));
-		
-		
-		
-		///
-		System.out.print("\nSELECT\n");
-		Where.selectAll(db);
-		
-		
-		
-		///
-		System.out.print("\nUPDATE\n");
-		
-		db.update(new ImmMapArray<String, Object>(new Object[] {
-				"name", "DEADCAFE"
-		}), new And(
-				new Where("name", "DEADBeeF", WType.EQUAL, false),
-				new Where("pass", new byte[] {1,2,3,4,5,6,7,8}, true)
-		));
-		
-		
-		
-		///
-		System.out.print("\nSELECT\n");
-		Where.selectAll(db);
-		
-		
-		
-		///
-		System.out.print("\nDELETE\n");
-		
-		db.delete(new Or(
-				new Where("id", null),
-				new Where("id", 1, WType.BIGGER_EQUAL)
-		));
-		
-		
-		///
-		System.out.print("\nSELECT\n");
-		Where.selectAll(db);
-		
-		while(true) {
-			Thread.sleep(50L);
-			if(new BufferedReader(new InputStreamReader(System.in)).readLine() != null) {
-				System.out.println((System.currentTimeMillis() - con) + " ms from first connect!");
-				Where.selectAll(db);
-			}
-		}
-		
-	}
-	
-	public static void selectAll(Database db) throws SQLException, DatabaseException {
-		ResSet rs = db.select(new Sort[] {
-				new Sort("id", SType.ASC)
-		});
-		while(rs.next()) {
-			System.out.println(rs.getEntries());
 		}
 	}
 	

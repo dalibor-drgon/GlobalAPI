@@ -25,7 +25,6 @@
 package eu.wordnice.db.results;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -280,7 +279,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 			return -1;
 		}
 		this.checkSet();
-		return Api.indexOf(name, this.names);
+		return Api.indexOf(name, this.names, 0, this.cols);
 	}
 	
 	@Override
@@ -477,19 +476,9 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 		
 		protected ArraysResSet orig;
 		
-		@SuppressWarnings("unchecked")
 		protected SetSetResSetSnapshot(ArraysResSet orig) {
 			this.orig = orig;
-			List<Object[]> list = null;
-			try {
-				Class<?> c = orig.values.getClass();
-				Constructor<?> con = c.getDeclaredConstructor();
-				con.setAccessible(true);
-				list = (List<Object[]>) con.newInstance();
-			} catch(Throwable t) {}
-			if(list == null) {
-				list = new ArrayList<Object[]>();
-			}
+			List<Object[]> list = new ArrayList<Object[]>();
 			list.addAll(orig.values);
 			this.values = list;
 			this.names = orig.names;

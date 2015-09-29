@@ -25,7 +25,6 @@
 package eu.wordnice.db.results;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -307,19 +306,9 @@ public class MapsResSet extends ObjectResSet implements ResSetDB {
 		
 		protected MapsResSet orig;
 		
-		@SuppressWarnings("unchecked")
 		protected CollResSetSnapshot(MapsResSet orig) {
 			this.orig = orig;
-			List<Map<String, Object>> list = null;
-			try {
-				Class<?> c = orig.list.getClass();
-				Constructor<?> con = c.getDeclaredConstructor();
-				con.setAccessible(true);
-				list = (List<Map<String, Object>>) con.newInstance();
-			} catch(Throwable t) {}
-			if(list == null) {
-				list = new ArrayList<Map<String, Object>>();
-			}
+			List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
 			list.addAll(orig.list);
 			this.list = list;
 			this.first();
