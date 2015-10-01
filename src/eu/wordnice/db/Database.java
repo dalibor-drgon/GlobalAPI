@@ -54,7 +54,6 @@ import eu.wordnice.db.sql.DriverManagerSQL;
 import eu.wordnice.db.sql.MySQL;
 import eu.wordnice.db.sql.SQL;
 import eu.wordnice.db.sql.SQLite;
-import eu.wordnice.db.wndb.WNDB;
 import eu.wordnice.streams.Input;
 import eu.wordnice.streams.InputAdv;
 import eu.wordnice.streams.Output;
@@ -101,11 +100,19 @@ public class Database implements Closeable, AutoCloseable {
 	public File file;
 	
 	/**
-	 * @see {@link Database#init(Map, Map)}
+	 * @see {@link Database#init(Map, Map, File)}
 	 */
 	public Database(Map<String, Object> data, Map<String, ColType> cols)
 			throws IllegalArgumentException, SerializeException, IOException, SQLException {
 		this.init(data, cols);
+	}
+	
+	/**
+	 * @see {@link Database#init(Map, Map, File)}
+	 */
+	public Database(Map<String, Object> data, Map<String, ColType> cols, File root)
+			throws IllegalArgumentException, SerializeException, IOException, SQLException {
+		this.init(data, cols, root);
 	}
 	
 	/**
@@ -121,6 +128,14 @@ public class Database implements Closeable, AutoCloseable {
 	 */
 	public Database(ResSetDB rs, File file) {
 		this.init(rs, file);
+	}
+	
+	/**
+	 * @see {@link Database#init(Map, Map, File)}
+	 */
+	public void init(Map<String, Object> data, Map<String, ColType> cols)
+			throws IllegalArgumentException, SerializeException, IOException, SQLException {
+		this.init(data, cols, null);
 	}
 	
 	/**
@@ -153,9 +168,9 @@ public class Database implements Closeable, AutoCloseable {
 	 * 
 	 * 
 	 * # Types below are good for small amount of data
-	 * # (under 100 MB; e.g. storing users)
+	 * # (under 10 MB; e.g. storing users)
 	 * 
-	 * - type: wndb
+	 * - type: wndb           # binary
 	 * - file: ./test.wndb
 	 * 
 	 * - type: flatfile (todo)
@@ -173,6 +188,7 @@ public class Database implements Closeable, AutoCloseable {
 	 * 
 	 * @param data Map
 	 * @param cols Columns names and types
+	 * @param root Root directory (null = current)
 	 * 
 	 * @throws IllegalArgumentException when not enought information were provided
 	 *                                  or entered database type does not exist
@@ -180,7 +196,7 @@ public class Database implements Closeable, AutoCloseable {
 	 * @throws IOException Error while reading file-based database
 	 * @throws SQLException Error while connecting or quering SQL-based database
 	 */
-	public void init(Map<String, Object> data, Map<String, ColType> cols)
+	public void init(Map<String, Object> data, Map<String, ColType> cols, File root)
 			throws IllegalArgumentException, SerializeException, IOException, SQLException {
 		Object otype = data.get("type");
 		if(otype == null) {
@@ -196,7 +212,7 @@ public class Database implements Closeable, AutoCloseable {
 			if(table == null) {
 				throw new IllegalArgumentException("SQLite table is null!");
 			}
-			this.init(new SQLite(Api.getRealPath(new File(file.toString()))), table.toString(), cols);
+			this.init(new SQLite(Api.getRealPath(root, file.toString())), table.toString(), cols);
 			this.sql.connect();
 		} else if(type.equals("mysql")) {
 			Object host = data.get("host");
@@ -279,8 +295,8 @@ public class Database implements Closeable, AutoCloseable {
 			if(file == null) {
 				throw new IllegalArgumentException("WNDB file is null!");
 			}
-			File fl = new File(file.toString());
-			this.init(WNDB.loadOrCreateWNDBSafe(fl, 
+			File fl = (root == null) ? new File(file.toString()) : new File(root, file.toString());
+			this.init(ArraysResSet.loadOrCreateSafe(fl, 
 					cols.keySet().toArray(new String[0]),
 					cols.values().toArray(new ColType[0])), fl);
 		} else {

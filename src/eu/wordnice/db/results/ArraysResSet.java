@@ -24,7 +24,12 @@
 
 package eu.wordnice.db.results;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,8 +42,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import eu.wordnice.api.Api;
+import eu.wordnice.api.Val;
 import eu.wordnice.cols.ImmArray;
 import eu.wordnice.cols.ImmMapPair;
+import eu.wordnice.db.ColType;
 import eu.wordnice.db.DatabaseException;
 import eu.wordnice.db.RawUnsupportedException;
 import eu.wordnice.db.operator.AndOr;
@@ -46,42 +53,67 @@ import eu.wordnice.db.operator.Limit;
 import eu.wordnice.db.operator.Sort;
 import eu.wordnice.db.serialize.BadResultException;
 import eu.wordnice.db.serialize.SerializeException;
+import eu.wordnice.db.serialize.SerializeUtils;
+import eu.wordnice.db.wndb.WNDBDecoder;
+import eu.wordnice.db.wndb.WNDBEncoder;
 import eu.wordnice.streams.Input;
 import eu.wordnice.streams.Output;
 
 public class ArraysResSet extends ObjectResSet implements ResSetDB {
 
+	public static final long PREFIX = 0x12435687CAFF44L;
+	
 	public List<Object[]> values;
-	public String[] names;
+	public String[] names; //Might be null, but should not
 	public ListIterator<Object[]> it;
 	public Object[] cur;
+	public ColType[] types; //Might be null
 	public int cols;
+	public long nextID = 1; //currentID = nextID; nextID++;
 
 	protected ArraysResSet() {}
 	
 	public ArraysResSet(String[] names, ResSet rs) throws DatabaseException, SQLException {
-		this(names, names.length, rs);
+		this(names, null, names.length, rs);
 	}
 	
 	public ArraysResSet(String[] names, int names_len, ResSet rs) throws DatabaseException, SQLException {
+		this(names, null, names_len, rs);
+	}
+	
+	public ArraysResSet(String[] names, ColType[] types, ResSet rs) throws DatabaseException, SQLException {
+		this(names, types, names.length, rs);
+	}
+	
+	public ArraysResSet(String[] names, ColType[] types, int names_len, ResSet rs) throws DatabaseException, SQLException {
 		this.values = new ArrayList<Object[]>();
 		this.names = names;
+		this.types = types;
 		this.cols = names.length;
 		this.insertAll(rs);
 		this.first();
 	}
 	
 	public ArraysResSet(List<Object[]> values, int size) {
-		this(values, null, size);
+		this(values, null, null, size);
 	}
 	
 	public ArraysResSet(List<Object[]> values, String[] names) {
-		this(values, names, names.length);
+		this(values, names, null, names.length);
 	}
 	
 	public ArraysResSet(List<Object[]> values, String[] names, int names_len) {
+		this(values, names, null, names_len);
+	}
+	
+	public ArraysResSet(List<Object[]> values, ColType[] types, String[] names) {
+		this(values, names, types, names.length);
+	}
+	
+	public ArraysResSet(List<Object[]> values, String[] names, ColType[] types, int names_len) {
 		this.values = values;
 		this.names = names;
+		this.types = types;
 		this.cols = names_len;
 		this.first();
 	}
@@ -98,6 +130,20 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 	 */
 	public ArraysResSet(String[] names, int names_len) {
 		this(new ArrayList<Object[]>(), names, names_len);
+	}
+	
+	/**
+	 * Create empty database
+	 */
+	public ArraysResSet(String[] names, ColType[] types) {
+		this(new ArrayList<Object[]>(), names, types, names.length);
+	}
+	
+	/**
+	 * Create empty database
+	 */
+	public ArraysResSet(String[] names, ColType[] types, int names_len) {
+		this(new ArrayList<Object[]>(), names, types, names_len);
 	}
 	
 	
@@ -131,9 +177,20 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 			}
 		}
 		if(keepOriginal && this.cur != null) {
-			for(int i = 0; i < this.cols; i++) {
+			for(int i = 0, n = this.cols; i < n; i++) {
 				if(!was[i]) {
 					nev[i] = this.cur[i];
+				}
+			}
+		} else if(this.types != null) {
+			for(int i = 0, n = this.cols; i < n; i++) {
+				if(!was[i]) {
+					ColType ct = this.types[i];
+					if(ct == ColType.ID) {
+						nev[i] = this.nextID++;
+					} else {
+						nev[i] = ct.def;
+					}
 				}
 			}
 		}
@@ -141,12 +198,28 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 	}
 	
 	public boolean checkRowRaw(Object[] vals) {
-		return (vals != null && vals.length >= this.cols());
+		if(vals == null || vals.length < this.cols) {
+			return false;
+		}
+		if(this.types == null) {
+			return true;
+		}
+		for(int i = 0, n = this.cols; i < n; i++) {
+			ColType ct = this.types[i];
+			Object obj = vals[i];
+			if(!ColType.isAssignable(ct, obj)) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	public boolean isRawValueOK(int i, Object val) {
 		if(i < 0 || i >= this.cols) {
 			return false;
+		}
+		if(this.types != null) {
+			return ColType.isAssignable(this.types[i], val);
 		}
 		return true;
 	}
@@ -483,6 +556,8 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 			this.values = list;
 			this.names = orig.names;
 			this.cols = orig.cols;
+			this.nextID = orig.nextID;
+			this.types = orig.types;
 			this.first();
 		}
 		
@@ -500,23 +575,49 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 
 	@Override
 	public void write(Output out) throws SerializeException, IOException {
-		out.writeColl(this.values);
+		if(this.types != null) {
+			WNDBEncoder.writeOutputStreamData(out, this.names, this.types, this.values, this.nextID);
+		} else {
+			out.writeLong(ArraysResSet.PREFIX);
+			out.writeInt(this.cols);
+			out.writeLong(this.nextID);
+			out.writeCollArray(this.names);
+			out.writeColl(this.values);
+		}
 	}
 
 	@Override
 	public void read(Input in) throws SerializeException, IOException {
-		this.values = (List<Object[]>) in.readColl(new ArrayList<Object[]>());
-		if(this.values == null) {
-			throw new BadResultException("Readed null collection!");
-		}
-		ListIterator<Object[]> it = this.values.listIterator();
-		int i = 0;
-		while(it.hasNext()) {
-			Object[] arr = it.next();
-			if(arr == null || arr.length <= this.cols) {
-				throw new BadResultException("Bad readed collection! Array at index " + i + " has " + ((arr == null) ? -1 : arr.length) + " elements!");
+		long prefix = in.readLong();
+		if(prefix == ArraysResSet.PREFIX) {
+			this.cols = in.readInt();
+			this.nextID = in.readLong();
+			this.names = in.readColl().toArray(new String[this.cols]);
+			this.values = (List<Object[]>) in.readColl(new ArrayList<Object[]>());
+			if(this.values == null || this.values.isEmpty()) {
+				this.nextID = 1;
+				if(this.values == null) {
+					throw new BadResultException("Readed null collection!");
+				}
+				return;
 			}
-			i++;
+			Iterator<Object[]> it = this.values.iterator();
+			int i = 0;
+			while(it.hasNext()) {
+				Object[] arr = it.next();
+				if(arr == null || arr.length <= this.cols) {
+					throw new BadResultException("Broken read collection! Array at index " + i + " has " + ((arr == null) ? -1 : arr.length) + " elements!");
+				}
+				i++;
+			}
+		} else {
+			Val.FourVal<String[], ColType[], List<Object[]>, Long> vals = WNDBDecoder.readInputStreamRawData(in, prefix);
+			this.names = vals.one;
+			this.types = vals.two;
+			this.values = vals.three;
+			this.cols = this.names.length;
+			this.nextID = (this.values.isEmpty()) ? 1 : vals.four;
+			this.first();
 		}
 	}
 
@@ -551,6 +652,75 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 	public void deleteDB(AndOr where, int limit)
 			throws UnsupportedOperationException, DatabaseException, SQLException {
 		throw new UnsupportedOperationException();
+	}
+	
+	
+	/************
+	 * Utilities
+	 */
+	
+	public static ArraysResSet loadOrCreate(File f, String[] names, ColType[] types) throws SerializeException, IOException {
+		if(f.exists()) {
+			File ren = null;
+			try {
+				ArraysResSet rs = new ArraysResSet();
+				SerializeUtils.read(rs, f);
+				return rs;
+			} catch(Exception e) {
+				ren = Api.getFreeName(f);
+				System.err.println("Error occured while loading binary database ("
+						+ Api.getRealPath(f) + "). Database will be renamed and marked as corruped (" + ren.getName() + "):");
+				e.printStackTrace();
+			}
+			Api.moveFile(f, ren);
+		}
+		return new ArraysResSet(names, types);
+	}
+	
+	public static ArraysResSet loadOrCreateSafe(File f, String[] names, ColType[] types) {
+		if(f.exists()) {
+			try {
+				ArraysResSet rs = new ArraysResSet();
+				SerializeUtils.read(rs, f);
+				return rs;
+			} catch(Exception e) {
+				System.err.println("Error occured while loading WNDB database (" 
+						+ Api.getRealPath(f) + "):");
+				e.printStackTrace();
+			}
+			File ren = Api.getFreeName(f);
+			try {
+				ren.createNewFile();
+				if(!f.renameTo(ren)) {
+					byte[] buff = new byte[(int) Math.min(f.length(), 8192)];
+					InputStream in = new FileInputStream(f);
+					OutputStream out = new FileOutputStream(ren);
+					int cur = 0;
+					while((cur = in.read(buff)) > 0) {
+						out.write(buff, 0, cur);
+					}
+					in.close();
+					out.close();
+				}
+			} catch(Exception e) {
+				System.err.println("Error occured while moving corrupted binary database (" 
+						+ Api.getRealPath(f) + ") to (" + ren.getName() 
+						+ "). Due this unexpected error, all saved data will lost!");
+				e.printStackTrace();
+				return new ArraysResSet(names, types);
+			}
+		}
+		try {
+			ArraysResSet rs = new ArraysResSet(names, types);
+			SerializeUtils.write(rs, f);
+			return rs;
+		} catch(Exception e) {
+			System.err.println("Error occured while creating binary database (" 
+					+ Api.getRealPath(f) 
+					+ "). Due this unexpected error, all saved data will lost!");
+			e.printStackTrace();
+		}
+		return new ArraysResSet(names, types);
 	}
 
 }

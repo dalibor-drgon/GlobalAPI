@@ -38,26 +38,30 @@ import eu.wordnice.streams.Input;
 import eu.wordnice.streams.InputAdv;
 
 public class WNDBDecoder { 
-
-	public static final long STATIC_DB_PREFIX = 0xDEADCAFEBEEFBABEL;
 	
-	
-	public static Val.ThreeVal<String[], ColType[], List<Object[]>> readFileRawData(File f) throws SerializeException, IOException {
+	public static Val.FourVal<String[], ColType[], List<Object[]>, Long> readFileRawData(File f) throws SerializeException, IOException {
 		Input in = InputAdv.forFile(f);
-		Val.ThreeVal<String[], ColType[], List<Object[]>> ret = WNDBDecoder.readInputStreamRawData(in);
+		Val.FourVal<String[], ColType[], List<Object[]>, Long> ret = WNDBDecoder.readInputStreamRawData(in);
 		in.close();
 		return ret;
 	}
 	
-	public static Val.ThreeVal<String[], ColType[], List<Object[]>> readInputStreamRawData(Input in) throws SerializeException, IOException {
-		long type = in.readLong();
-		if (type != WNDBDecoder.STATIC_DB_PREFIX) {
+	public static Val.FourVal<String[], ColType[], List<Object[]>, Long> readInputStreamRawData(Input in) throws SerializeException, IOException {
+		return WNDBDecoder.readInputStreamRawData(in, in.readLong());
+	}
+	
+	public static Val.FourVal<String[], ColType[], List<Object[]>, Long> readInputStreamRawData(Input in, long prefix) throws SerializeException, IOException {
+		if(prefix != WNDBEncoder.PREFIX && prefix != WNDBEncoder.PREFIX_2_4_9) {
 			throw new BadPrefixException("Not WNDB format!");
 		}
 
+		long nextId = 1;
 		int bt = in.readInt();
 		if(bt < 1) {
 			throw new SerializeException("Invalid returned number of heads: " + bt);
+		}
+		if(prefix != WNDBEncoder.PREFIX_2_4_9) {
+			nextId = in.readLong();
 		}
 
 		String[] names = new String[bt];
@@ -80,7 +84,11 @@ public class WNDBDecoder {
 			i++;
 		}
 		
-		return new Val.ThreeVal<String[], ColType[], List<Object[]>>(names, types, data);
+		if(prefix == WNDBEncoder.PREFIX_2_4_9) {
+			nextId = i + 1;
+		}
+		
+		return new Val.FourVal<String[], ColType[], List<Object[]>, Long>(names, types, data, nextId);
 	}
 	
 	public static Object readObject(Input in, int type, int ri, int vi) throws SerializeException, IOException {

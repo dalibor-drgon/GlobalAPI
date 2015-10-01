@@ -38,25 +38,29 @@ import eu.wordnice.streams.OutputAdv;
 
 public class WNDBEncoder {
 
-	public static void writeFileData(File f, String[] names, ColType[] types, Iterable<Object[]> vals) throws SerializeException, IOException {
+	public static final long PREFIX_2_4_9 = 0xDEADCAFEBEEFBABEL;
+	public static final long PREFIX = 0xDEEDCAFEBEEFBABEL;
+	
+	public static void writeFileData(File f, String[] names, ColType[] types, Iterable<Object[]> vals, long nextId) throws SerializeException, IOException {
 		if(vals == null || f == null) {
 			throw new NullPointerException("File or values are null!");
 		}
 		Output out = OutputAdv.forFile(f);
-		WNDBEncoder.writeOutputStreamData(out, names, types, vals);
+		WNDBEncoder.writeOutputStreamData(out, names, types, vals, nextId);
 		out.close();
 	}
 	
-	public static void writeOutputStreamData(Output out, String[] names, ColType[] types, Iterable<Object[]> vals) throws SerializeException, IOException {
+	public static void writeOutputStreamData(Output out, String[] names, ColType[] types, Iterable<Object[]> vals, long nextId) throws SerializeException, IOException {
 		if(out == null || vals == null || 
 				names == null || types == null ||
 						names.length == 0 || names.length != types.length) {
 			throw new NullPointerException("File or values are null, or the lengths "
 					+ "of names and types do not match!");
 		}
-		out.writeLong(WNDBDecoder.STATIC_DB_PREFIX);
+		out.writeLong(WNDBEncoder.PREFIX);
 		int sz = names.length;
 		out.writeInt(sz);
+		out.writeLong(nextId);
 		
 		for(int b = 0; b < sz; b++) {
 			out.writeUTF(names[b]);
