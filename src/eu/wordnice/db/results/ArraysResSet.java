@@ -157,10 +157,9 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 		return this.cur;
 	}
 	
-	protected Object[] vals2raw(Map<String, Object> vals, boolean keepOriginal) throws IllegalArgumentException {
+	protected Object[] vals2raw(Iterator<Entry<String, Object>> it, boolean keepOriginal) throws IllegalArgumentException {
 		Object[] nev = new Object[this.cols()];
 		boolean[] was = new boolean[this.cols()];
-		Iterator<Entry<String, Object>> it = vals.entrySet().iterator();
 		while(it.hasNext()) {
 			Entry<String, Object> ent =  it.next();
 			String key = ent.getKey();
@@ -357,17 +356,17 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 	
 	@Override
 	public void update(Map<String, Object> vals) throws DatabaseException, SQLException {
-		this.updateRaw(this.vals2raw(vals, true));
+		this.updateRaw(this.vals2raw(vals.entrySet().iterator(), true));
 	}
 	
 	@Override
 	public void updateAll(Map<String, Object> vals) throws DatabaseException, SQLException {
-		this.updateRaw(this.vals2raw(vals, false));
+		this.updateRaw(this.vals2raw(vals.entrySet().iterator(), false));
 	}
 
 	@Override
 	public void insert(Map<String, Object> vals) throws DatabaseException, SQLException {
-		this.insertRaw(this.vals2raw(vals, false));
+		this.insertRaw(this.vals2raw(vals.entrySet().iterator(), false));
 	}
 	
 	@Override
@@ -389,13 +388,21 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 		String[] cols = columns.toArray(new String[0]);
 		int n = cols.length;
 		int[] inds = new int[n];
+		int[] inds2 = new int[this.cols];
 		for(int i = 0; i < n; i++) {
 			String key = cols[i];
 			int index = this.getColumnIndex(key);
 			if(index == -1) {
 				throw new IllegalArgumentException("Illegal column name '" + key + "'!");
 			}
+			for(int i2 = 0; i2 < i; i2++) {
+				if(inds[i2] == index) {
+					throw new IllegalArgumentException("Duplicated column '" 
+							+ key + "' at indexes " + i + " & " + i2 + "!");
+				}
+			}
 			inds[i] = index;
+			inds2[index] = i;
 		}
 		
 		if(this.values instanceof ArrayList) {
@@ -425,6 +432,16 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB {
 			if(i != n) {
 				throw new IllegalArgumentException("Illegal values size " + i 
 						+ ". We have planned to reach " + n + " from " + cursz + "!");
+			}
+			for(i = 0; i < this.cols; i++) {
+				if(inds2[i] == -1) {
+					ColType ct = this.types[i];
+					if(ct == ColType.ID) {
+						insert_vals[i] = this.nextID++;
+					} else {
+						insert_vals[i] = ct.def;
+					}
+				}
 			}
 			if(this.it != null) {
 				this.it.add(insert_vals);

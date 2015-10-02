@@ -360,7 +360,7 @@ public class Database implements Closeable, AutoCloseable {
 	}
 	
 	/**
-	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
+	 * @see {@link Database#select(String[], AndOr, Sort[], Limit)}
 	 * @return ResSet with all values
 	 */
 	public ResSet select() throws SQLException, DatabaseException {
@@ -368,80 +368,55 @@ public class Database implements Closeable, AutoCloseable {
 	}
 	
 	/**
-	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
+	 * @see {@link Database#select(String[], AndOr, Sort[], Limit)}
 	 */
-	public ResSet select(AndOr where) throws SQLException, DatabaseException {
-		return this.select(null, where, null, null);
+	public ResSet select(String[] names) throws SQLException, DatabaseException {
+		return this.select(names, null, null, null);
 	}
 	
 	/**
-	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
-	 */
-	public ResSet select(String[] columns, AndOr where) throws SQLException, DatabaseException {
-		return this.select(columns, where, null, null);
-	}
-	
-	/**
-	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
-	 */
-	public ResSet select(String[] columns, AndOr where, Sort[] sort) throws SQLException, DatabaseException {
-		return this.select(columns, where, sort, null);
-	}
-	
-	/**
-	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
-	 */
-	public ResSet select(String[] columns, AndOr where, Limit limit) throws SQLException, DatabaseException {
-		return this.select(columns, where, null, limit);
-	}
-	
-	/**
-	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
-	 */
-	public ResSet select(AndOr where, Sort[] sort) throws SQLException, DatabaseException {
-		return this.select(null, where, sort, null);
-	}
-	
-	/**
-	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
-	 */
-	public ResSet select(AndOr where, Limit limit) throws SQLException, DatabaseException {
-		return this.select(null, where, null, limit);
-	}
-	
-	/**
-	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
-	 */
-	public ResSet select(AndOr where, Sort[] sort, Limit limit) throws SQLException, DatabaseException {
-		return this.select(null, where, sort, limit);
-	}
-	
-	/**
-	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
-	 */
-	public ResSet select(String[] columns, Sort[] sort) throws SQLException, DatabaseException {
-		return this.select(columns, null, sort, null);
-	}
-	
-	/**
-	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
+	 * @see {@link Database#select(String[], AndOr, Sort[], Limit)}
 	 */
 	public ResSet select(Sort[] sort) throws SQLException, DatabaseException {
 		return this.select(null, null, sort, null);
 	}
 	
 	/**
-	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
+	 * @param vals Any parameter(s) from {@link Database#select(String[], AndOr, Sort[], Limit)}
+	 * @see {@link Database#select(String[], AndOr, Sort[], Limit)}
 	 */
-	public ResSet select(Limit limit) throws SQLException, DatabaseException {
-		return this.select(null, null, null, limit);
-	}
-	
-	/**
-	 * @see {@link Database#select(String[], AndOr, Limit, Sort[])}
-	 */
-	public ResSet select(Sort[] sort, Limit limit) throws SQLException, DatabaseException {
-		return this.select(null, null, sort, limit);
+	public ResSet select(Object... vals) throws IllegalArgumentException, SQLException, DatabaseException {
+		String[] columns = null;
+		AndOr where = null;
+		Sort[] sort = null;
+		Limit limit = null;
+		for(int i = 0, n = vals.length; i < n; i++) {
+			Object cur = vals[i];
+			if(cur instanceof String[]) {
+				if(columns != null) {
+					throw new IllegalArgumentException("Duplicated String[] names argument.");
+				}
+				columns = (String[]) cur;
+			} else if(cur instanceof AndOr) {
+				if(where != null) {
+					throw new IllegalArgumentException("Duplicated AndOr where argument.");
+				}
+				where = (AndOr) cur;
+			} else if(cur instanceof Sort[]) {
+				if(sort != null) {
+					throw new IllegalArgumentException("Duplicated Sort[] sort argument.");
+				}
+				sort = (Sort[]) cur;
+			} else if(cur instanceof Sort[]) {
+				if(limit != null) {
+					throw new IllegalArgumentException("Duplicated Limit limit argument.");
+				}
+				limit = (Limit) cur;
+			} else {
+				throw new IllegalArgumentException("Unknown argument type " + ((cur == null) ? null : cur.getClass().getName()));
+			}
+		}
+		return this.select(columns, where, sort, limit);
 	}
 	
 	/**
@@ -575,6 +550,9 @@ public class Database implements Closeable, AutoCloseable {
 	 * @throws DatabaseException Any error with reading or writing file-based database
 	 */
 	public void insert(Map<String, Object> vals) throws SQLException, DatabaseException {
+		if(vals == null) {
+			throw new NullPointerException("Map<String, Object> vals");
+		}
 		if(this.sql != null) {
 			StringBuilder sb = new StringBuilder();
 			StringBuilder sb_vals = new StringBuilder();
@@ -643,6 +621,9 @@ public class Database implements Closeable, AutoCloseable {
 	 * @throws DatabaseException Any error with reading or writing file-based database
 	 */
 	public void insertAll(Collection<Map<String, Object>> vals) throws SQLException, DatabaseException {
+		if(vals == null) {
+			throw new NullPointerException("Collection<Map<String, Object>> vals");
+		}
 		if(this.sql != null) {
 			Iterator<Map<String, Object>> it = vals.iterator();
 			while(it.hasNext()) {
@@ -663,6 +644,12 @@ public class Database implements Closeable, AutoCloseable {
 	 * @throws DatabaseException Any error with reading or writing file-based database
 	 */
 	public void insertAll(Collection<String> names, Collection<Collection<Object>> vals) throws SQLException, DatabaseException {
+		if(names == null) {
+			throw new NullPointerException("Collection<String> names");
+		}
+		if(vals == null) {
+			throw new NullPointerException("Collection<Collection<Object>> vals");
+		}
 		if(this.sql != null) {
 			StringBuilder sb = new StringBuilder();
 			StringBuilder sb_vals = new StringBuilder();
@@ -756,6 +743,9 @@ public class Database implements Closeable, AutoCloseable {
 	 * @throws DatabaseException Any error with reading or writing file-based database
 	 */
 	public void update(Map<String, Object> nevvals, AndOr where, int limit) throws DatabaseException, SQLException {
+		if(nevvals == null) {
+			throw new NullPointerException("Map<String, Object> nevvals");
+		}
 		if(this.sql != null) {
 			StringBuilder sb = new StringBuilder();
 			Iterator<Entry<String, Object>> it = nevvals.entrySet().iterator();
