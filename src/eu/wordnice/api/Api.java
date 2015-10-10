@@ -41,7 +41,6 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +53,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import eu.wordnice.cols.ImmArray;
+import gnu.trove.set.hash.THashSet;
 
 public class Api {
 	
@@ -356,7 +356,7 @@ public class Api {
 		}
 	}
 	
-	public static <X, Y> boolean equals(Object[] one, Object[] two, int size) {
+	public static boolean equals(Object[] one, Object[] two, int size) {
 		if(one == two) {
 			return true;
 		}
@@ -370,7 +370,7 @@ public class Api {
 		return true;
 	}
 	
-	public static <X, Y> boolean equals(Object[] one, int off1, Object[] two, int off2, int size) {
+	public static boolean equals(Object[] one, int off1, Object[] two, int off2, int size) {
 		if(one == two && off1 == off2) {
 			return true;
 		}
@@ -754,7 +754,7 @@ public class Api {
 	}
 	
 	public static Set<Class<?>> filterClasses(Collection<Class<?>> in, Class<?> ext) {
-		Set<Class<?>> out = new HashSet<Class<?>>();
+		Set<Class<?>> out = new THashSet<Class<?>>();
 		Api.filterClasses(out, in, ext);
 		return out;
 	}
@@ -788,7 +788,7 @@ public class Api {
 	}
 	
 	public static Set<String> filterClassesString(Collection<String> in, String pref) {
-		Set<String> out = new HashSet<String>();
+		Set<String> out = new THashSet<String>();
 		Api.filterClassesString(out, in, pref);
 		return out;
 	}
@@ -804,7 +804,7 @@ public class Api {
 	}
 	
 	public static Set<Class<?>> filterClasses(Collection<Class<?>> in, String pref) {
-		Set<Class<?>> out = new HashSet<Class<?>>();
+		Set<Class<?>> out = new THashSet<Class<?>>();
 		Api.filterClasses(out, in, pref);
 		return out;
 	}
@@ -820,7 +820,7 @@ public class Api {
 	}
 	
 	public static Set<String> filterPackagesString(Collection<String> in, String pref) {
-		Set<String> out = new HashSet<String>();
+		Set<String> out = new THashSet<String>();
 		Api.filterPackagesString(out, in, pref);
 		return out;
 	}
@@ -836,7 +836,7 @@ public class Api {
 	}
 	
 	public static Set<Package> filterPackages(Collection<Package> in, String pref) {
-		Set<Package> out = new HashSet<Package>();
+		Set<Package> out = new THashSet<Package>();
 		Api.filterPackages(out, in, pref);
 		return out;
 	}
@@ -898,7 +898,7 @@ public class Api {
 	}
 	
 	public static Set<String> getClasses(File fd) throws Exception {
-		Set<String> out = new HashSet<String>();
+		Set<String> out = new THashSet<String>();
 		Api.getClasses(out, fd);
 		return out;
 	}
@@ -912,7 +912,7 @@ public class Api {
 	}
 	
 	public static Set<String> getClasses(ZipInputStream zip) throws Exception {
-		Set<String> set = new HashSet<String>();
+		Set<String> set = new THashSet<String>();
 		Api.getClasses(set, zip);
 		return set;
 	}
@@ -1051,7 +1051,7 @@ public class Api {
 	public static void copyFolder(File to, File from) throws IOException {
 		boolean hasNio = false;
 		try {
-			java.nio.file.Files.class.getCanonicalName();
+			java.nio.file.Files.class.equals(0xCAFEBABE);
 			hasNio = true;
 		} catch(Throwable t) {}
 		if(hasNio) {
@@ -1353,7 +1353,7 @@ public class Api {
 		while(i < times) {
 			chars[i++] = c;
 		}
-		return new String(chars);
+		return String.copyValueOf(chars);
 	}
 	
 	public static String getMultiple(int times, String c, int off, int len) {
@@ -1378,7 +1378,7 @@ public class Api {
 			Api.memcpy(chars, (i * c.length), c, 0, c.length);
 			i++;
 		}
-		return new String(chars);
+		return String.copyValueOf(chars);
 	}
 	
 	

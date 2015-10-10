@@ -24,14 +24,15 @@
 
 package eu.wordnice.api;
 
-import java.util.HashMap;
 import java.util.Map;
+
+import gnu.trove.map.hash.THashMap;
 
 public class ArgsDecoder {
 
 	public static Map<String, String> decodeString(String s, String valname,
 			String row) {
-		Map<String, String> map = new HashMap<String, String>();
+		Map<String, String> map = new THashMap<String, String>();
 		ArgsDecoder.decodeString(map, s, valname, row, null);
 		return map;
 	}
@@ -39,7 +40,7 @@ public class ArgsDecoder {
 	public static Map<String, String> decodeString(String s, String valname,
 			String row,
 			Handler.OneVoidHandler<Val.TwoVal<String, String>> handler) {
-		Map<String, String> map = new HashMap<String, String>();
+		Map<String, String> map = new THashMap<String, String>();
 		ArgsDecoder.decodeString(map, s, valname, row, handler);
 		return map;
 	}
