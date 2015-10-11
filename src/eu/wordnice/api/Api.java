@@ -24,7 +24,9 @@
 
 package eu.wordnice.api;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -1574,6 +1576,156 @@ public class Api {
 		return ((lnum > 0) ? (lnum + 1) : (lnum));
 	}
 	
+	
+	public static File getJRE() {
+		return new File(System.getProperty("java.home"));
+	}
+	
+	public static String getCommandOutput(String... args) {
+		String output = null;	   //the string to return
+
+		Process process = null;
+		BufferedReader reader = null;
+		InputStreamReader streamReader = null;
+		InputStream stream = null;
+		InputStream err = null;
+
+		try {
+			ProcessBuilder pb = new ProcessBuilder(args);
+			pb.redirectErrorStream(false);
+			process = pb.start();
+
+			stream = process.getInputStream();
+			err = process.getErrorStream();
+			streamReader = new InputStreamReader(stream);
+			reader = new BufferedReader(streamReader);
+
+			byte[] blah = new byte[1024];
+			String currentLine = null;  //store current line of output from the cmd
+			StringBuilder commandOutput = new StringBuilder();  //build up the output from cmd
+			
+			while(err.read(blah) > 0);
+			while((currentLine = reader.readLine()) != null) {
+				commandOutput.append(currentLine);
+			}
+			while(err.read(blah) > 0);
+
+			if(process.waitFor() == 0) {
+				output = commandOutput.toString();
+			}
+		} catch(Exception e) {
+			if(e instanceof IOException && !(e instanceof EOFException)) {
+				output = null;
+			}
+		}
+		try {
+			stream.close();
+		} catch(Exception e) {}
+		try {
+			streamReader.close();
+		} catch(Exception e) {}
+		try {
+			streamReader.close();
+		} catch(Exception e) {}
+		
+		return output;
+	}
+	
+	public static File getJDK() {
+		File lastChance = null;
+		
+		String os = System.getProperty("os.name");
+		if(os.contains("win") || os.contains("Win")) {
+			String path = getCommandOutput("where.exe", "javac");
+			if(path != null && !path.isEmpty()) {
+				lastChance = new File(path).getParentFile().getParentFile();
+				if(lastChance.exists()) {
+					return lastChance;
+				}
+			}
+		}
+		
+		String response = getCommandOutput("whereis", "javac");
+		if(response != null && !response.isEmpty()) {
+			int pathStartIndex = response.indexOf('/');
+			if(pathStartIndex != -1) {
+				String path = response.substring(pathStartIndex, response.length());
+				File f = new File(path).getParentFile().getParentFile();
+				if(f.exists()) {
+					return f;
+				} else if(lastChance == null) {
+					lastChance = f;
+				}
+			}
+		}
+		
+		String jdk = System.getenv("JAVA_HOME");
+		if(jdk != null && !jdk.isEmpty()) {
+			return new File(jdk);
+		} else if(lastChance != null) {
+			return lastChance;
+		}
+		
+		jdk = System.getProperty("java.version");
+		if(jdk == null || jdk.isEmpty()) {
+			return null;
+		}
+		jdk = "jdk" + (jdk.toLowerCase());
+		
+		String path = System.getenv("PATH");
+		if(path == null) {
+			path = System.getenv("Path");
+			if(path == null) {
+				return null;
+			}
+		}
+		
+		String[] paths = path.split(File.pathSeparator);
+		for(int i = 0, n = paths.length; i < n; i++) {
+			String p = paths[i];
+			if(p.toLowerCase().contains(jdk)) {
+				File f = new File(p);
+				if(f.exists()) {
+					return f;
+				} else if(lastChance == null) {
+					lastChance = f;
+				}
+			}
+		}
+		if(lastChance != null) {
+			return lastChance;
+		} else if(!os.contains("win") && !os.contains("Win")) {
+			return null;
+		}
+		
+		File[] roots = File.listRoots();
+		if(roots == null || roots.length == 0) {
+			return null;
+		}
+		File jp = new File(roots[0], "Program Files/Java/");
+		if(!jp.exists() || !jp.isDirectory()) {
+			return null;
+		}
+		File[] jvs = jp.listFiles();
+		if(jvs == null || jvs.length == 0) {
+			return null;
+		}
+		if(jvs.length == 1) {
+			return jvs[0];
+		}
+		for(int i = 0, n = jvs.length; i < n; i++) {
+			File f = jvs[i];
+			String nm = f.getName().toLowerCase();
+			if(nm.contains(jdk)) {
+				return f;
+			} else if(nm.contains("jdk")) {
+				if(lastChance == null || !lastChance.exists()) {
+					lastChance = f;
+				}
+			}
+		}
+		return jvs[0];
+	}
 	
 	
 }

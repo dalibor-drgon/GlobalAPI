@@ -126,4 +126,32 @@ public class AnyClassLoader extends URLClassLoader {
 		return super.findLoadedClass(name);
 	}
 	
+	public URL getClassAsURL(String clz) {
+		return super.getResource(clz.replace('.', '/') + ".class");
+	}
+	
+	public URL getClassAsURL(String clz, String internal) {
+		return super.getResource(clz.replace('.', '/') + '$' + internal.replace('.', '$') + ".class");
+	}
+	
+	public InputStream getClassAsStream(String clz) {
+		return super.getResourceAsStream(clz.replace('.', '/') + ".class");
+	}
+	
+	public InputStream getClassAsStream(String clz, String internal) {
+		return super.getResourceAsStream(clz.replace('.', '/') + '$' + internal.replace('.', '$') + ".class");
+	}
+	
+	public byte[] getResourceAsBytes(String name) throws IOException {
+		return Api.readInputBytes(super.getResourceAsStream(name));
+	}
+	
+	public byte[] getClassAsBytes(String clz) throws IOException {
+		return Api.readInputBytes(this.getClassAsStream(clz));
+	}
+	
+	public byte[] getClassAsBytes(String clz, String internal) throws IOException {
+		return Api.readInputBytes(this.getClassAsStream(clz, internal));
+	}
+	
 }
