@@ -29,6 +29,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,6 +40,8 @@ import java.lang.reflect.Array;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -899,6 +902,18 @@ public class Api {
 		}
 	}
 	
+	public static Set<String> getClasses(Class<?> cls) throws Exception {
+		Set<String> out = new THashSet<String>();
+		Api.getClasses(out, Api.getClassesLocation(cls));
+		return out;
+	}
+	
+	public static Set<String> getClasses(ClassLoader cl) throws Exception {
+		Set<String> out = new THashSet<String>();
+		Api.getClasses(out, Api.getClassesLocation(cl));
+		return out;
+	}
+	
 	public static Set<String> getClasses(File fd) throws Exception {
 		Set<String> out = new THashSet<String>();
 		Api.getClasses(out, fd);
@@ -1037,6 +1052,9 @@ public class Api {
 	
 	
 	public static void deleteFolder(File fold) throws IOException {
+		if(!fold.exists()) {
+			return;
+		}
 		File[] files = fold.listFiles();
 		int i = 0;
 		for(; i < files.length; i++) {
@@ -1051,61 +1069,58 @@ public class Api {
 	}
 	
 	public static void copyFolder(File to, File from) throws IOException {
-		boolean hasNio = false;
-		try {
-			java.nio.file.Files.class.equals(0xCAFEBABE);
-			hasNio = true;
-		} catch(Throwable t) {}
-		if(hasNio) {
-			Api.copyFolderNio(to, from);
+		if(!from.exists()) {
+			throw new FileNotFoundException(from.getAbsolutePath());
+		}
+		if(!to.exists()) {
+			Api.createDirForFile(to);
+			Files.copy(java.nio.file.Paths.get(from.getAbsolutePath()), 
+					Paths.get(to.getAbsolutePath()));
+		}
+		File[] files = from.listFiles();
+		int i = 0;
+		for(; i < files.length; i++) {
+			File cur = files[i];
+			File target = new File(to, cur.getName());
+			if(cur.isDirectory()) {
+				Api.copyFolder(target, cur);
+			} else {
+				Files.copy(java.nio.file.Paths.get(cur.getAbsolutePath()), 
+						Paths.get(target.getAbsolutePath()));
+			}
+		}
+	}
+	
+	public static void copyFile(File to, File from) throws IOException {
+		if(!from.exists()) {
+			throw new FileNotFoundException(from.getAbsolutePath());
+		}
+		if(!to.exists()) {
+			Api.createDirForFile(to);
 		} else {
-			Api.copyFolderRaw(to, from);
-		}
-	}
-	
-	private static void copyFolderRaw(File to, File from) throws IOException {
-		if(!to.exists()) {
-			to.mkdirs();
-		}
-		File[] files = from.listFiles();
-		int i = 0;
-		for(; i < files.length; i++) {
-			File cur = files[i];
-			File target = new File(to, cur.getName());
-			if(cur.isDirectory()) {
-				Api.copyFolderRaw(target, cur);
-			} else {
-				target.createNewFile();
-				FileInputStream in = new FileInputStream(cur);
-				FileOutputStream out = new FileOutputStream(target);
-				byte[] buff = new byte[8192];
-				int red = 0;
-				while((red = in.read(buff)) > 0) {
-					out.write(buff, 0, red);
-				}
-				out.close();
-				in.close();
+			try {
+				to.delete();
+			} catch(SecurityException se) {
+				Api.copyFileIO(to, from);
 			}
 		}
+		Files.copy(java.nio.file.Paths.get(from.getAbsolutePath()), 
+				Paths.get(to.getAbsolutePath()));
 	}
 	
-	private static void copyFolderNio(File to, File from) throws IOException {
+	protected static void copyFileIO(File to, File from) throws IOException {
 		if(!to.exists()) {
-			java.nio.file.Files.copy(java.nio.file.Paths.get(from.getAbsolutePath()), 
-					java.nio.file.Paths.get(to.getAbsolutePath()));
+			to.createNewFile();
 		}
-		File[] files = from.listFiles();
-		int i = 0;
-		for(; i < files.length; i++) {
-			File cur = files[i];
-			File target = new File(to, cur.getName());
-			if(cur.isDirectory()) {
-				Api.copyFolderNio(target, cur);
-			} else {
-				java.nio.file.Files.copy(java.nio.file.Paths.get(cur.getAbsolutePath()), 
-						java.nio.file.Paths.get(target.getAbsolutePath()));
-			}
+		FileOutputStream out = new FileOutputStream(to);
+		FileInputStream in = new FileInputStream(from);
+		byte[] buff = new byte[(int) Math.min(from.length(), 8192L)];
+		int cur = 0;
+		while((cur = in.read(buff)) > 0) {
+			out.write(buff, 0, cur);
 		}
+		in.close();
+		out.close();
 	}
 	
 	
@@ -1634,97 +1649,98 @@ public class Api {
 	public static File getJDK() {
 		File lastChance = null;
 		
+		String ver = "jdk" + (System.getProperty("java.version").toLowerCase());
+		
+		String jdk = System.getenv("JAVA_HOME");
+		if(jdk != null && !jdk.isEmpty() && ver != null) {
+			File jdk_file = new File(jdk);
+			if(jdk_file.getName().toLowerCase().contains(ver)) {
+				return jdk_file;
+			}
+		}
+		
 		String os = System.getProperty("os.name");
+		boolean isWin = (os != null && (os.contains("win") || os.contains("Win")));
 		if(os.contains("win") || os.contains("Win")) {
 			String path = getCommandOutput("where.exe", "javac");
 			if(path != null && !path.isEmpty()) {
 				lastChance = new File(path).getParentFile().getParentFile();
-				if(lastChance.exists()) {
+				if(lastChance.exists() && lastChance.getName().toLowerCase().contains(ver)) {
 					return lastChance;
 				}
 			}
 		}
-		
+				
 		String response = getCommandOutput("whereis", "javac");
 		if(response != null && !response.isEmpty()) {
 			int pathStartIndex = response.indexOf('/');
 			if(pathStartIndex != -1) {
 				String path = response.substring(pathStartIndex, response.length());
-				File f = new File(path).getParentFile().getParentFile();
-				if(f.exists()) {
-					return f;
-				} else if(lastChance == null) {
-					lastChance = f;
+				lastChance = new File(path).getParentFile().getParentFile();
+				if(lastChance.exists() && lastChance.getName().toLowerCase().contains(ver)) {
+					return lastChance;
 				}
 			}
 		}
-		
-		String jdk = System.getenv("JAVA_HOME");
-		if(jdk != null && !jdk.isEmpty()) {
-			return new File(jdk);
-		} else if(lastChance != null) {
-			return lastChance;
-		}
-		
-		jdk = System.getProperty("java.version");
-		if(jdk == null || jdk.isEmpty()) {
-			return null;
-		}
-		jdk = "jdk" + (jdk.toLowerCase());
-		
-		String path = System.getenv("PATH");
-		if(path == null) {
-			path = System.getenv("Path");
+				
+		if(isWin) {
+			if(ver == null) {
+				return lastChance;
+			}
+			String path = System.getenv("PATH");
 			if(path == null) {
+				path = System.getenv("Path");
+			}
+			
+			if(path != null) {
+				String[] paths = path.split(File.pathSeparator);
+				for(int i = 0, n = paths.length; i < n; i++) {
+					String p = paths[i];
+					if(p.toLowerCase().contains(ver)) {
+						File f = new File(p);
+						if(f.exists()) {
+							return f;
+						} else if(lastChance == null) {
+							lastChance = f;
+						}
+					}
+				}
+			}
+		
+			File[] roots = File.listRoots();
+			if(roots == null || roots.length == 0) {
 				return null;
 			}
-		}
-		
-		String[] paths = path.split(File.pathSeparator);
-		for(int i = 0, n = paths.length; i < n; i++) {
-			String p = paths[i];
-			if(p.toLowerCase().contains(jdk)) {
-				File f = new File(p);
-				if(f.exists()) {
+			File jp = new File(roots[0], "Program Files/Java/");
+			if(!jp.exists() || !jp.isDirectory()) {
+				return null;
+			}
+			File[] jvs = jp.listFiles();
+			if(jvs == null || jvs.length == 0) {
+				return null;
+			}
+			if(jvs.length == 1) {
+				return jvs[0];
+			}
+			for(int i = 0, n = jvs.length; i < n; i++) {
+				File f = jvs[i];
+				String nm = f.getName().toLowerCase();
+				if(nm.contains(ver)) {
 					return f;
-				} else if(lastChance == null) {
-					lastChance = f;
+				} else if(nm.contains("jdk")) {
+					if(lastChance == null || !lastChance.exists()) {
+						lastChance = f;
+					}
 				}
 			}
-		}
-		if(lastChance != null) {
-			return lastChance;
-		} else if(!os.contains("win") && !os.contains("Win")) {
-			return null;
-		}
-		
-		File[] roots = File.listRoots();
-		if(roots == null || roots.length == 0) {
-			return null;
-		}
-		File jp = new File(roots[0], "Program Files/Java/");
-		if(!jp.exists() || !jp.isDirectory()) {
-			return null;
-		}
-		File[] jvs = jp.listFiles();
-		if(jvs == null || jvs.length == 0) {
-			return null;
-		}
-		if(jvs.length == 1) {
 			return jvs[0];
 		}
-		for(int i = 0, n = jvs.length; i < n; i++) {
-			File f = jvs[i];
-			String nm = f.getName().toLowerCase();
-			if(nm.contains(jdk)) {
-				return f;
-			} else if(nm.contains("jdk")) {
-				if(lastChance == null || !lastChance.exists()) {
-					lastChance = f;
-				}
+		if(lastChance == null) {
+			if(jdk != null && !jdk.isEmpty()) {
+				lastChance = new File(jdk);
 			}
 		}
-		return jvs[0];
+		return lastChance;
 	}
 	
 	
