@@ -27,8 +27,11 @@ package eu.wordnice.api.bukkit;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.bukkit.Bukkit;
+
 import eu.wordnice.api.Api;
 import eu.wordnice.api.OnlyOnce;
+import eu.wordnice.javaagent.JavaAgent;
 
 public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 	
@@ -65,7 +68,17 @@ public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 			}
 		});
 		
-		lg.info("MainAPI by wordnice for Bukkit was enabled!");
+		Bukkit.getScheduler().runTask(this, new Runnable() {
+			@Override
+			public void run() {
+				lg.info("Checking instrumentation...");
+				JavaAgent.setTryAgain(true);
+				lg.info("Instrumentation: " + JavaAgent.get());
+			}
+		});
+		
+		lg.info("MainAPI by wordnice for Bukkit was enabled! "
+				+ "(waiting for server core to check instrumentation)");
 	}
 	
 	/**

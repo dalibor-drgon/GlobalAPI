@@ -28,6 +28,7 @@ import java.util.Set;
 
 import eu.wordnice.api.Api;
 import eu.wordnice.api.OnlyOnce;
+import eu.wordnice.javaagent.JavaAgent;
 
 @org.spongepowered.api.plugin.Plugin(id="MainAPI", name="MainAPI", version="2.5.1")
 public class MainApi {
@@ -55,6 +56,10 @@ public class MainApi {
 				MainApi.this.log.info(str);
 			}
 		});
+		
+		this.log.info("Checking instrumentation...");
+		JavaAgent.setTryAgain(true);
+		this.log.info("Instrumentation: " + JavaAgent.get());
 		
 		this.log.info("MainAPI by wordnice for Sponge was enabled!");
 	}

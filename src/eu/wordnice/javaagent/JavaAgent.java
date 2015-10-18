@@ -26,6 +26,9 @@ import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.CodeSource;
 import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -49,11 +52,72 @@ public class JavaAgent {
 	
 	protected static final Logger LOG = Logger.getLogger("JavaAgent");
 	
-	private static final String IBM_VM_CLASS = "com.ibm.tools.attach.VirtualMachine";
-	private static final String SUN_VM_CLASS = "com.sun.tools.attach.VirtualMachine";
-	private static boolean isIBM = false;
-	private static boolean tried = false;
-	private static Instrumentation inst;
+	protected static final String PROPERTY = "java.lang.Instrumentation";
+	protected static final String PROPERTY_LIST = "java.lang.Instrumentation.QeueeList";
+	protected static final String PROPERTY_TRY = "java.lang.Instrumentation.TryAgain";
+	
+	protected static final String IBM_VM_CLASS = "com.ibm.tools.attach.VirtualMachine";
+	protected static final String SUN_VM_CLASS = "com.sun.tools.attach.VirtualMachine";
+	protected static boolean isIBM = false;
+	
+	public static void setTryAgain(boolean bol) {
+		System.getProperties().put(PROPERTY_TRY, bol);
+	}
+	
+	public static boolean getTryAgain() {
+		Object ta = System.getProperties().get(PROPERTY_TRY);
+		if(ta instanceof Boolean) {
+			return (Boolean) ta;
+		}
+		return true;
+	}
+	
+	
+	public static void setInstrumentation(Instrumentation ins) {
+		if(ins != null) {
+			System.getProperties().put(PROPERTY, ins);
+			ready();
+		}
+	}
+	
+	public static Instrumentation getInstrumentation() {
+		Object ins = System.getProperties().get(PROPERTY);
+		if(ins != null && !(ins instanceof Instrumentation)) {
+			ins = null;
+			System.getProperties().remove(PROPERTY);
+		}
+		return (Instrumentation) ins;
+	}
+	
+	public static void ready() {
+		Collection<Runnable> onInit = getRunWhenReady();
+		if(onInit != null && !onInit.isEmpty()) {
+			Iterator<Runnable> runs = onInit.iterator();
+			while(runs.hasNext()) {
+				runs.next().run();
+				runs.remove();
+			}
+		}
+	}
+	
+	public static void runWhenReady(Runnable run) {
+		Instrumentation ins = getInstrumentation();
+		if(ins != null) {
+			run.run();
+			return;
+		}
+		getRunWhenReady().add(run);
+	}
+	
+	@SuppressWarnings("unchecked")
+	protected static Collection<Runnable> getRunWhenReady() {
+		Object ins = System.getProperties().get(PROPERTY_LIST);
+		if(ins == null || !(ins instanceof Collection)) {
+			ins = new ArrayList<Runnable>();
+			System.getProperties().put(PROPERTY_LIST, ins);
+		}
+		return (Collection<Runnable>) ins;
+	}
 
 	
 	public static void premain(String args, Instrumentation in) {
@@ -61,8 +125,9 @@ public class JavaAgent {
 			LOG.info("[DEBUG] eu.wordnice.javaagent.JavaAgent: PreMain called!"
 					+ "\n\t- Arguments: " + args
 					+ "\n\t- Instrumentation: " + in);
-			inst = in;
+			setInstrumentation(in);
 		}
+		System.out.println(Thread.currentThread().getContextClassLoader() + " // " + ClassLoader.getSystemClassLoader());
 	}
 	
 	public static void agentmain(String args, Instrumentation in) {
@@ -71,18 +136,20 @@ public class JavaAgent {
 					+ "(note that agent was loaded later dynamically by itself)"
 					+ "\n\t- Arguments: " + args
 					+ "\n\t- Instrumentation: " + in);
-			inst = in;
+			setInstrumentation(in);
 		}
+		System.out.println(Thread.currentThread().getContextClassLoader() + " // " + ClassLoader.getSystemClassLoader());
 	}
-
+	
 	/**
 	 * This method returns the Instrumentation object provided by the JVM. If the Instrumentation object is null,
 	 * it does its best to add an instrumentation agent to the JVM and then the instrumentation object.
 	 * @return Instrumentation
 	 */
 	public static synchronized Instrumentation get() {
-		if(inst != null || tried) {
-			return inst;
+		Instrumentation ins = getInstrumentation();
+		if(ins != null || !getTryAgain()) {
+			return ins;
 		}
 		
 		if(System.getProperty("java.vendor").toUpperCase().contains("IBM")) {
@@ -91,36 +158,38 @@ public class JavaAgent {
 
 		AccessController.doPrivileged(new PrivilegedAction<Object>() {
 			public Object run() {
-				File to = null;
-				File from = null;
-				try {
-					String os = System.getProperty("os.name");
-					boolean isWin = (os != null && (os.contains("win") || os.contains("Win")));
-					String attachName = (isWin) ? "attach.dll" : "attach.so";
-					
-					File jdk = Api.getJDK();
-					File jre = Api.getJRE();
-					if(jdk == null || jre == null) {
-						throw new NullPointerException("Cannot get JRE or JDK location! "
-								+ "Please set JAVA_HOME variable! "
-								+ "JRE[" + jre + "] JDK[" + jdk + "]");
+				if(Api.isWindows()) {
+					File to = null;
+					File from = null;
+					try {						
+						File jdk = Api.getJDK();
+						File jre = Api.getJRE();
+						if(jdk == null || jre == null) {
+							throw new NullPointerException("Cannot get JRE or JDK location! "
+									+ "Please set JAVA_HOME variable! "
+									+ "JRE[" + jre + "] JDK[" + jdk + "]");
+						}
+						
+						to = new File(jre, "bin/attach.dll");
+						from = new File(jdk, "jre/bin/attach.dll");
+						if(!to.exists()) {
+							Api.copyFile(to, from);
+						}
+					} catch(Throwable t2) {
+						LOG.log(Level.SEVERE, "Little error occured while checking "
+								+ "and copying native libraries... "
+								+ "If you see another error from JavaAgent below, please "
+								+ "make sure you have got attach.dll native library "
+								+ "in your JRE/bin path."
+								+ ((from == null) ? "" : " (We tried copying [" 
+										+ from.getAbsolutePath() + "] to [" 
+										+ to.getAbsolutePath() + "])")
+								+ " Continue.", t2);
 					}
-					
-					to = new File(jre, "bin/" + attachName);
-					from = new File(jdk, "jre/bin/" + attachName);
-					if(!to.exists()) {
-						Api.copyFile(to, from);
-					}
-				} catch(Throwable t2) {
-					LOG.log(Level.SEVERE, "(expected unhappy) Error occured while checking "
-							+ "and copying native libraries... "
-							+ "If you see another error from JavaAgent below, please "
-							+ "make sure you have got attach.dll or attach.so native library "
-							+ "in your JRE/bin path."
-							+ ((from == null) ? "" : " (We tried copying [" 
-									+ from.getAbsolutePath() + "] to [" 
-									+ to.getAbsolutePath() + "])")
-							+ " Continue.", t2);
+				} else {
+					LOG.info("Just to know: If you see errors from JavaAgent "
+							+ "below, make sure you have installed 'attach' "
+							+ "native library instaled near [" + Api.getJDK() + "]");
 				}
 				
 				
@@ -156,8 +225,8 @@ public class JavaAgent {
 			}
 		});
 
-		tried = true;
-		return inst;
+		setTryAgain(false);
+		return getInstrumentation();
 	}
 
 	private static File findToolsJar() {
@@ -279,7 +348,7 @@ public class JavaAgent {
 		try {
 			ClassLoader loader = Thread.currentThread().getContextClassLoader();
 			String cls = SUN_VM_CLASS;
-			if (isIBM) {
+			if(isIBM) {
 				cls = IBM_VM_CLASS;
 			} else {
 				loader = new URLClassLoader(new URL[]{toolsJar.toURI().toURL()}, loader);

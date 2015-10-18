@@ -36,11 +36,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -58,7 +62,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import eu.wordnice.cols.ImmArray;
+import eu.wordnice.javaagent.JavaAgent;
 import gnu.trove.set.hash.THashSet;
+import sun.misc.Unsafe;
 
 public class Api {
 	
@@ -66,8 +72,8 @@ public class Api {
 	public static byte[] GENSTRING = "abcdefghijklmnopqrstuvwxyz1234567890QWERTZUIOPASDFGHJKLYXCVBNM".getBytes();
 	
 	protected static long RANDOM_SEED = System.nanoTime() + 0xCAFEBEEF;
-	protected static InstanceMan unsafe;
-	protected static int is64Bit = -1;
+	protected static Unsafe unsafe;
+	protected static Method getThreads;
 	
 	
 	public static Random getRandom() {
@@ -267,10 +273,11 @@ public class Api {
 	}
 	
 	public static Thread[] getThreads() {
-		Object gt = InstanceMan.getValue(null, Thread.class, "getThreads");
-		if(gt instanceof Thread[]) {
-			return (Thread[]) gt;
-		}
+		try {
+			Api.getThreads = Thread.class.getDeclaredMethod("getThreads");
+			Api.getThreads.setAccessible(true);
+			return (Thread[])Api.getThreads.invoke(null);
+		} catch(Throwable t) {}
 		Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
 		return threadSet.toArray(new Thread[threadSet.size()]);
 	}
@@ -1074,7 +1081,7 @@ public class Api {
 		}
 		if(!to.exists()) {
 			Api.createDirForFile(to);
-			Files.copy(java.nio.file.Paths.get(from.getAbsolutePath()), 
+			Files.copy(Paths.get(from.getAbsolutePath()), 
 					Paths.get(to.getAbsolutePath()));
 		}
 		File[] files = from.listFiles();
@@ -1085,7 +1092,7 @@ public class Api {
 			if(cur.isDirectory()) {
 				Api.copyFolder(target, cur);
 			} else {
-				Files.copy(java.nio.file.Paths.get(cur.getAbsolutePath()), 
+				Files.copy(Paths.get(cur.getAbsolutePath()), 
 						Paths.get(target.getAbsolutePath()));
 			}
 		}
@@ -1104,7 +1111,7 @@ public class Api {
 				Api.copyFileIO(to, from);
 			}
 		}
-		Files.copy(java.nio.file.Paths.get(from.getAbsolutePath()), 
+		Files.copy(Paths.get(from.getAbsolutePath()), 
 				Paths.get(to.getAbsolutePath()));
 	}
 	
@@ -1121,6 +1128,30 @@ public class Api {
 		}
 		in.close();
 		out.close();
+	}
+	
+	public static File readLink(File file) {
+		if(file == null) {
+			return null;
+		}
+		try {
+			return Files.readSymbolicLink(Paths.get(file.getAbsolutePath())).toFile();
+		} catch(Exception exc) {
+			return file;
+		}
+	}
+	
+	public static File readFinalLink(File file) {
+		if(file == null) {
+			return null;
+		}
+		Path p = Paths.get(file.getAbsolutePath());
+		try {
+			while(true) {
+				p = Files.readSymbolicLink(p);
+			}
+		} catch(Exception exc) {}
+		return p.toFile();
 	}
 	
 	
@@ -1401,54 +1432,40 @@ public class Api {
 	
 	/*** C & UNSAFE ***/
 	
-	public static InstanceMan getUnsafe() {
+	public static Instrumentation getInstrumentation() {
+		return JavaAgent.get();
+	}
+	
+	public static Unsafe getUnsafe() {
 		if(Api.unsafe == null) {
-			InstanceMan im = null;
-			try {
-				im = new InstanceMan(Api.getClass("sun.misc.Unsafe"), null);
-				Map<String, ?> vals = im.getValues(im.c);
-				Iterator<? extends Entry<String, ?>> it = vals.entrySet().iterator();
-				while(it.hasNext()) {
-					Entry<String, ?> ent = it.next();
-					Object uns = ent.getValue();
-					if(uns != null && im.c.isAssignableFrom(uns.getClass())) {
-						im.reinit(uns);
-						Api.unsafe = im;
-						return Api.unsafe;
-					}
+			Class<?> clz = Unsafe.class;
+			Field[] fields = clz.getDeclaredFields();
+			for(int i = 0, n = fields.length; i < n; i++) {
+				Field f = fields[i];
+				if(!f.getType().equals(Unsafe.class)) {
+					continue;
 				}
-			} catch(Throwable t) {
-				Api.unsafe = new InstanceMan(new Object());
+				try {
+					f.setAccessible(true);
+					Unsafe unf = (Unsafe) f.get(null);
+					if(unf != null) {
+						return (Api.unsafe = unf);
+					}
+				} catch(Throwable t) {}
 			}
 		}
 		return Api.unsafe;
 	}
 	
 	public static boolean is64() {
-		if(Api.is64Bit == -1) {
-			Object retv = Api.getUnsafe().getValue("ADDRESS_SIZE");
-			if(retv == null) {
-				Api.is64Bit = 1;
-				return true;
-			}
-			Api.is64Bit = ((int) ((Integer) retv) == 8) ? 1 : 0;
-		}
-		return Api.is64Bit != 0;
-	}
-	
-	@SuppressWarnings("unchecked")
-	public static <X> X createEmptyInstance(Class<X> cls) {
-		try {
-			return (X) getUnsafe().callMethod("allocateInstance", cls);
-		} catch(Throwable t) {}
-		return null;
+		return (Unsafe.ADDRESS_SIZE == 8);
 	}
 	
 	public static void throv(Throwable t) {
-		try {
-			Api.getUnsafe().callMethod("throwException", new Object[] { t }, 
-					new Class<?>[] { Throwable.class });
-		} catch(Throwable ign) {}
+		Unsafe unf = Api.getUnsafe();
+		if(unf != null) {
+			unf.throwException(t);
+		}
 		throw new RuntimeException(t);
 	}
 	
@@ -1463,70 +1480,41 @@ public class Api {
 		System.arraycopy(from, posfrom, to, posto, size);
 	}
 	
-	public static boolean memcpy(long to, long from, long sz) {
-		return Api.getUnsafe().callMethod("copyMemory", from, to, sz) != null;
+	public static void memcpy(long to, long from, long sz) {
+		Api.getUnsafe().copyMemory(from, to, sz);
 	}
 	
-	public static boolean memset(long to, byte val, long sz) {
-		return Api.getUnsafe().callMethod("setMemory", to, sz, val) != null;
+	public static void memset(long to, byte val, long sz) {
+		Api.getUnsafe().setMemory(to, sz, val);
 	}
 	
 	
 	public static long malloc(long sz) {
-		Val.OneVal<Object> valr = Api.getUnsafe().callMethod("allocateMemory", sz);
-		if(valr == null) {
-			return 0;
-		}
-		return (long) ((Long) valr.one);
+		return Api.getUnsafe().allocateMemory(sz);
 	}
 	
 	public static long zalloc(long sz) {
-		Val.OneVal<Object> valr = Api.getUnsafe().callMethod("allocateMemory", sz);
-		if(valr == null) {
-			return 0;
-		}
-		long ptr = (long) ((Long) valr.one);
-		Api.memset(ptr, Byte.MIN_VALUE, sz);
-		return ptr;
+		return Api.getUnsafe().allocateMemory(sz);
 	}
 	
 	public static long realloc(long ptr, long nevsz) {
-		Val.OneVal<Object> valr = Api.getUnsafe().callMethod("reallocateMemory", ptr, nevsz);
-		if(valr == null) {
-			return 0;
-		}
-		return (long) ((Long) valr.one);
+		return Api.getUnsafe().reallocateMemory(ptr, nevsz);
 	}
 	
 	public static void free(long ptr) {
-		try {
-			Api.getUnsafe().callMethod("freeMemory", ptr);
-		} catch(Throwable t) {}
+		Api.getUnsafe().freeMemory(ptr);
 	}
 	
 	
 	
 	public static long getPointer(Object obj) {
 		Object arr[] = new Object[] { obj };
-
-		Val.OneVal<Object> valr = Api.getUnsafe().callMethod("arrayBaseOffset", Object[].class);
-		if(valr == null) {
-			return 0;
-		}
-		long base_offset = (long) ((Long) valr.one);
-		
+		long base_offset = Api.getUnsafe().arrayBaseOffset(Object[].class);
 		if(Api.is64()) {
-			valr = Api.getUnsafe().callMethod("getLong", arr, base_offset);
-			if(valr != null) {
-				return (long) ((Long) valr.one);
-			}
+			return Api.getUnsafe().getLong(arr, base_offset);
 		} else {
-			valr = Api.getUnsafe().callMethod("getInt", arr, base_offset);
-			if(valr != null) {
-				return (int) ((Integer) valr.one);
-			}
+			return Api.getUnsafe().getInt(arr, base_offset);
 		}
-		return 0;
 	}
 	
 	
@@ -1646,6 +1634,11 @@ public class Api {
 		return output;
 	}
 	
+	public static boolean isWindows() {
+		String os = System.getProperty("os.name");
+		return (os != null && (os.contains("win") || os.contains("Win")));
+	}
+	
 	public static File getJDK() {
 		File lastChance = null;
 		
@@ -1653,15 +1646,36 @@ public class Api {
 		
 		String jdk = System.getenv("JAVA_HOME");
 		if(jdk != null && !jdk.isEmpty() && ver != null) {
-			File jdk_file = new File(jdk);
-			if(jdk_file.getName().toLowerCase().contains(ver)) {
-				return jdk_file;
+			lastChance = new File(jdk);
+			if(lastChance.exists() && lastChance.getName().toLowerCase().contains(ver)) {
+				return lastChance;
 			}
 		}
 		
 		String os = System.getProperty("os.name");
 		boolean isWin = (os != null && (os.contains("win") || os.contains("Win")));
-		if(os.contains("win") || os.contains("Win")) {
+		if(!isWin) {
+			String response = getCommandOutput("whereis", "javac");
+			if(response != null && !response.isEmpty()) {
+				int pathStartIndex = response.indexOf('/');
+				if(pathStartIndex != -1) {
+					String[] paths = response.substring(pathStartIndex, response.length()).split(" ");
+					for(int i = 0, n = paths.length; i < n; i++) {
+						String path = paths[i];
+						if(!path.endsWith("javac")) {
+							continue;
+						}
+						lastChance = Api.readFinalLink(new File(path)).getParentFile().getParentFile();
+						if(lastChance.exists()) {
+							return lastChance;
+						}
+					}
+				}
+			}
+			if(lastChance == null) {
+				lastChance = Api.getJRE().getParentFile();
+			}
+		} else {
 			String path = getCommandOutput("where.exe", "javac");
 			if(path != null && !path.isEmpty()) {
 				lastChance = new File(path).getParentFile().getParentFile();
@@ -1669,25 +1683,11 @@ public class Api {
 					return lastChance;
 				}
 			}
-		}
-				
-		String response = getCommandOutput("whereis", "javac");
-		if(response != null && !response.isEmpty()) {
-			int pathStartIndex = response.indexOf('/');
-			if(pathStartIndex != -1) {
-				String path = response.substring(pathStartIndex, response.length());
-				lastChance = new File(path).getParentFile().getParentFile();
-				if(lastChance.exists() && lastChance.getName().toLowerCase().contains(ver)) {
-					return lastChance;
-				}
-			}
-		}
-				
-		if(isWin) {
+			
 			if(ver == null) {
 				return lastChance;
 			}
-			String path = System.getenv("PATH");
+			path = System.getenv("PATH");
 			if(path == null) {
 				path = System.getenv("Path");
 			}
