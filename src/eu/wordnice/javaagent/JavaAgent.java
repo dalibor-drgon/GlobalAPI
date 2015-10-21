@@ -80,7 +80,11 @@ public class JavaAgent {
 		}
 	}
 	
-	public static Instrumentation getInstrumentation() {
+	/**
+	 * @deprecated Use {@link JavaAgent#get()} instead
+	 */
+	@Deprecated
+	public static Instrumentation getRawInstrumentation() {
 		Object ins = System.getProperties().get(PROPERTY);
 		if(ins != null && !(ins instanceof Instrumentation)) {
 			ins = null;
@@ -101,7 +105,7 @@ public class JavaAgent {
 	}
 	
 	public static void runWhenReady(Runnable run) {
-		Instrumentation ins = getInstrumentation();
+		Instrumentation ins = getRawInstrumentation();
 		if(ins != null) {
 			run.run();
 			return;
@@ -110,7 +114,7 @@ public class JavaAgent {
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected static Collection<Runnable> getRunWhenReady() {
+	public static Collection<Runnable> getRunWhenReady() {
 		Object ins = System.getProperties().get(PROPERTY_LIST);
 		if(ins == null || !(ins instanceof Collection)) {
 			ins = new ArrayList<Runnable>();
@@ -127,7 +131,6 @@ public class JavaAgent {
 					+ "\n\t- Instrumentation: " + in);
 			setInstrumentation(in);
 		}
-		System.out.println(Thread.currentThread().getContextClassLoader() + " // " + ClassLoader.getSystemClassLoader());
 	}
 	
 	public static void agentmain(String args, Instrumentation in) {
@@ -138,7 +141,6 @@ public class JavaAgent {
 					+ "\n\t- Instrumentation: " + in);
 			setInstrumentation(in);
 		}
-		System.out.println(Thread.currentThread().getContextClassLoader() + " // " + ClassLoader.getSystemClassLoader());
 	}
 	
 	/**
@@ -147,7 +149,7 @@ public class JavaAgent {
 	 * @return Instrumentation
 	 */
 	public static synchronized Instrumentation get() {
-		Instrumentation ins = getInstrumentation();
+		Instrumentation ins = getRawInstrumentation();
 		if(ins != null || !getTryAgain()) {
 			return ins;
 		}
@@ -226,7 +228,7 @@ public class JavaAgent {
 		});
 
 		setTryAgain(false);
-		return getInstrumentation();
+		return getRawInstrumentation();
 	}
 
 	private static File findToolsJar() {
