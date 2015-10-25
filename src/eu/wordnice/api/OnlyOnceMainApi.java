@@ -24,13 +24,20 @@
 
 package eu.wordnice.api;
 
+import java.lang.instrument.Instrumentation;
+
+import eu.wordnice.javaagent.JavaAgent;
+
 /**
  * On program start, make sure you call {@link OnlyOnce#debugAll(OnlyOnceLogger)}
  * (except bukkit / sponge plugins)
  * 
  * @author wordnice
  */
-public class OnlyOnce {
+public class OnlyOnceMainApi {
+	
+	public static boolean all = false;
+	public static boolean allMain = false;
 	
 	public interface OnlyOnceLogger {
 		public void info(String str);
@@ -38,11 +45,29 @@ public class OnlyOnce {
 	}
 	
 	/**
+	 * On main thread call this
+	 */
+	public static void debugAllMain(OnlyOnceLogger log) {
+		if(allMain) {
+			return;
+		}
+		allMain = true;
+		log.info("Checking instrumentation...");
+		JavaAgent.setTryAgain(true);
+		Instrumentation ins = JavaAgent.get();
+		log.info("Instrumentation: " + ins);
+	}
+	
+	/**
 	 * On program start, make sure you call this method
 	 * (except bukkit / sponge plugins)
 	 */
 	public static void debugAll(OnlyOnceLogger log) {
-		OnlyOnce.debugSQL(log);
+		if(all) {
+			return;
+		}
+		all = true;
+		OnlyOnceMainApi.debugSQL(log);
 	}
 	
 	
@@ -65,8 +90,8 @@ public class OnlyOnce {
 	}
 	
 	protected static void debugSQL(OnlyOnceLogger log) {
-		OnlyOnce.debugDriver(log, "org.sqlite.JDBC","SQLite");
-		OnlyOnce.debugDriver(log, "com.mysql.jdbc.Driver", "MySQL");
+		OnlyOnceMainApi.debugDriver(log, "org.sqlite.JDBC","SQLite");
+		OnlyOnceMainApi.debugDriver(log, "com.mysql.jdbc.Driver", "MySQL");
 	}
 	
 }

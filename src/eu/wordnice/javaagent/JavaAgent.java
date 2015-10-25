@@ -26,9 +26,6 @@ import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.CodeSource;
 import java.security.PrivilegedAction;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -36,8 +33,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import eu.wordnice.api.Api;
 
 /**
  * This class is based on the OpenJPA's org.apache.openjpa.enhance.InstrumentationFactory.  It essentially does
@@ -53,7 +48,6 @@ public class JavaAgent {
 	protected static final Logger LOG = Logger.getLogger("JavaAgent");
 	
 	protected static final String PROPERTY = "java.lang.Instrumentation";
-	protected static final String PROPERTY_LIST = "java.lang.Instrumentation.QeueeList";
 	protected static final String PROPERTY_TRY = "java.lang.Instrumentation.TryAgain";
 	
 	protected static final String IBM_VM_CLASS = "com.ibm.tools.attach.VirtualMachine";
@@ -76,7 +70,6 @@ public class JavaAgent {
 	public static void setInstrumentation(Instrumentation ins) {
 		if(ins != null) {
 			System.getProperties().put(PROPERTY, ins);
-			ready();
 		}
 	}
 	
@@ -93,36 +86,9 @@ public class JavaAgent {
 		return (Instrumentation) ins;
 	}
 	
-	public static void ready() {
-		Collection<Runnable> onInit = getRunWhenReady();
-		if(onInit != null && !onInit.isEmpty()) {
-			Iterator<Runnable> runs = onInit.iterator();
-			while(runs.hasNext()) {
-				runs.next().run();
-				runs.remove();
-			}
-		}
+	public static boolean has() {
+		return (System.getProperties().get(PROPERTY) instanceof Instrumentation);
 	}
-	
-	public static void runWhenReady(Runnable run) {
-		Instrumentation ins = getRawInstrumentation();
-		if(ins != null) {
-			run.run();
-			return;
-		}
-		getRunWhenReady().add(run);
-	}
-	
-	@SuppressWarnings("unchecked")
-	public static Collection<Runnable> getRunWhenReady() {
-		Object ins = System.getProperties().get(PROPERTY_LIST);
-		if(ins == null || !(ins instanceof Collection)) {
-			ins = new ArrayList<Runnable>();
-			System.getProperties().put(PROPERTY_LIST, ins);
-		}
-		return (Collection<Runnable>) ins;
-	}
-
 	
 	public static void premain(String args, Instrumentation in) {
 		if(in != null) {
@@ -160,12 +126,12 @@ public class JavaAgent {
 
 		AccessController.doPrivileged(new PrivilegedAction<Object>() {
 			public Object run() {
-				if(Api.isWindows()) {
+				if(eu.wordnice.api.Api.isWindows()) {
 					File to = null;
 					File from = null;
 					try {						
-						File jdk = Api.getJDK();
-						File jre = Api.getJRE();
+						File jdk = eu.wordnice.api.Api.getJDK();
+						File jre = eu.wordnice.api.Api.getJRE();
 						if(jdk == null || jre == null) {
 							throw new NullPointerException("Cannot get JRE or JDK location! "
 									+ "Please set JAVA_HOME variable! "
@@ -175,7 +141,7 @@ public class JavaAgent {
 						to = new File(jre, "bin/attach.dll");
 						from = new File(jdk, "jre/bin/attach.dll");
 						if(!to.exists()) {
-							Api.copyFile(to, from);
+							eu.wordnice.api.Api.copyFile(to, from);
 						}
 					} catch(Throwable t2) {
 						LOG.log(Level.SEVERE, "Little error occured while checking "
@@ -191,7 +157,7 @@ public class JavaAgent {
 				} else {
 					LOG.info("Just to know: If you see errors from JavaAgent "
 							+ "below, make sure you have installed 'attach' "
-							+ "native library instaled near [" + Api.getJDK() + "]");
+							+ "native library instaled near [" + eu.wordnice.api.Api.getJDK() + "]");
 				}
 				
 				
@@ -232,7 +198,7 @@ public class JavaAgent {
 	}
 
 	private static File findToolsJar() {
-		File javaHomeFile = Api.getJDK();
+		File javaHomeFile = eu.wordnice.api.Api.getJDK();
 		if(javaHomeFile == null) {
 			return null;
 		}

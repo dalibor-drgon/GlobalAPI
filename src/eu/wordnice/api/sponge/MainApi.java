@@ -27,8 +27,7 @@ package eu.wordnice.api.sponge;
 import java.util.Set;
 
 import eu.wordnice.api.Api;
-import eu.wordnice.api.OnlyOnce;
-import eu.wordnice.javaagent.JavaAgent;
+import eu.wordnice.api.OnlyOnceMainApi;
 
 @org.spongepowered.api.plugin.Plugin(id="MainAPI", name="MainAPI", version="2.5.1")
 public class MainApi {
@@ -44,7 +43,7 @@ public class MainApi {
 			this.log.info("Sponge packages: " + Api.filterPackagesString(clzs, (String) null).size());
 		} catch(Throwable t) {}
 		
-		OnlyOnce.debugAll(new OnlyOnce.OnlyOnceLogger() {
+		final OnlyOnceMainApi.OnlyOnceLogger oolog = new OnlyOnceMainApi.OnlyOnceLogger() {
 			
 			@Override
 			public void severe(String str) {
@@ -55,11 +54,10 @@ public class MainApi {
 			public void info(String str) {
 				MainApi.this.log.info(str);
 			}
-		});
+		};
 		
-		this.log.info("Checking instrumentation...");
-		JavaAgent.setTryAgain(true);
-		this.log.info("Instrumentation: " + JavaAgent.get());
+		OnlyOnceMainApi.debugAll(oolog);
+		OnlyOnceMainApi.debugAllMain(oolog);
 		
 		this.log.info("MainAPI by wordnice for Sponge was enabled!");
 	}

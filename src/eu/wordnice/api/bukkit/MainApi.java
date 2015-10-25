@@ -30,8 +30,7 @@ import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 
 import eu.wordnice.api.Api;
-import eu.wordnice.api.OnlyOnce;
-import eu.wordnice.javaagent.JavaAgent;
+import eu.wordnice.api.OnlyOnceMainApi;
 
 public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 	
@@ -55,7 +54,7 @@ public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 		lg.info("Online worlds: " + WNBukkit.getWorlds());
 		lg.info("Online plugins: " + WNBukkit.getPlugins());
 		
-		OnlyOnce.debugAll(new OnlyOnce.OnlyOnceLogger() {
+		final OnlyOnceMainApi.OnlyOnceLogger oolog = new OnlyOnceMainApi.OnlyOnceLogger() {
 			
 			@Override
 			public void severe(String str) {
@@ -66,14 +65,14 @@ public class MainApi extends org.bukkit.plugin.java.JavaPlugin {
 			public void info(String str) {
 				lg.info(str);
 			}
-		});
+		};
+		
+		OnlyOnceMainApi.debugAll(oolog);
 		
 		Bukkit.getScheduler().runTask(this, new Runnable() {
 			@Override
 			public void run() {
-				lg.info("Checking instrumentation...");
-				JavaAgent.setTryAgain(true);
-				lg.info("Instrumentation: " + JavaAgent.get());
+				OnlyOnceMainApi.debugAllMain(oolog);
 			}
 		});
 		
