@@ -53,8 +53,7 @@ public class OnlyOnceMainApi {
 		}
 		allMain = true;
 		log.info("Checking instrumentation...");
-		JavaAgent.setTryAgain(true);
-		Instrumentation ins = JavaAgent.get();
+		Instrumentation ins = JavaAgent.checkInstrumentation();
 		log.info("Instrumentation: " + ins);
 	}
 	

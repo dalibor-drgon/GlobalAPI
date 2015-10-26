@@ -24,11 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessController;
-import java.security.CodeSource;
 import java.security.PrivilegedAction;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -48,23 +44,10 @@ public class JavaAgent {
 	protected static final Logger LOG = Logger.getLogger("JavaAgent");
 	
 	protected static final String PROPERTY = "java.lang.Instrumentation";
-	protected static final String PROPERTY_TRY = "java.lang.Instrumentation.TryAgain";
 	
 	protected static final String IBM_VM_CLASS = "com.ibm.tools.attach.VirtualMachine";
 	protected static final String SUN_VM_CLASS = "com.sun.tools.attach.VirtualMachine";
 	protected static boolean isIBM = false;
-	
-	public static void setTryAgain(boolean bol) {
-		System.getProperties().put(PROPERTY_TRY, bol);
-	}
-	
-	public static boolean getTryAgain() {
-		Object ta = System.getProperties().get(PROPERTY_TRY);
-		if(ta instanceof Boolean) {
-			return (Boolean) ta;
-		}
-		return true;
-	}
 	
 	
 	public static void setInstrumentation(Instrumentation ins) {
@@ -73,11 +56,7 @@ public class JavaAgent {
 		}
 	}
 	
-	/**
-	 * @deprecated Use {@link JavaAgent#get()} instead
-	 */
-	@Deprecated
-	public static Instrumentation getRawInstrumentation() {
+	public static Instrumentation get() {
 		Object ins = System.getProperties().get(PROPERTY);
 		if(ins != null && !(ins instanceof Instrumentation)) {
 			ins = null;
@@ -114,9 +93,9 @@ public class JavaAgent {
 	 * it does its best to add an instrumentation agent to the JVM and then the instrumentation object.
 	 * @return Instrumentation
 	 */
-	public static synchronized Instrumentation get() {
-		Instrumentation ins = getRawInstrumentation();
-		if(ins != null || !getTryAgain()) {
+	public static synchronized Instrumentation checkInstrumentation() {
+		Instrumentation ins = get();
+		if(ins != null) {
 			return ins;
 		}
 		
@@ -126,16 +105,28 @@ public class JavaAgent {
 
 		AccessController.doPrivileged(new PrivilegedAction<Object>() {
 			public Object run() {
+				String note = "Optionaly, to avoid this message and other possible "
+						+ "issues in future, launch minecraft server with "
+						+ "[-javaagent:plugins/OptimizedJava.jar] argument for Java VM.";
 				if(eu.wordnice.api.Api.isWindows()) {
+					String msg = "Occured one of possible errors for Windows.\n"
+							+ "You need installed JDK. Download one and "
+							+ "install if didn't have already. "
+							+ "Then just copy <JDK>\\jre\\bin\\attach.dll file "
+							+ "to <JRE>\\bin\\attach.dll\n"
+							+ "If you got JDK 1.8.0_60, then it will be "
+							+ "copying C:\\Program Files\\Java\\jdk1.8.0_60\\jre\\bin\\attach.dll "
+							+ "to C:\\Program Files\\Java\\jre1.8.0_60\\bin\\attach.dll\n"
+							+ "Restart your server, please.";
 					File to = null;
 					File from = null;
 					try {						
 						File jdk = eu.wordnice.api.Api.getJDK();
 						File jre = eu.wordnice.api.Api.getJRE();
 						if(jdk == null || jre == null) {
-							throw new NullPointerException("Cannot get JRE or JDK location! "
-									+ "Please set JAVA_HOME variable! "
-									+ "JRE[" + jre + "] JDK[" + jdk + "]");
+							throw new NullPointerException("Cannot get JRE or JDK path! "
+									+ "Please install latest JDK (or set JAVA_HOME system variable)! "
+									+ "Found JRE[" + jre + "] JDK[" + jdk + "]");
 						}
 						
 						to = new File(jre, "bin/attach.dll");
@@ -144,20 +135,17 @@ public class JavaAgent {
 							eu.wordnice.api.Api.copyFile(to, from);
 						}
 					} catch(Throwable t2) {
-						LOG.log(Level.SEVERE, "Little error occured while checking "
-								+ "and copying native libraries... "
-								+ "If you see another error from JavaAgent below, please "
-								+ "make sure you have got attach.dll native library "
-								+ "in your JRE/bin path."
+						LOG.log(Level.SEVERE, msg
 								+ ((from == null) ? "" : " (We tried copying [" 
 										+ from.getAbsolutePath() + "] to [" 
-										+ to.getAbsolutePath() + "])")
-								+ " Continue.", t2);
+										+ to.getAbsolutePath() + "], but failed)")
+								+ note + "\n Continue.", t2);
 					}
 				} else {
-					LOG.info("Just to know: If you see errors from JavaAgent "
+					LOG.info("Just little note: If you see errors from JavaAgent "
 							+ "below, make sure you have installed 'attach' "
-							+ "native library instaled near [" + eu.wordnice.api.Api.getJDK() + "]");
+							+ "native library in [" + eu.wordnice.api.Api.getJRE() + "/bin/]\n.");
+					LOG.info(note);
 				}
 				
 				
@@ -193,8 +181,7 @@ public class JavaAgent {
 			}
 		});
 
-		setTryAgain(false);
-		return getRawInstrumentation();
+		return get();
 	}
 
 	private static File findToolsJar() {
@@ -225,27 +212,34 @@ public class JavaAgent {
 	}
 
 	private static String createAgentJar() throws IOException {
-		File file =
-				File.createTempFile(JavaAgent.class.getName(), ".jar");
+		File file = File.createTempFile(JavaAgent.class.getName(), ".jar");
 		file.deleteOnExit();
 
 		ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(file));
 		zout.putNextEntry(new ZipEntry("META-INF/MANIFEST.MF"));
+		zout.write(("Agent-Class: " + JavaAgent.class.getName() + "\r\n"
+				+ "Can-Redefine-Classes: true\r\n" 
+				+ "Can-Retransform-Classes: " + Boolean.toString(!isIBM) + "\r\n").getBytes());
+		zout.closeEntry();
 
-		PrintWriter writer = new PrintWriter(new OutputStreamWriter(zout));
-
-		writer.println("Agent-Class: " + JavaAgent.class.getName());
-		writer.println("Can-Redefine-Classes: true");
-		// IBM doesn't support retransform
-		writer.println("Can-Retransform-Classes: " + Boolean.toString(!isIBM));
-
-		writer.close();
+		String agent = JavaAgent.class.getName().replace('.', '/') + ".class";
+		zout.putNextEntry(new ZipEntry(agent));
+		InputStream in = JavaAgent.class.getResourceAsStream("/" + agent);
+		byte[] buf = new byte[8192];
+		int cur = 0;
+		while((cur = in.read(buf)) > 0) {
+			zout.write(buf, 0, cur);
+		}
+		zout.closeEntry();
+		
+		in.close();
+		zout.close();
 
 		return file.getAbsolutePath();
 	}
 
 	private static String getAgentJar() {
-		File agentJarFile = null;
+		/*File agentJarFile = null;
 		// Find the name of the File that this class was loaded from. That
 		// jar *should* be the same location as our agent.
 		CodeSource cs =
@@ -279,7 +273,12 @@ public class JavaAgent {
 			agentJar = agentJarFile.getAbsolutePath();
 		}
 
-		return agentJar;
+		return agentJar;*/
+		try {
+			return createAgentJar();
+		} catch (IOException ioe) {
+			return null;
+		}
 	}
 
 	private static void loadAgent(String agentJar, Class<?> vmClass) {
@@ -328,6 +327,7 @@ public class JavaAgent {
 		return null;
 	}
 
+	/*
 	private static boolean validateAgentJarManifest(File agentJarFile,
 													String agentClassName) {
 		try {
@@ -351,5 +351,5 @@ public class JavaAgent {
 			LOG.log(Level.SEVERE, "Unexpected exception occured.", e);
 		}
 		return false;
-	}
+	}*/
 }

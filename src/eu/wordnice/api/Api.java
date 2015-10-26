@@ -1105,29 +1105,10 @@ public class Api {
 		if(!to.exists()) {
 			Api.createDirForFile(to);
 		} else {
-			try {
-				to.delete();
-			} catch(SecurityException se) {
-				Api.copyFileIO(to, from);
-			}
+			to.delete();
 		}
 		Files.copy(Paths.get(from.getAbsolutePath()), 
 				Paths.get(to.getAbsolutePath()));
-	}
-	
-	protected static void copyFileIO(File to, File from) throws IOException {
-		if(!to.exists()) {
-			to.createNewFile();
-		}
-		FileOutputStream out = new FileOutputStream(to);
-		FileInputStream in = new FileInputStream(from);
-		byte[] buff = new byte[(int) Math.min(from.length(), 8192L)];
-		int cur = 0;
-		while((cur = in.read(buff)) > 0) {
-			out.write(buff, 0, cur);
-		}
-		in.close();
-		out.close();
 	}
 	
 	public static File readLink(File file) {
@@ -1733,7 +1714,6 @@ public class Api {
 					}
 				}
 			}
-			return jvs[0];
 		}
 		if(lastChance == null) {
 			if(jdk != null && !jdk.isEmpty()) {

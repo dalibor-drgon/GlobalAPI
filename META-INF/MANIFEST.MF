@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-Can-Redefine-Classes: true
-Can-Retransform-Classes: true
-Premain-Class: eu.wordnice.javaagent.JavaAgent
-Agent-Class: eu.wordnice.javaagent.JavaAgent
