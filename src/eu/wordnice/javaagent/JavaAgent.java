@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2012 the original author or authors.
+ * Copyright 2008-2012 Broadleaf Commerce
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -219,7 +219,8 @@ public class JavaAgent {
 		zout.putNextEntry(new ZipEntry("META-INF/MANIFEST.MF"));
 		zout.write(("Agent-Class: " + JavaAgent.class.getName() + "\r\n"
 				+ "Can-Redefine-Classes: true\r\n" 
-				+ "Can-Retransform-Classes: " + Boolean.toString(!isIBM) + "\r\n").getBytes());
+				+ "Can-Retransform-Classes: " + Boolean.toString(!isIBM) + "\r\n"
+				+ "Can-Set-Native-Method-Prefix: true\r\n").getBytes());
 		zout.closeEntry();
 
 		String agent = JavaAgent.class.getName().replace('.', '/') + ".class";
