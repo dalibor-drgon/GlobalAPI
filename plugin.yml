@@ -1,4 +1,5 @@
 name: MainAPI
-version: 2.5.1
+version: 3.0.0
 author: wordnice
-main: eu.wordnice.api.bukkit.MainApi
+main: wordnice.api.bukkit.MainApi
+load: STARTUP
