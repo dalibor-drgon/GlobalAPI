@@ -38,8 +38,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
-import wordnice.api.Api;
-import wordnice.cols.ImmWeakArray;
+import wordnice.api.Nice;
+import wordnice.coll.ImmWeakArray;
 import wordnice.utils.NiceStringUtils;
 
 public class Craft {
@@ -405,7 +405,7 @@ public class Craft {
 				nev = nev.substring(0, start) + nev.substring(end + 2, nev.length());
 				continue;
 			}
-			String format = Api.dateFormat(nev.substring(start+13, end));
+			String format = Nice.dateFormat(nev.substring(start+13, end));
 			nev = nev.substring(0, start) + format + nev.substring(end + 2, nev.length());
 			befend = start + format.length();
 		}

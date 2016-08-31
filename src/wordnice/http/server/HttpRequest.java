@@ -36,12 +36,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import wordnice.api.Api;
-import wordnice.api.Api.CannotDoIt;
-import wordnice.api.Api.Masked;
-import wordnice.api.Api.Value;
+import wordnice.api.Nice;
+import wordnice.api.Nice.CannotDoIt;
+import wordnice.api.Nice.Masked;
+import wordnice.api.Nice.Value;
 import wordnice.codings.ASCII;
 import wordnice.codings.URLCoder;
+import wordnice.coll.MapWorker;
 import wordnice.http.HttpFormatException;
 import wordnice.http.client.HttpClient;
 import wordnice.http.server.HttpServer.Handler;
@@ -50,7 +51,6 @@ import wordnice.streams.OUtils;
 import wordnice.utils.ArgsDecoder;
 import wordnice.utils.ByteArraySequence;
 import wordnice.utils.ByteSequence;
-import wordnice.utils.MapWorker;
 import wordnice.utils.Sockets;
 
 public class HttpRequest implements Closeable {
@@ -66,7 +66,7 @@ public class HttpRequest implements Closeable {
 		public boolean getParsePost() {return true;}
 		public boolean getParsePostMultipart() {return true;}
 		public int getMultipartMemoryLimit() {return 16*1024;}
-		public int getMultipartBufferSize() {return Api.BUFFER_SIZE;}
+		public int getMultipartBufferSize() {return Nice.bufferSize;}
 	};
 	
 	public static Settings getDefaultSettings() {
@@ -104,7 +104,7 @@ public class HttpRequest implements Closeable {
 		public boolean parsePost = true;
 		public boolean parsePostMultipart = true;
 		public int multipartMemoryLimit = 16*1024;
-		public int multipartBufferSize = Api.BUFFER_SIZE;
+		public int multipartBufferSize = Nice.bufferSize;
 		
 		public Settings() {}
 		
@@ -162,10 +162,10 @@ public class HttpRequest implements Closeable {
 	}
 	
 	public void init(Socket sock) throws IOException {
-		if(sock == null) throw Api.illegal("Socket == null!");
+		if(sock == null) throw Nice.illegal("Socket == null!");
 		this.socket = sock;
-		this.input = Api.buffered(sock.getInputStream());
-		this.output = Api.buffered(sock.getOutputStream());
+		this.input = Nice.buffered(sock.getInputStream());
+		this.output = Nice.buffered(sock.getOutputStream());
 	}
 	
 	public Settings getSettings() {
@@ -526,7 +526,7 @@ public class HttpRequest implements Closeable {
 			parsePostSimple(id, in);
 			return;
 		}
-		final long clen = Api.getAs(id.getHead("content-length"), long.class, -1L);
+		final long clen = Nice.getAs(id.getHead("content-length"), long.class, -1L);
 		if(clen < 0) {
 			throw new HttpFormatException("Content length undefined or wrong ("+clen+")");
 		}
@@ -544,7 +544,7 @@ public class HttpRequest implements Closeable {
 								try {
 								id.setBoundary(val);
 								} catch(IOException ioe) {
-									throw Api.mask(ioe);
+									throw Nice.mask(ioe);
 								}
 							} else if(key.equals("charset")) {
 								if(Charset.isSupported(val)) {
@@ -582,7 +582,7 @@ public class HttpRequest implements Closeable {
 		final Value<String> name = new Value<String>();
 		final Value<String> filename = new Value<String>();
 		while(true) {
-			Map<String,String> head = Api.createMap();
+			Map<String,String> head = Nice.createMap();
 			//System.out.println("Parsing heads... " + pis.getPrefix() + " / " + startbuff + ","+ startbuff2);
 			parseHeads(head, in);
 			String cdis = head.get("content-disposition");
@@ -650,8 +650,8 @@ public class HttpRequest implements Closeable {
 	}
 	
 	public static void parsePostSimple(final RequestData id, InputStream in) throws IOException {
-		final long clen = Api.getAs(id.getHead("content-length"), long.class, -1L);
-		if(clen < 0 || clen > Api.MAX_ARRAY_LENGTH) {
+		final long clen = Nice.getAs(id.getHead("content-length"), long.class, -1L);
+		if(clen < 0 || clen > Nice.MAX_ARRAY_LENGTH) {
 			throw new HttpFormatException("Content length undefined, wrong or too big ("+clen+")");
 		}
 		final Map<String,Post> posts = id.getOrCreatePost();

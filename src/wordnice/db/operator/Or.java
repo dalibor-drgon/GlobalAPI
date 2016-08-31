@@ -28,8 +28,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import wordnice.api.Api;
-import wordnice.api.Api.DataEntry;
+import wordnice.api.Nice;
+import wordnice.api.Nice.DataEntry;
 import wordnice.db.results.ResSet;
 import wordnice.db.sql.SQL;
 
@@ -67,7 +67,7 @@ public class Or implements AndOr {
 					vals.add(wh.val);
 				}
 			} else {
-				throw Api.illegal("Unknown argument " 
+				throw Nice.illegal("Unknown argument " 
 						+ ((obj == null) ? null : obj.getClass().getName()) + " -> " + obj);
 			}
 		}

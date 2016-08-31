@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 import wordnice.codings.URLCoder;
 import wordnice.streams.OUtils;
 import wordnice.utils.ByteSequence;
@@ -51,15 +51,15 @@ public class HttpClient {
 	protected Map<CharSequence,List<Object>> heads;
 	
 	public HttpClient(Socket sock) throws IOException {
-		this(sock, Api.buffered(sock.getInputStream()), 
-				Api.buffered(sock.getOutputStream()));
+		this(sock, Nice.buffered(sock.getInputStream()), 
+				Nice.buffered(sock.getOutputStream()));
 	}
 	
 	public HttpClient(Socket sock, InputStream in, OutputStream out) {
 		this.sock = sock;
 		this.input = in;
 		this.output = out;
-		this.heads = Api.createMap();
+		this.heads = Nice.createMap();
 	}
 	
 	public Socket getSocket() {
@@ -81,7 +81,7 @@ public class HttpClient {
 	public List<Object> getOrCreateHead(CharSequence key) {
 		List<Object> list = this.heads.get(key);
 		if(list == null) {
-			list = Api.createList();
+			list = Nice.createList();
 			this.heads.put(key, list);
 		}
 		return list;

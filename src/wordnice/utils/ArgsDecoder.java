@@ -29,10 +29,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import wordnice.api.Api;
-import wordnice.api.Api.BadFormat;
-import wordnice.api.Api.DataEntry;
-import wordnice.api.Api.Masked;
+import wordnice.api.Nice;
+import wordnice.api.Nice.BadFormat;
+import wordnice.api.Nice.DataEntry;
+import wordnice.api.Nice.Masked;
 import wordnice.codings.URLCoder;
 
 
@@ -200,17 +200,17 @@ public class ArgsDecoder {
 				return;
 			}
 			if(key.charAt(start) != startChar) { //Eg. "Opps" not inside [] -> Request[Post]Oops
-				throw Api.badFormat("ArgsDecoder.handleArray: Unexpected character")
+				throw Nice.badFormat("ArgsDecoder.handleArray: Unexpected character")
 					.setOffsetAndLength(start, 1);
 			}
 			end = key.indexOf(endChar, start);
 			if(end == -1) { //Last key not terminated with ] -> Request[Post][Password
-				throw Api.badFormat("ArgsDecoder.handleArray: Name not terminated until EOF")
+				throw Nice.badFormat("ArgsDecoder.handleArray: Name not terminated until EOF")
 					.setOffsetAndEnd(start, key.length());
 			}
 			int i = NiceStringUtils.indexOf(key, startChar, start+1, end);
 			if(i != -1) { //Found [ inside [ -> [blah[anotherName ...
-				throw Api.badFormat("ArgsDecoder.handleArray: Found another name starting in name")
+				throw Nice.badFormat("ArgsDecoder.handleArray: Found another name starting in name")
 					.setOffsetAndLength(i, 1);
 			}
 			
@@ -224,22 +224,22 @@ public class ArgsDecoder {
 	
 	public static Map<ByteSequence,ByteSequence> handleMap(
 			ByteSequence str, ByteSequence val, ByteSequence row) throws Masked {
-		return handleMap(Api.<ByteSequence,ByteSequence>createMap(), null, str, val, row, 0);
+		return handleMap(Nice.<ByteSequence,ByteSequence>createMap(), null, str, val, row, 0);
 	}
 	
 	public static Map<ByteSequence,ByteSequence> handleMap(
 			ByteSequence str, ByteSequence val, ByteSequence row, int start) throws Masked {
-		return handleMap(Api.<ByteSequence,ByteSequence>createMap(), null, str, val, row, start);
+		return handleMap(Nice.<ByteSequence,ByteSequence>createMap(), null, str, val, row, start);
 	}
 	
 	public static Map<ByteSequence,ByteSequence> handleMap(AtomicMapHandler<ByteSequence,ByteSequence> handler,
 			ByteSequence str, ByteSequence val, ByteSequence row) throws Masked {
-		return handleMap(Api.<ByteSequence,ByteSequence>createMap(), handler, str, val, row, 0);
+		return handleMap(Nice.<ByteSequence,ByteSequence>createMap(), handler, str, val, row, 0);
 	}
 	
 	public static Map<ByteSequence,ByteSequence> handleMap(AtomicMapHandler<ByteSequence,ByteSequence> handler,
 			ByteSequence str, ByteSequence val, ByteSequence row, int start) throws Masked {
-		return handleMap(Api.<ByteSequence,ByteSequence>createMap(), handler, str, val, row, start);
+		return handleMap(Nice.<ByteSequence,ByteSequence>createMap(), handler, str, val, row, start);
 	}
 	
 	public static Map<ByteSequence,ByteSequence> handleMap(Map<ByteSequence,ByteSequence> output,
@@ -305,22 +305,22 @@ public class ArgsDecoder {
 	
 	public static Map<String,String> handleMap(
 			String str, String val, String row) throws Masked {
-		return handleMap(Api.<String,String>createMap(), null, str, val, row, 0);
+		return handleMap(Nice.<String,String>createMap(), null, str, val, row, 0);
 	}
 	
 	public static Map<String,String> handleMap(
 			String str, String val, String row, int start) throws Masked {
-		return handleMap(Api.<String,String>createMap(), null, str, val, row, start);
+		return handleMap(Nice.<String,String>createMap(), null, str, val, row, start);
 	}
 	
 	public static Map<String,String> handleMap(AtomicMapHandler<String,String> handler,
 			String str, String val, String row) throws Masked {
-		return handleMap(Api.<String,String>createMap(), handler, str, val, row, 0);
+		return handleMap(Nice.<String,String>createMap(), handler, str, val, row, 0);
 	}
 	
 	public static Map<String,String> handleMap(AtomicMapHandler<String,String> handler,
 			String str, String val, String row, int start) throws Masked {
-		return handleMap(Api.<String,String>createMap(), handler, str, val, row, start);
+		return handleMap(Nice.<String,String>createMap(), handler, str, val, row, start);
 	}
 	
 	public static Map<String,String> handleMap(Map<String,String> output,

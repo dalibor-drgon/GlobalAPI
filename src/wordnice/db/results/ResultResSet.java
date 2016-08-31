@@ -31,8 +31,8 @@ import java.sql.Statement;
 import java.util.Collection;
 import java.util.Map;
 
-import wordnice.cols.ImmArray;
-import wordnice.cols.ImmMapPair;
+import wordnice.coll.ImmArray;
+import wordnice.coll.ImmMapPair;
 import wordnice.db.DatabaseException;
 import wordnice.db.DatabaseUtils;
 import wordnice.db.serialize.CollSerializer;

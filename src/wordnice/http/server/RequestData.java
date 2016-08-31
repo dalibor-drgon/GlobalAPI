@@ -28,10 +28,10 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Map;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
+import wordnice.coll.MapWorker;
 import wordnice.http.HttpFormatException;
 import wordnice.http.server.HttpRequest.Settings;
-import wordnice.utils.MapWorker;
 
 public class RequestData {
 
@@ -106,7 +106,7 @@ public class RequestData {
 
 	public MapWorker getOrCreateGet() {
 		if(get == null) {
-			get = Api.createMapWorker();
+			get = Nice.createMapWorker();
 		}
 		return get;
 	}
@@ -128,7 +128,7 @@ public class RequestData {
 	}
 
 	public Map<String,String> getOrCreateHeads() {
-		if(heads == null) heads = Api.createMap();
+		if(heads == null) heads = Nice.createMap();
 		return heads;
 	}
 	
@@ -148,7 +148,7 @@ public class RequestData {
 	}
 	
 	public Map<String,Post> getOrCreatePost() {
-		if(post == null) post = Api.createMap();
+		if(post == null) post = Nice.createMap();
 		return this.post;
 	}
 	
@@ -168,7 +168,7 @@ public class RequestData {
 	}
 	
 	public RequestData putPost(String key, Post post) {
-		if(this.post == null) this.post = Api.createMap();
+		if(this.post == null) this.post = Nice.createMap();
 		this.post.put(key, post);
 		return this;
 	}

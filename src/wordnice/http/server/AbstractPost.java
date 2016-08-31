@@ -36,7 +36,7 @@ import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 
 public abstract class AbstractPost implements Post {
 	
@@ -86,7 +86,7 @@ public abstract class AbstractPost implements Post {
 	@Override
 	public Map<String,String> getOrCreateHeads() {
 		if(heads == null) {
-			heads = Api.createMap();
+			heads = Nice.createMap();
 		}
 		return heads;
 	}
@@ -139,7 +139,7 @@ public abstract class AbstractPost implements Post {
 			this.isFile = isFile;
 			this.maxsizeForMemory = maxsize;
 			if(!isFile) {
-				baos = Api.baos();
+				baos = Nice.baos();
 			}
 		}
 		
@@ -149,7 +149,7 @@ public abstract class AbstractPost implements Post {
 		}
 		
 		public void write(byte[] bytes, int off, int len) throws FileNotFoundException, IOException {
-			Api.checkBounds(bytes, off, len);
+			Nice.checkBounds(bytes, off, len);
 			if(!isEditing || len == 0) {
 				return;
 			}
@@ -323,7 +323,7 @@ public abstract class AbstractPost implements Post {
 		@Override
 		public Map<String,String> getOrCreateHeads() {
 			if(heads == null) {
-				heads = Api.createMap();
+				heads = Nice.createMap();
 			}
 			return heads;
 		}

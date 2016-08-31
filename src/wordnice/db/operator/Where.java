@@ -26,7 +26,7 @@ package wordnice.db.operator;
 
 import java.util.regex.Pattern;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 import wordnice.codings.ASCII;
 import wordnice.db.results.ResSet;
 import wordnice.utils.NiceStringUtils;
@@ -207,7 +207,7 @@ public class Where {
 				return NiceStringUtils.equalsIgnoreCase(ent, 0, b, 0, b.length());
 			}
 		}
-		throw Api.illegal("Unknown value type " + val.getClass().getName());
+		throw Nice.illegal("Unknown value type " + val.getClass().getName());
 	}
 	
 	protected static boolean end(ResSet rs, String key, Object val, boolean sens) {
@@ -238,7 +238,7 @@ public class Where {
 				return NiceStringUtils.equalsIgnoreCase(ent, ent.length() - b.length(), b, 0, b.length());
 			}
 		}
-		throw Api.illegal("Unknown value type " + val.getClass().getName());
+		throw Nice.illegal("Unknown value type " + val.getClass().getName());
 	}
 	
 	protected static boolean equals(ResSet rs, String key, Object val, boolean sens) {

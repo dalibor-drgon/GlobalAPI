@@ -28,7 +28,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 
 /**
  * For Single thread only!
@@ -49,7 +49,7 @@ implements AutoCloseable {
 	protected int bufferLength;
 
     public BufferedOutput(OutputStream out) {
-        this(out, Api.BUFFER_SIZE, (int) (Api.BUFFER_SIZE*0.85));
+        this(out, Nice.bufferSize, (int) (Nice.bufferSize*0.85));
     }
 
     public BufferedOutput(OutputStream out, int size) {
@@ -59,7 +59,7 @@ implements AutoCloseable {
     public BufferedOutput(OutputStream out, int size, int minimalWrite) {
         super(out);
         if (size <= 0) {
-            throw Api.illegal("Buffer size <= 0");
+            throw Nice.illegal("Buffer size <= 0");
         }
         setBuffer(new byte[size]);
         setMinimalWrite(minimalWrite);
@@ -133,7 +133,7 @@ implements AutoCloseable {
 	
 	public BufferedOutput setBuffer(byte[] buffer) {
 		if (buffer == null || buffer.length <= 0) {
-            throw Api.illegal("Buffer is null or buffer size <= 0");
+            throw Nice.illegal("Buffer is null or buffer size <= 0");
         }
 		this.buf = buffer;
 		this.bufferLength = this.buf.length;

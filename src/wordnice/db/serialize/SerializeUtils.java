@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 import wordnice.utils.FilesAPI;
 
 public class SerializeUtils {
@@ -39,13 +39,13 @@ public class SerializeUtils {
 		if(file.exists() == false) {
 			FilesAPI.createFile(file);
 		}
-		try(OutputStream os = Api.output(file)) {
+		try(OutputStream os = Nice.output(file)) {
 			dw.write(os);
 		}
 	}
 	
 	public static void read(DataReader dr, File file) throws SerializeException, FileNotFoundException, IOException {
-		try(InputStream is = Api.input(file)) {
+		try(InputStream is = Nice.input(file)) {
 			dr.read(is);
 		}
 	}

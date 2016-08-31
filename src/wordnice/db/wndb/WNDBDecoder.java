@@ -30,7 +30,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 import wordnice.db.ColType;
 import wordnice.db.serialize.BadPrefixException;
 import wordnice.db.serialize.BadTypeException;
@@ -46,7 +46,7 @@ public class WNDBDecoder {
 	
 	public static void readFileRawData(DecoderHandler hd, File f) 
 			throws SerializeException, IOException {
-		try(InputStream in = Api.input(f)) {
+		try(InputStream in = Nice.input(f)) {
 			WNDBDecoder.readInputStreamRawData(hd, in);
 		}
 	}
@@ -123,7 +123,7 @@ public class WNDBDecoder {
 			case STRING:
 				return IUtils.deserializeUTF(in);
 			case BYTES:
-				return IUtils.readBytes(in);
+				return IUtils.deserializeBytes(in);
 			case ARRAY:
 				return IUtils.deserializeColl(in);
 			case MAP:

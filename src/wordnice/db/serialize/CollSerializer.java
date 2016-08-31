@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import gnu.trove.map.hash.THashMap;
-import wordnice.api.Api;
+import wordnice.api.Nice;
 import wordnice.streams.IUtils;
 import wordnice.streams.OUtils;
 
@@ -58,12 +58,12 @@ public class CollSerializer {
 		ResultSetMetaData md = rs.getMetaData();
 		int columns = md.getColumnCount();
 		String[] cols = new String[columns];
-		List<Map<String, Object>> list = Api.createList();
+		List<Map<String, Object>> list = Nice.createList();
 		for(int i = 0; i < columns; i++) {           
 			cols[i] = md.getColumnName(i + 1);
 		}
 		while(rs.next()) {
-			Map<String, Object> row = Api.createMap(columns);
+			Map<String, Object> row = Nice.createMap(columns);
 			for(int i = 0; i < columns;) {
 				String col = cols[i];
 				i++;
@@ -80,14 +80,14 @@ public class CollSerializer {
 	
 	public static void arrayToFile(File f, Object[] arr)
 			throws SerializeException, IOException {
-		try(OutputStream ost = Api.output(f)) {
+		try(OutputStream ost = Nice.output(f)) {
 			CollSerializer.arrayToStream(ost, arr, 0, arr.length);
 		}
 	}
 	
 	public static void arrayToFile(File f, Object[] arr, int off, int len)
 			throws SerializeException, IOException {
-		try(OutputStream ost = Api.output(f)) {
+		try(OutputStream ost = Nice.output(f)) {
 			CollSerializer.arrayToStream(ost, arr, off, len);
 		}
 	}
@@ -109,7 +109,7 @@ public class CollSerializer {
 	
 	public static <X> X[] arrayFromFile(Class<X> clz, File f)
 			throws SerializeException, IOException {
-		try (InputStream ins = Api.input(f)) {
+		try (InputStream ins = Nice.input(f)) {
 			return CollSerializer.arrayFromStream(clz, ins);
 		}
 	}
@@ -145,14 +145,14 @@ public class CollSerializer {
 	
 	public static void collToFile(File f, Collection<?> col)
 			throws SerializeException, IOException {
-		try(OutputStream ost = Api.output(f)) {
+		try(OutputStream ost = Nice.output(f)) {
 			CollSerializer.collToStream(ost, col.iterator(), col.size());
 		}
 	}
 	
 	public static void collToFile(File f, Iterator<?> it, int size)
 			throws SerializeException, IOException {
-		try(OutputStream ost = Api.output(f)) {
+		try(OutputStream ost = Nice.output(f)) {
 			CollSerializer.collToStream(ost, it, size);
 		}
 	}
@@ -185,7 +185,7 @@ public class CollSerializer {
 	
 	public static <X> Collection<X> collFromFile(Collection<X> col, File f)
 			throws SerializeException, IOException {
-		try (InputStream ins = Api.input(f)) {
+		try (InputStream ins = Nice.input(f)) {
 			return CollSerializer.collFromStream(col, ins);
 		}
 	}
@@ -210,7 +210,7 @@ public class CollSerializer {
 			return null;
 		}
 		if(col == null) {
-			col = Api.createList(len);
+			col = Nice.createList(len);
 		} else if(col instanceof ArrayList) {
 			((ArrayList<?>) col).ensureCapacity(col.size() + len);
 		}
@@ -226,7 +226,7 @@ public class CollSerializer {
 	
 	public static void mapToFile(File f, Map<?,?> map)
 			throws SerializeException, IOException {
-		try(OutputStream ost = Api.output(f)) {
+		try(OutputStream ost = Nice.output(f)) {
 			CollSerializer.mapToStream(ost, map);
 		}
 	}
@@ -263,7 +263,7 @@ public class CollSerializer {
 	
 	public static <X,Y> Map<X,Y> mapFromFile(Map<X,Y> map, File f)
 			throws SerializeException, IOException {
-		try (InputStream ins = Api.input(f)) {
+		try (InputStream ins = Nice.input(f)) {
 			return CollSerializer.mapFromStream(map, ins);
 		}
 	}

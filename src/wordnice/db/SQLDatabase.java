@@ -36,7 +36,8 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
+import wordnice.coll.CollUtils;
 import wordnice.db.operator.AndOr;
 import wordnice.db.operator.Limit;
 import wordnice.db.operator.Sort;
@@ -47,7 +48,6 @@ import wordnice.db.results.ResSetDB;
 import wordnice.db.results.ResultResSet;
 import wordnice.db.serialize.SerializeException;
 import wordnice.db.sql.SQL;
-import wordnice.utils.CollUtils;
 
 /**
  * This class allows you to easily create database of any available
@@ -151,26 +151,26 @@ public class SQLDatabase implements Closeable, AutoCloseable, Database {
 			Object cur = vals[i];
 			if(cur instanceof String[]) {
 				if(columns != null) {
-					throw Api.illegal("Duplicated String[] names argument.");
+					throw Nice.illegal("Duplicated String[] names argument.");
 				}
 				columns = (String[]) cur;
 			} else if(cur instanceof AndOr) {
 				if(where != null) {
-					throw Api.illegal("Duplicated AndOr where argument.");
+					throw Nice.illegal("Duplicated AndOr where argument.");
 				}
 				where = (AndOr) cur;
 			} else if(cur instanceof Sort[]) {
 				if(sort != null) {
-					throw Api.illegal("Duplicated Sort[] sort argument.");
+					throw Nice.illegal("Duplicated Sort[] sort argument.");
 				}
 				sort = (Sort[]) cur;
 			} else if(cur instanceof Sort[]) {
 				if(limit != null) {
-					throw Api.illegal("Duplicated Limit limit argument.");
+					throw Nice.illegal("Duplicated Limit limit argument.");
 				}
 				limit = (Limit) cur;
 			} else {
-				throw Api.illegal("Unknown argument type " + ((cur == null) ? null : cur.getClass().getName()));
+				throw Nice.illegal("Unknown argument type " + ((cur == null) ? null : cur.getClass().getName()));
 			}
 		}
 		return this.select(columns, where, sort, limit);
@@ -193,14 +193,14 @@ public class SQLDatabase implements Closeable, AutoCloseable, Database {
 		}
 		if(limit != null) {
 			if(limit.len <= 0) {
-				throw Api.illegal("Invalid limit " + limit);
+				throw Nice.illegal("Invalid limit " + limit);
 			} else {
 				suf.append(" LIMIT ");
 				suf.append(limit.len);
 			}
 				
 			if(limit.off < 0) {
-				throw Api.illegal("Invalid offset " + limit.off);
+				throw Nice.illegal("Invalid offset " + limit.off);
 			} else if(limit.off > 0) {
 				suf.append(" OFFSET ");
 				suf.append(limit.off);
@@ -304,7 +304,7 @@ public class SQLDatabase implements Closeable, AutoCloseable, Database {
 			try {
 				ps.close();
 			} catch(Exception t) {}
-			throw Api.illegal("Map results mismatch! After first iteration got " + size + " elements, after second " + cursize + "!");
+			throw Nice.illegal("Map results mismatch! After first iteration got " + size + " elements, after second " + cursize + "!");
 		}
 		try {
 			ps.executeUpdate();
@@ -478,7 +478,7 @@ public class SQLDatabase implements Closeable, AutoCloseable, Database {
 				ps.setObject(secsize, DatabaseUtils.toSQLObject(it.next().getValue()));
 			}
 			if(secsize != size) {
-				throw Api.illegal("Map results mismatch! After first iteration got " + size + " elements, after second " + secsize + "!");
+				throw Nice.illegal("Map results mismatch! After first iteration got " + size + " elements, after second " + secsize + "!");
 			}
 			ps.executeUpdate();
 		} catch(SQLException sqle) {

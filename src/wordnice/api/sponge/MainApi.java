@@ -56,8 +56,8 @@ public class MainApi {
 			}
 		};
 		
-		InitGlobalAPI.debugAll(oolog);
-		InitGlobalAPI.debugAllMain(oolog);
+		InitGlobalAPI.initFirst(oolog);
+		InitGlobalAPI.initInMainThread(oolog);
 		
 		this.log.info("MainAPI by wordnice for Sponge was enabled!");
 	}

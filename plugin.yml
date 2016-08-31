@@ -1,5 +1,5 @@
 name: MainAPI
 version: 3.0.0
 author: wordnice
-main: wordnice.api.bukkit.MainApi
+main: wordnice.api.bukkit.NiceBukkitPlugin
 load: STARTUP

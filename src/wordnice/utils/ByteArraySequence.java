@@ -27,7 +27,7 @@ package wordnice.utils;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 import wordnice.codings.ASCII;
 
 public class ByteArraySequence implements ByteSequence {
@@ -52,7 +52,7 @@ public class ByteArraySequence implements ByteSequence {
 	
 	public ByteArraySequence(byte[] ch, int off, int len) {
 		if(ch == null) ch = EMPTY_ARR;
-		Api.checkBounds(ch, off, len);
+		Nice.checkBounds(ch, off, len);
 		this.ch = ch;
 		this.off = off;
 		this.len = len;
@@ -120,7 +120,7 @@ public class ByteArraySequence implements ByteSequence {
 	@Override
 	public int indexOf(byte c, int off) {
 		if(off > this.len) {
-			throw Api.bounds(off);
+			throw Nice.bounds(off);
 		}
 		int i = this.off + off;
 		int end = this.off + this.len;
@@ -143,12 +143,12 @@ public class ByteArraySequence implements ByteSequence {
 	}
 	
 	public int indexOf(byte[] arr, int aoff, int alen, int off) {
-		Api.checkBounds(arr, aoff, alen);
+		Nice.checkBounds(arr, aoff, alen);
 		if(alen == 1) {
 			return indexOf(arr[aoff], off);
 		}
 		if(off > this.len) {
-			throw Api.bounds(off);
+			throw Nice.bounds(off);
 		}
 		int from = this.off+off;
 		int i = ASCII.indexOf(this.ch, from, this.len-off, arr, aoff, alen);

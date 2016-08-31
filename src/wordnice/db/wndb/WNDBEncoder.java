@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 import wordnice.db.ColType;
 import wordnice.db.serialize.BadTypeException;
 import wordnice.db.serialize.SerializeException;
@@ -44,9 +44,9 @@ public class WNDBEncoder {
 	
 	public static void writeFileData(File f, String[] names, ColType[] types, Iterable<Object[]> vals, long nextId) throws SerializeException, IOException {
 		if(vals == null || f == null) {
-			throw Api.illegal("File or values are null!");
+			throw Nice.illegal("File or values are null!");
 		}
-		try(OutputStream out = Api.output(f)) {
+		try(OutputStream out = Nice.output(f)) {
 			WNDBEncoder.writeOutputStreamData(out, names, types, vals, nextId);
 		}
 	}
@@ -55,7 +55,7 @@ public class WNDBEncoder {
 		if(out == null || vals == null || 
 				names == null || types == null ||
 						names.length == 0 || names.length != types.length) {
-			throw Api.illegal("File or values are null, or the lengths "
+			throw Nice.illegal("File or values are null, or the lengths "
 					+ "of names and types do not match!");
 		}
 		OUtils.writeLong(out, WNDBEncoder.PREFIX);

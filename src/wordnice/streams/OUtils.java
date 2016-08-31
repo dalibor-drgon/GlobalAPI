@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 import wordnice.db.ColType;
 import wordnice.db.serialize.CollSerializer;
 import wordnice.db.serialize.SerializeException;
@@ -265,7 +265,7 @@ public class OUtils {
 		write(out, cbuf, 0, cbuf.length);
 	}
 	public static void write(OutputStream out, char[] cbuf, int off, int len) throws IOException {
-		Api.checkBounds(cbuf, off, len);
+		Nice.checkBounds(cbuf, off, len);
 		NiceStringUtils.toBytes(out,cbuf, off, len);
 	}
 	
@@ -292,12 +292,12 @@ public class OUtils {
 	}
 	
 	public static void write(OutputStream out, CharSequence str, int off, int len) throws IOException {
-		Api.checkBounds(str, off, len);
+		Nice.checkBounds(str, off, len);
 		NiceStringUtils.toBytes(out, str, off, len);
 	}
 	
 	public static void writeln(OutputStream out) throws IOException {
-		out.write(Api.LINE_SEPARATOR_BYTES);
+		out.write(Nice.LINE_SEPARATOR_BYTES);
 	}
 	
 	public static void writeln(OutputStream out, Object obj) throws IOException {

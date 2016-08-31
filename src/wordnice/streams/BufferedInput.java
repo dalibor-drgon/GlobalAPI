@@ -28,7 +28,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 
 public class BufferedInput
 extends BufferedInputStream
@@ -49,13 +49,13 @@ implements AutoCloseable {
     }
 
     public BufferedInput(InputStream in) {
-        this(in, Api.BUFFER_SIZE);
+        this(in, Nice.bufferSize);
     }
 
     public BufferedInput(InputStream in, int size) {
         super(in);
         if (size <= 0) {
-            throw Api.illegal("Buffer size <= 0");
+            throw Nice.illegal("Buffer size <= 0");
         }
         buf = new byte[size];
     }
@@ -73,11 +73,11 @@ implements AutoCloseable {
             } else if (buffer.length >= marklimit) {
                 markpos = -1;   /* buffer got too big, invalidate mark */
                 pos = 0;        /* drop buffer contents */
-            } else if (buffer.length >= Api.BUFFER_SIZE) {
+            } else if (buffer.length >= Nice.bufferSize) {
                 throw new OutOfMemoryError("Required array size too large");
             } else {            /* grow buffer */
-                int nsz = (pos <= Api.BUFFER_SIZE - pos) ?
-                        pos * 2 : Api.BUFFER_SIZE;
+                int nsz = (pos <= Nice.bufferSize - pos) ?
+                        pos * 2 : Nice.bufferSize;
                 if (nsz > marklimit)
                     nsz = marklimit;
                 byte nbuf[] = new byte[nsz];

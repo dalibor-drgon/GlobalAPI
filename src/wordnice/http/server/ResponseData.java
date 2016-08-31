@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 import wordnice.codings.URLCoder;
 
 public class ResponseData {
@@ -45,7 +45,7 @@ public class ResponseData {
 	
 	public Map<String,List<String>> getOrCreateHeads() {
 		if(this.heads == null) {
-			this.heads = Api.createMap();
+			this.heads = Nice.createMap();
 		}
 		return this.heads;
 	}
@@ -59,7 +59,7 @@ public class ResponseData {
 	public List<String> getOrCreateHead(String key) {
 		List<String> list = this.getOrCreateHeads().get(key);
 		if(list == null) {
-			list = Api.createList();
+			list = Nice.createList();
 			this.heads.put(key, list);
 		}
 		return list;

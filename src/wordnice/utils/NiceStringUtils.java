@@ -31,9 +31,8 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
-import java.util.Random;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 
 public class NiceStringUtils {
 	
@@ -57,7 +56,7 @@ public class NiceStringUtils {
 	 */
 	public static String multireplace(String input, int off, int slen, 
 			Object[] find, Object[] repl, int roff, int rlen) {
-		StringBuilder sb = Api.sb();
+		StringBuilder sb = Nice.sb();
 		int i = off;
 		int end = off+slen;
 		rlen += roff; //rlen became rend
@@ -98,7 +97,7 @@ public class NiceStringUtils {
 	 */
 	public static String multireplace(String input, int off, int slen, 
 			Object[] pair, int roff, int rlen) {
-		StringBuilder sb = Api.sb();
+		StringBuilder sb = Nice.sb();
 		int i = off;
 		int end = off+slen;
 		rlen += roff-1; //rlen became rend
@@ -205,7 +204,7 @@ public class NiceStringUtils {
 	
 	//toBytes char[]
 	public static byte[] toBytes(char[] chars, int off, int len) {
-		return toBytes(chars, off, len, Api.UTF8);
+		return toBytes(chars, off, len, Nice.UTF8);
 	}
 	
 	public static byte[] toBytes(char[] chars, int off, int len, Charset charset) {
@@ -218,7 +217,7 @@ public class NiceStringUtils {
 	}
 	
 	public static ByteArraySequence toByteSequence(char[] chars, int off, int len) {
-		return toByteSequence(chars, off, len, Api.UTF8);
+		return toByteSequence(chars, off, len, Nice.UTF8);
 	}
 	
 	public static ByteArraySequence toByteSequence(char[] chars, int off, int len, Charset charset) {
@@ -228,7 +227,7 @@ public class NiceStringUtils {
 	}
 	
 	public static void toBytes(DataOutput out, char[] chars, int off, int len) throws IOException {
-		toBytes(out, chars, off, len, Api.UTF8);
+		toBytes(out, chars, off, len, Nice.UTF8);
 	}
 	
 	public static void toBytes(DataOutput out, char[] chars, int off, int len, Charset charset) throws IOException {
@@ -238,7 +237,7 @@ public class NiceStringUtils {
 	}
 	
 	public static void toBytes(OutputStream out, char[] chars, int off, int len) throws IOException {
-		toBytes(out, chars, off, len, Api.UTF8);
+		toBytes(out, chars, off, len, Nice.UTF8);
 	}
 	
 	public static void toBytes(OutputStream out, char[] chars, int off, int len, Charset charset) throws IOException {
@@ -251,7 +250,7 @@ public class NiceStringUtils {
 	
 	//toBytes CharSequence
 	public static byte[] toBytes(CharSequence chars, int off, int len) {
-		return toBytes(chars, off, len, Api.UTF8);
+		return toBytes(chars, off, len, Nice.UTF8);
 	}
 	
 	public static byte[] toBytes(CharSequence chars, int off, int len, Charset charset) {
@@ -264,7 +263,7 @@ public class NiceStringUtils {
 	}
 	
 	public static ByteArraySequence toByteSequence(CharSequence chars, int off, int len) {
-		return toByteSequence(chars, off, len, Api.UTF8);
+		return toByteSequence(chars, off, len, Nice.UTF8);
 	}
 	
 	public static ByteArraySequence toByteSequence(CharSequence chars, int off, int len, Charset charset) {
@@ -274,7 +273,7 @@ public class NiceStringUtils {
 	}
 	
 	public static void toBytes(DataOutput out, CharSequence chars, int off, int len) throws IOException {
-		toBytes(out, chars, off, len, Api.UTF8);
+		toBytes(out, chars, off, len, Nice.UTF8);
 	}
 	
 	public static void toBytes(DataOutput out, CharSequence chars, int off, int len, Charset charset) throws IOException {
@@ -284,7 +283,7 @@ public class NiceStringUtils {
 	}
 	
 	public static void toBytes(OutputStream out, CharSequence chars, int off, int len) throws IOException {
-		toBytes(out, chars, off, len, Api.UTF8);
+		toBytes(out, chars, off, len, Nice.UTF8);
 	}
 	
 	public static void toBytes(OutputStream out, CharSequence chars, int off, int len, Charset charset) throws IOException {
@@ -307,7 +306,7 @@ public class NiceStringUtils {
 	
 	//toChars byte[]
 	public static char[] toChars(byte[] bytes, int off, int len) {
-		return toChars(bytes, off, len, Api.UTF8);
+		return toChars(bytes, off, len, Nice.UTF8);
 	}
 	
 	public static char[] toChars(byte[] bytes, int off, int len, Charset charset) {
@@ -317,7 +316,7 @@ public class NiceStringUtils {
 	}
 	
 	public static CharArraySequence toCharSequence(byte[] bytes, int off, int len) {
-		return toCharSequence(bytes, off, len, Api.UTF8);
+		return toCharSequence(bytes, off, len, Nice.UTF8);
 	}
 	
 	public static CharArraySequence toCharSequence(byte[] bytes, int off, int len, Charset charset) {
@@ -329,7 +328,7 @@ public class NiceStringUtils {
 	
 	//toChars ByteSequence
 	public static char[] toChars(ByteSequence bytes, int off, int len) {
-		return toChars(bytes, off, len, Api.UTF8);
+		return toChars(bytes, off, len, Nice.UTF8);
 	}
 	
 	public static char[] toChars(ByteSequence bytes, int off, int len, Charset charset) {
@@ -339,7 +338,7 @@ public class NiceStringUtils {
 	}
 	
 	public static CharArraySequence toCharSequence(ByteSequence bytes, int off, int len) {
-		return toCharSequence(bytes, off, len, Api.UTF8);
+		return toCharSequence(bytes, off, len, Nice.UTF8);
 	}
 	
 	public static CharArraySequence toCharSequence(ByteSequence bytes, int off, int len, Charset charset) {
@@ -348,67 +347,7 @@ public class NiceStringUtils {
 	            cb.position(), cb.limit()-cb.position());
 	}
 	
-	
-	/**
-	 * Randoms
-	 */
-	protected static String generatorDefaultString = "0123456789abcdefghijklmnopqrstuvwxyABCDEFGHIJKLMNOPQRSTUVWXY";
-	protected static char[] generatorDefaultChars = generatorDefaultString.toCharArray();
-	protected static byte[] generatorDefaultBytes = generatorDefaultString.getBytes();
-	
-	public static String genString(int len) {
-		return genString(len, generatorDefaultChars);
-	}
-	
-	public static String genString(int len, char[] chars) {
-		return String.copyValueOf(genChars(len, chars));
-	}
-	
-	public static String genString(int len, CharSequence chars) {
-		return String.copyValueOf(genChars(len, chars));
-	}
-	
-	public static char[] genChars(int len) {
-		return genChars(len, generatorDefaultChars);
-	}
-	
-	public static char[] genChars(int len, char[] chars) {
-		Random rd = Api.getRandom();
-		char[] out = new char[len];
-		int i = 0;
-		for(; i < len; i++) {
-			out[i] = chars[rd.nextInt(chars.length)];
-		}
-		return out;
-	}
-	
-	public static char[] genChars(int len, CharSequence chars) {
-		Random rd = Api.getRandom();
-		char[] out = new char[len];
-		int i = 0;
-		for(; i < len; i++) {
-			out[i] = chars.charAt(rd.nextInt(chars.length()));
-		}
-		return out;
-	}
-	
-	public static void genBytesSecure(byte[] bytes) {
-		Api.getRandom().nextBytes(bytes);
-	}
-	
-	public static byte[] genBytes(int len) {
-		return genBytes(len, generatorDefaultBytes);
-	}
-	
-	public static byte[] genBytes(int len, byte[] bytes) {
-		Random rd = Api.getRandom();
-		byte[] out = new byte[len];
-		int i = 0;
-		for(; i < len; i++) {
-			out[i] = bytes[rd.nextInt(bytes.length)];
-		}
-		return out;
-	}
+
 	
 	/**
 	 * @note No argument checking!
@@ -417,7 +356,7 @@ public class NiceStringUtils {
 	 * @param c Character to convert
 	 * @return Number of bytes
 	 */
-	public static int toBytes(byte[] bytearr, char c) {
+	public static int UTFtoBytes(byte[] bytearr, char c) {
 		if ((c >= 0x0001) && (c <= 0x007F)) {
             bytearr[0] = (byte) c;
             return 1;
@@ -441,7 +380,7 @@ public class NiceStringUtils {
 	 * @param c Character to convert
 	 * @return Number of bytes
 	 */
-	public static int toBytes(byte[] bytearr, int off, char c) {
+	public static int UTFtoBytes(byte[] bytearr, int off, char c) {
 		if ((c >= 0x0001) && (c <= 0x007F)) {
             bytearr[off] = (byte) c;
             return 1;
@@ -465,7 +404,7 @@ public class NiceStringUtils {
 	 * @return Number of bytes
 	 * @throws IOException Writing error
 	 */
-	public static int toBytes(OutputStream out, char c) throws IOException {
+	public static int UTFtoBytes(OutputStream out, char c) throws IOException {
 		if ((c >= 0x0001) && (c <= 0x007F)) {
             out.write((byte) c);
             return 1;

@@ -31,7 +31,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Map;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 import wordnice.db.operator.AndOr;
 import wordnice.db.operator.Limit;
 import wordnice.db.operator.Sort;
@@ -129,26 +129,26 @@ public class ResSetDatabase implements Closeable, AutoCloseable, Database {
 			Object cur = vals[i];
 			if(cur instanceof String[]) {
 				if(columns != null) {
-					throw Api.illegal("Duplicated String[] names argument.");
+					throw Nice.illegal("Duplicated String[] names argument.");
 				}
 				columns = (String[]) cur;
 			} else if(cur instanceof AndOr) {
 				if(where != null) {
-					throw Api.illegal("Duplicated AndOr where argument.");
+					throw Nice.illegal("Duplicated AndOr where argument.");
 				}
 				where = (AndOr) cur;
 			} else if(cur instanceof Sort[]) {
 				if(sort != null) {
-					throw Api.illegal("Duplicated Sort[] sort argument.");
+					throw Nice.illegal("Duplicated Sort[] sort argument.");
 				}
 				sort = (Sort[]) cur;
 			} else if(cur instanceof Sort[]) {
 				if(limit != null) {
-					throw Api.illegal("Duplicated Limit limit argument.");
+					throw Nice.illegal("Duplicated Limit limit argument.");
 				}
 				limit = (Limit) cur;
 			} else {
-				throw Api.illegal("Unknown argument type " + ((cur == null) ? null : cur.getClass().getName()));
+				throw Nice.illegal("Unknown argument type " + ((cur == null) ? null : cur.getClass().getName()));
 			}
 		}
 		return this.select(columns, where, sort, limit);
@@ -178,10 +178,10 @@ public class ResSetDatabase implements Closeable, AutoCloseable, Database {
 		}
 		if(limit != null && rs.size() != 0 && (limit.off != 0 || limit.len < rs.size())) {
 			if(limit.len <= 0) {
-				throw Api.illegal("Invalid limit " + limit);
+				throw Nice.illegal("Invalid limit " + limit);
 			}
 			if(limit.off < 0) {
-				throw Api.illegal("Invalid offset " + limit.off);
+				throw Nice.illegal("Invalid offset " + limit.off);
 			}
 			if(rs.hasCut() == false) {
 				rs = DatabaseUtils.copy(rs);

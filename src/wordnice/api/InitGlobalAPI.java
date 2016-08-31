@@ -29,7 +29,7 @@ import java.lang.instrument.Instrumentation;
 import wordnice.javaagent.JavaAgent;
 
 /**
- * On program start, make sure you call {@link OnlyOnce#debugAll(MiniLogger)}
+ * On program start, make sure you call {@link OnlyOnce#initFirst(MiniLogger)}
  * (except bukkit / sponge plugins)
  * 
  * @author wordnice
@@ -47,7 +47,7 @@ public class InitGlobalAPI {
 	/**
 	 * On main thread call this
 	 */
-	public static void debugAllMain(MiniLogger log) {
+	public static void initInMainThread(MiniLogger log) {
 		if(allMain) {
 			return;
 		}
@@ -61,7 +61,7 @@ public class InitGlobalAPI {
 	 * On program start, make sure you call this method
 	 * (except bukkit / sponge plugins)
 	 */
-	public static void debugAll(MiniLogger log) {
+	public static void initFirst(MiniLogger log) {
 		if(all) {
 			return;
 		}

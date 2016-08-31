@@ -28,7 +28,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 
 public class PrefixedInputStream 
 extends FilterInputStream 
@@ -85,7 +85,7 @@ implements AutoCloseable {
 			this.off = 0;
 			this.len = 0;
 		} else {
-			Api.checkBounds(buffer, off, len);
+			Nice.checkBounds(buffer, off, len);
 			this.buf = buffer;
 			this.off = off;
 			this.len = len;
@@ -120,7 +120,7 @@ implements AutoCloseable {
 	
 	@Override
 	public int read(byte[] buff, int off, int len) throws IOException {
-		Api.checkBounds(buff, off, len);
+		Nice.checkBounds(buff, off, len);
 		System.out.println("Read: " + off + "," + len + " / " + this.len + " / " + this.buf);
 		if(this.len > 0) {
 			int possible = (len > this.len) ? this.len : len;

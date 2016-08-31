@@ -37,8 +37,8 @@ import java.util.zip.ZipInputStream;
 
 import gnu.trove.set.hash.THashSet;
 import sun.misc.Unsafe;
-import wordnice.api.Api;
-import wordnice.api.Api.VHandler;
+import wordnice.api.Nice;
+import wordnice.api.Nice.VHandler;
 import wordnice.javaagent.JavaAgent;
 
 public class UnsafeAPI {
@@ -219,7 +219,7 @@ public class UnsafeAPI {
 	}
 	
 	public static Set<String> filterClassesString(Collection<String> in, String pref) {
-		Set<String> out = Api.createSet();
+		Set<String> out = Nice.createSet();
 		filterClassesString(out, in, pref);
 		return out;
 	}
@@ -251,7 +251,7 @@ public class UnsafeAPI {
 	}
 	
 	public static Set<String> filterClassesStringEquals(Collection<String> in, String pref) {
-		Set<String> out = Api.createSet();
+		Set<String> out = Nice.createSet();
 		filterClassesStringEquals(out, in, pref);
 		return out;
 	}
@@ -283,7 +283,7 @@ public class UnsafeAPI {
 	}
 	
 	public static Set<String> filterPackagesString(Collection<String> in, String pref) {
-		Set<String> out = Api.createSet();
+		Set<String> out = Nice.createSet();
 		filterPackagesString(out, in, pref);
 		return out;
 	}
@@ -378,19 +378,19 @@ public class UnsafeAPI {
 	}
 	
 	public static Set<String> getClassesNear(Class<?> cls) throws Exception {
-		Set<String> out = Api.createSet();
+		Set<String> out = Nice.createSet();
 		getClasses(out, getClassesLocation(cls));
 		return out;
 	}
 	
 	public static Set<String> getClasses(ClassLoader cl) throws Exception {
-		Set<String> out = Api.createSet();
+		Set<String> out = Nice.createSet();
 		getClasses(out, getClassesLocation(cl));
 		return out;
 	}
 	
 	public static Set<String> getClasses(File fd) throws Exception {
-		Set<String> out = Api.createSet();
+		Set<String> out = Nice.createSet();
 		getClasses(out, fd);
 		return out;
 	}
@@ -400,7 +400,7 @@ public class UnsafeAPI {
 			getClassesFolder(set, fd, "");
 			return;
 		}
-		getClassesZip(set, new ZipInputStream(Api.input(fd)));
+		getClassesZip(set, new ZipInputStream(Nice.input(fd)));
 	}
 	
 	public static void getClasses(VHandler<String> handler, File fd) throws Exception {
@@ -408,11 +408,11 @@ public class UnsafeAPI {
 			getClassesFolder(handler, fd, "");
 			return;
 		}
-		getClassesZip(handler, new ZipInputStream(Api.input(fd)));
+		getClassesZip(handler, new ZipInputStream(Nice.input(fd)));
 	}
 	
 	public static Set<String> getClassesZip(ZipInputStream zip) throws Exception {
-		Set<String> set = Api.createSet();
+		Set<String> set = Nice.createSet();
 		getClassesZip(set, zip);
 		return set;
 	}

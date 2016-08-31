@@ -31,8 +31,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 
-import wordnice.api.Api;
-import wordnice.api.Api.BadArg;
+import wordnice.api.Nice;
+import wordnice.api.Nice.BadArg;
 import wordnice.utils.ByteSequence;
 import wordnice.utils.NiceStringUtils;
 
@@ -166,12 +166,12 @@ public class URLCoder {
 			return -1;
 		}
 		if(off < 0 || len < 0) {
-			throw Api.badArg("URLCoder.decodeStream: "
+			throw Nice.badArg("URLCoder.decodeStream: "
 					+ "Offset or length smaller than zero (off "+off+", len "+len+")");
 		}
 		int end = off+len;
 		if(end > in.length) {
-			throw Api.badArg("URLCoder.decodeStream: "
+			throw Nice.badArg("URLCoder.decodeStream: "
 					+ "Computed end bigger than string length "
 					+ "(end "+end+", real len "+in.length+")");
 		}
@@ -228,7 +228,7 @@ public class URLCoder {
 		if(ch == null) {
 			return null;
 		}
-		Api.checkArrayLen("URLCoder.decode", ch.length(), off, len);
+		Nice.checkArrayLen("URLCoder.decode", ch.length(), off, len);
 		if(len == 0) {
 			return "";
 		}
@@ -249,7 +249,7 @@ public class URLCoder {
 		if(ch == null) {
 			return new byte[0];
 		}
-		Api.checkArrayLen("URLCoder.decode", ch.length(), off, len);
+		Nice.checkArrayLen("URLCoder.decode", ch.length(), off, len);
 		if(len == 0) {
 			return new byte[0];
 		}

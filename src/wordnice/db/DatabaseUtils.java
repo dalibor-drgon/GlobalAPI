@@ -36,7 +36,8 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
+import wordnice.coll.CollUtils;
 import wordnice.db.results.ArraysResSet;
 import wordnice.db.results.MapsResSet;
 import wordnice.db.results.ResSet;
@@ -48,7 +49,6 @@ import wordnice.db.sql.SQL;
 import wordnice.db.sql.SQLite;
 import wordnice.streams.IUtils;
 import wordnice.streams.OUtils;
-import wordnice.utils.CollUtils;
 import wordnice.utils.FilesAPI;
 
 public class DatabaseUtils {
@@ -124,17 +124,17 @@ public class DatabaseUtils {
 			throws IllegalArgumentException, SerializeException, IOException, SQLException {
 		Object otype = data.get("type");
 		if(otype == null) {
-			throw Api.illegal("Entered type is null!");
+			throw Nice.illegal("Entered type is null!");
 		}
 		String type = otype.toString().toLowerCase();
 		if(type.equals("sqlite")) {
 			Object file = data.get("file");
 			if(file == null) {
-				throw Api.illegal("SQLite file is null!");
+				throw Nice.illegal("SQLite file is null!");
 			}
 			Object table = data.get("table");
 			if(table == null) {
-				throw Api.illegal("SQLite table is null!");
+				throw Nice.illegal("SQLite table is null!");
 			}
 			SQLDatabase db = new SQLDatabase(new SQLite(FilesAPI.getRealPath(root, file.toString())), table.toString(), cols);
 			db.sql.connect();
@@ -142,23 +142,23 @@ public class DatabaseUtils {
 		} else if(type.equals("mysql")) {
 			Object host = data.get("host");
 			if(host == null) {
-				throw Api.illegal("MySQL host is null!");
+				throw Nice.illegal("MySQL host is null!");
 			}
 			Object db = data.get("db");
 			if(db == null) {
-				throw Api.illegal("MySQL database name is null!");
+				throw Nice.illegal("MySQL database name is null!");
 			}
 			Object user = data.get("user");
 			if(user == null) {
-				throw Api.illegal("MySQL user is null!");
+				throw Nice.illegal("MySQL user is null!");
 			}
 			Object pass = data.get("pass");
 			if(pass == null) {
-				throw Api.illegal("MySQL pass is null!");
+				throw Nice.illegal("MySQL pass is null!");
 			}
 			Object table = data.get("table");
 			if(table == null) {
-				throw Api.illegal("MySQL table is null!");
+				throw Nice.illegal("MySQL table is null!");
 			}
 
 			SQLDatabase sdb = new SQLDatabase(new MySQL(host.toString(), db.toString(), user.toString(), pass.toString()), table.toString(), cols);
@@ -167,11 +167,11 @@ public class DatabaseUtils {
 		} else if(type.equals("driver")) {
 			Object target = data.get("target");
 			if(target == null) {
-				throw Api.illegal("JDBC target is null!");
+				throw Nice.illegal("JDBC target is null!");
 			}
 			Object table = data.get("table");
 			if(table == null) {
-				throw Api.illegal("JDBC table is null!");
+				throw Nice.illegal("JDBC table is null!");
 			}
 			Object user = data.get("user");
 			Object pass = data.get("pass");
@@ -219,7 +219,7 @@ public class DatabaseUtils {
 		} else if(type.equals("wndb")) {
 			Object file = data.get("file");
 			if(file == null) {
-				throw Api.illegal("WNDB file is null!");
+				throw Nice.illegal("WNDB file is null!");
 			}
 			File fl = (root == null) ? new File(file.toString()) : new File(root, file.toString());
 			ResSetDatabase rsdb = new ResSetDatabase(ArraysResSet.loadOrCreateSafe(fl, 
@@ -227,7 +227,7 @@ public class DatabaseUtils {
 					cols.values().toArray(new ColType[0])), fl);
 			return rsdb;
 		} else {
-			throw Api.illegal("Unknown database type " + type);
+			throw Nice.illegal("Unknown database type " + type);
 		}
 		
 	}

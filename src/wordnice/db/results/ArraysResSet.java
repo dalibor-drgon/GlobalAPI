@@ -42,9 +42,10 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import wordnice.api.Api;
-import wordnice.cols.ImmArray;
-import wordnice.cols.ImmMapPair;
+import wordnice.api.Nice;
+import wordnice.coll.CollUtils;
+import wordnice.coll.ImmArray;
+import wordnice.coll.ImmMapPair;
 import wordnice.db.ColType;
 import wordnice.db.DatabaseException;
 import wordnice.db.RawUnsupportedException;
@@ -59,7 +60,6 @@ import wordnice.db.wndb.WNDBEncoder;
 import wordnice.db.wndb.WNDBDecoder.DecoderHandler;
 import wordnice.streams.IUtils;
 import wordnice.streams.OUtils;
-import wordnice.utils.CollUtils;
 import wordnice.utils.FilesAPI;
 
 public class ArraysResSet extends ObjectResSet implements ResSetDB, DecoderHandler {
@@ -169,12 +169,12 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB, DecoderHandl
 			Object val = ent.getValue();
 			int index = this.getColumnIndex(key);
 			if(index == -1) {
-				throw Api.illegal("Illegal column name '" + key + "'!");
+				throw Nice.illegal("Illegal column name '" + key + "'!");
 			} else if(this.isRawValueOK(index, val)) {
 				nev[index] = val;
 				was[index] = true;
 			} else {
-				throw Api.illegal("Illegal type for column '" + key 
+				throw Nice.illegal("Illegal type for column '" + key 
 						+ "', value class " + ((val == null) ? null : val.getClass()) + "!");
 			}
 		}
@@ -260,7 +260,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB, DecoderHandl
 		}
 		int index = this.getColumnIndex(name);
 		if(index == -1) {
-			throw Api.illegal("Illegal column name '" + name + "'!");
+			throw Nice.illegal("Illegal column name '" + name + "'!");
 		}
 		return this.getCurrent()[index];
 	}
@@ -269,7 +269,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB, DecoderHandl
 	public Object getObject(int in) {
 		this.checkSet();
 		if(in < 0 || in >= this.cols()) {
-			throw Api.illegal("Illegal column index " + in + " / " + this.cols() + "!");
+			throw Nice.illegal("Illegal column index " + in + " / " + this.cols() + "!");
 		}
 		return this.getCurrent()[in];
 	}
@@ -396,11 +396,11 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB, DecoderHandl
 			String key = cols[i];
 			int index = this.getColumnIndex(key);
 			if(index == -1) {
-				throw Api.illegal("Illegal column name '" + key + "'!");
+				throw Nice.illegal("Illegal column name '" + key + "'!");
 			}
 			for(int i2 = 0; i2 < i; i2++) {
 				if(inds[i2] == index) {
-					throw Api.illegal("Duplicated column '" 
+					throw Nice.illegal("Duplicated column '" 
 							+ key + "' at indexes " + i + " & " + i2 + "!");
 				}
 			}
@@ -416,7 +416,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB, DecoderHandl
 			Collection<Object> cur = it.next();
 			int cursz = cur.size();
 			if(cursz < n) {
-				throw Api.illegal("Illegal values size " + cursz);
+				throw Nice.illegal("Illegal values size " + cursz);
 			}
 			Object[] insert_vals = new Object[n];
 			Iterator<Object> cur_it = cur.iterator();
@@ -427,13 +427,13 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB, DecoderHandl
 				if(this.isRawValueOK(index, val)) {
 					insert_vals[index] = val;
 				} else {
-					throw Api.illegal("Illegal type for column " + index 
+					throw Nice.illegal("Illegal type for column " + index 
 							+ "'" + cols[i] + "', value class " 
 							+ ((val == null) ? null : val.getClass()) + "!");
 				}
 			}
 			if(i != n) {
-				throw Api.illegal("Illegal values size " + i 
+				throw Nice.illegal("Illegal values size " + i 
 						+ ". We have planned to reach " + n + " from " + cursz + "!");
 			}
 			for(i = 0; i < this.cols; i++) {
@@ -468,14 +468,14 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB, DecoderHandl
 
 	public void updateRaw(Object[] values) throws IllegalStateException, DatabaseException, SQLException {
 		if(!this.checkRowRaw(values)) {
-			throw Api.illegal("Invalid raw values!");
+			throw Nice.illegal("Invalid raw values!");
 		}
 		this.it.set(values);
 	}
 
 	public void insertRaw(Object[] values) throws IllegalStateException, DatabaseException, SQLException {
 		if(!this.checkRowRaw(values)) {
-			throw Api.illegal("Invalid raw values!");
+			throw Nice.illegal("Invalid raw values!");
 		}
 		if(this.it != null) {
 			this.it.add(values);

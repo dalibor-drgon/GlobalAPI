@@ -38,9 +38,9 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
-import wordnice.cols.ImmArray;
-import wordnice.cols.ImmIter;
-import wordnice.cols.ImmMapIterPair;
+import wordnice.coll.ImmArray;
+import wordnice.coll.ImmIter;
+import wordnice.coll.ImmMapIterPair;
 import wordnice.db.DatabaseException;
 import wordnice.db.RawUnsupportedException;
 import wordnice.db.operator.AndOr;

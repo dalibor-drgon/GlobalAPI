@@ -40,7 +40,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLSocket;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 
 public class Sockets {
 	
@@ -79,7 +79,7 @@ public class Sockets {
 		
 		public Config(String addr, int port) {
 			if(port < 1 || port > Short.MAX_VALUE)
-				throw Api.illegal("Illegal port number " + port);
+				throw Nice.illegal("Illegal port number " + port);
 			
 			this.ssl = false;
 			this.host = addr;
@@ -88,10 +88,10 @@ public class Sockets {
 		
 		public Config(String addr, int port, String keypass, String storepass, String keyfile) {
 			if(port < 1 || port > Short.MAX_VALUE)
-				throw Api.illegal("Illegal port number " + port);
-			if(keypass == null) throw Api.illegal("Key password = null");
-			if(storepass == null) throw Api.illegal("Store password = null");
-			if(keyfile == null) throw Api.illegal("Key store file = null");
+				throw Nice.illegal("Illegal port number " + port);
+			if(keypass == null) throw Nice.illegal("Key password = null");
+			if(storepass == null) throw Nice.illegal("Store password = null");
+			if(keyfile == null) throw Nice.illegal("Key store file = null");
 			this.ssl = true;
 			this.host = addr;
 			this.port = port;
@@ -102,28 +102,28 @@ public class Sockets {
 		
 		public Config(Map<String,Object> props)
 					throws IllegalArgumentException {
-			String host = Api.getAs(props.get("Host"), String.class);
+			String host = Nice.getAs(props.get("Host"), String.class);
 			if(host == null || host.isEmpty()) {
 				host = null;
 			}
-			int port = Api.getAs(props.get("Port"), int.class);
+			int port = Nice.getAs(props.get("Port"), int.class);
 			if(port < 1) {
-				throw Api.illegal("Unknown port (Port) " + port);
+				throw Nice.illegal("Unknown port (Port) " + port);
 			}
-			this.pending = Api.getAs(props.get("Pendings"), int.class, -1);
-			boolean ssl = Api.getAs(props.get("SSL"), boolean.class);
+			this.pending = Nice.getAs(props.get("Pendings"), int.class, -1);
+			boolean ssl = Nice.getAs(props.get("SSL"), boolean.class);
 			if(ssl) {
-				String keyPass = Api.getAs(props.get("KeyPass"), String.class);
-				String storePass = Api.getAs(props.get("StorePass"), String.class);
-				String keyFile = Api.getAs(props.get("KeyStoreFile"), String.class);
+				String keyPass = Nice.getAs(props.get("KeyPass"), String.class);
+				String storePass = Nice.getAs(props.get("StorePass"), String.class);
+				String keyFile = Nice.getAs(props.get("KeyStoreFile"), String.class);
 				if(keyPass == null) {
-					throw Api.illegal("Unknown key password (KeyPass)");
+					throw Nice.illegal("Unknown key password (KeyPass)");
 				}
 				if(storePass == null) {
-					throw Api.illegal("Unknown store password (StorePass)");
+					throw Nice.illegal("Unknown store password (StorePass)");
 				}
 				if(keyFile == null) {
-					throw Api.illegal("Unknown key store file (KeyStoreFile)");
+					throw Nice.illegal("Unknown key store file (KeyStoreFile)");
 				}
 				this.ssl = true;
 				this.host = host;

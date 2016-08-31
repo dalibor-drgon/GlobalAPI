@@ -34,8 +34,8 @@ import java.nio.ReadOnlyBufferException;
 import java.util.Collection;
 import java.util.Map;
 
-import wordnice.api.Api;
-import wordnice.api.Api.Value;
+import wordnice.api.Nice;
+import wordnice.api.Nice.Value;
 import wordnice.codings.ASCII;
 import wordnice.db.serialize.CollSerializer;
 import wordnice.db.serialize.SerializeException;
@@ -50,7 +50,7 @@ public class IUtils {
 		int toRead = buf.remaining();
 		int readed = 0;
 		if((readed = tryToReadFully(in, buf)) != toRead) {
-			throw Api.eof(readed, toRead);
+			throw Nice.eof(readed, toRead);
 		}
 	}
 	
@@ -188,7 +188,7 @@ public class IUtils {
 	}
 	
 	public static int tryToReadFully(InputStream in, byte[] b, int off, int len) throws IOException {
-		Api.checkBounds(b, off, len);
+		Nice.checkBounds(b, off, len);
 		int n = 0;
 		while (n < len) {
 			int count = -1;
@@ -210,7 +210,7 @@ public class IUtils {
 	public static void readFully(InputStream in, byte[] b, int off, int len) throws IOException {
 		int readed = 0;
 		if((readed = tryToReadFully(in, b, off, len)) != len) {
-			throw Api.eof(readed, len);
+			throw Nice.eof(readed, len);
 		}
 	}
 	
@@ -223,13 +223,13 @@ public class IUtils {
 	}
 	
 	public static ByteArrayOutputStream readFully(InputStream in) throws IOException {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream(Api.BUFFER_SIZE);
+		ByteArrayOutputStream baos = new ByteArrayOutputStream(Nice.bufferSize);
 		readFully(in, baos);
 		return baos;
 	}
 	
 	public static int readFully(InputStream in, OutputStream out) throws IOException {
-		byte[] buff = new byte[Api.BUFFER_SIZE];
+		byte[] buff = new byte[Nice.bufferSize];
 		int total = 0;
 		while(true) {
 			int readed = -1;
@@ -245,7 +245,7 @@ public class IUtils {
 		return total;
 	}
 	
-	public static byte[] readBytes(InputStream in) throws IOException {
+	public static byte[] deserializeBytes(InputStream in) throws IOException {
 		int len = readInt(in);
 		if(len < 0) {
 			return null;
@@ -257,13 +257,13 @@ public class IUtils {
 	
 	public static int tryToReadFully(InputStream in, char[] chars) throws IOException {
 		if(in == null || chars == null) {
-			throw Api.illegal("InputStream stream or array is null!");
+			throw Nice.illegal("InputStream stream or array is null!");
 		}
 		return tryToReadFully(in, chars, 0, chars.length);
 	}
 	
 	public static int tryToReadFully(InputStream in, char[] chars, int off, int len) throws IOException {
-		Api.checkBounds(chars, off, len);
+		Nice.checkBounds(chars, off, len);
 		if(len == 0) {
 			return 0;
 		}
@@ -316,7 +316,7 @@ public class IUtils {
 	public static void readFully(InputStream in, char[] chars, int off, int len) throws IOException {
 		int readed = 0;
 		if((readed = tryToReadFully(in, chars, off, len)) != len) {
-			throw Api.eof(readed, len);
+			throw Nice.eof(readed, len);
 		}
 	}
 	
@@ -400,13 +400,13 @@ public class IUtils {
 	}
 	
 	public static String readLine(InputStream in) throws IOException {
-		ByteArrayOutputStream baos = Api.baos();
+		ByteArrayOutputStream baos = Nice.baos();
 		if(!readLine(in, baos)) return null;
 		return (baos == null) ? null : baos.toString();
 	}
 	
 	public static String readLineStrict(InputStream in) throws IOException {
-		ByteArrayOutputStream baos = Api.baos();
+		ByteArrayOutputStream baos = Nice.baos();
 		if(!readLineStrict(in, baos)) return null;
 		return (baos == null) ? null : baos.toString();
 	}
@@ -439,7 +439,7 @@ public class IUtils {
 	
 	public static void readUntil(InputStream in, OutputStream out, byte[] bytes) throws IOException, EOFException {
 		if(bytes == null) {
-			throw Api.illegal("Bytes = null");
+			throw Nice.illegal("Bytes = null");
 		}
 		readUntil(in, out, bytes, 0, bytes.length);
 	}
@@ -452,7 +452,7 @@ public class IUtils {
 	public static void readUntil(InputStream in, OutputStream out, 
 			byte[] bytes, int off, int len, byte[] buffer) 
 			throws IOException, EOFException {
-		Api.checkBounds(bytes, off, len);
+		Nice.checkBounds(bytes, off, len);
 		if(buffer == null || buffer.length < len*2) {
 			buffer = new byte[len*2];
 		}
@@ -480,7 +480,7 @@ public class IUtils {
 	
 	public static void readUntilEOF(InputStream in, OutputStream out, byte[] bytes) throws IOException, EOFException {
 		if(bytes == null) {
-			throw Api.illegal("Bytes = null");
+			throw Nice.illegal("Bytes = null");
 		}
 		readUntilEOF(in, out, bytes, 0, bytes.length);
 	}
@@ -494,7 +494,7 @@ public class IUtils {
 	public static void readUntilEOF(InputStream in, OutputStream out, 
 			byte[] bytes, int off, int len, byte[] buffer, Value<Integer> bufferDataLength) 
 			throws IOException, EOFException {
-		Api.checkBounds(bytes, off, len);
+		Nice.checkBounds(bytes, off, len);
 		if(buffer == null || buffer.length < len*2) {
 			buffer = new byte[len*3];
 		}
@@ -539,9 +539,9 @@ public class IUtils {
 	public static void readUntilEOF(PrefixedInputStream in, OutputStream out, 
 			byte[] bytes, int off, int len, byte[] buffer1, byte[] buffer2, int bufferlen) 
 			throws IOException, EOFException {
-		Api.checkBounds(bytes, off, len);
+		Nice.checkBounds(bytes, off, len);
 		if(buffer1 == null || buffer2 == null) {
-			throw Api.illegal("Buffer = null!");
+			throw Nice.illegal("Buffer = null!");
 		}
 		byte[] buffer = (in.getPrefix() == buffer1) ? buffer2 : buffer1; 
 		byte[] inbuff = (buffer == buffer2) ? buffer1 : buffer2;

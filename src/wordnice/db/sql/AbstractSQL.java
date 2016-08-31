@@ -26,7 +26,7 @@ package wordnice.db.sql;
 
 import java.sql.SQLException;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 import wordnice.codings.URLCoder;
 import wordnice.db.ColType;
 import wordnice.db.operator.Sort;
@@ -51,21 +51,21 @@ public abstract class AbstractSQL implements SQL {
 	@Override
 	public String getWhere(Where where) {
 		if(where.val instanceof Number) {
-			return Api.replace(where.flag.sql, new Object[]{
+			return Nice.replace(where.flag.sql, new Object[]{
 					"111 ", "",
 					" 222", "",
 					"333", "",
 					"$", where.key
 			});
 		} else if(where.val instanceof byte[]) {
-			return Api.replace(where.flag.sql, new Object[]{
+			return Nice.replace(where.flag.sql, new Object[]{
 					"111 ", "",
 					" 222", "",
 					"333", ((byte[]) where.val).length,
 					"$", where.key
 			});
 		} else if(where.val instanceof String) {
-			return Api.replace(where.flag.sql, new Object[]{
+			return Nice.replace(where.flag.sql, new Object[]{
 					"111 ", "",
 					"222", ((this.useSQLiteSyntax()) 
 							? (where.sens) ? "" : "COLLATE NOCASE"
@@ -74,14 +74,14 @@ public abstract class AbstractSQL implements SQL {
 					"$", where.key
 			});
 		} else if(where.val == null) {
-			return Api.replace(where.flag.sql_null, new Object[]{
+			return Nice.replace(where.flag.sql_null, new Object[]{
 					"111 ", "",
 					" 222", "",
 					"333", "0",
 					"$", where.key
 			});
 		} else {
-			throw Api.illegal("Unknown value type " + where.val.getClass().getName());
+			throw Nice.illegal("Unknown value type " + where.val.getClass().getName());
 		}
 	}
 	

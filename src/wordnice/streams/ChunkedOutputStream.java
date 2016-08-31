@@ -27,7 +27,7 @@ package wordnice.streams;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 import wordnice.http.client.HttpClient;
 
 public class ChunkedOutputStream extends OutputStream {
@@ -39,7 +39,7 @@ public class ChunkedOutputStream extends OutputStream {
 	
     public ChunkedOutputStream(OutputStream out) {
 		if(out == null) {
-			throw Api.illegal("OutputStream null!");
+			throw Nice.illegal("OutputStream null!");
 		}
 		this.out = out;
 	}

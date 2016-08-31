@@ -26,16 +26,68 @@ package wordnice.utils;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.Map.Entry;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 import wordnice.utils.CharArraySequence;
 import wordnice.utils.NiceStringUtils;
 
+/**
+ * Extends as CharArraySequence, but does not support custom offset
+ */
 public class EvictingStringBuilder
 extends CharArraySequence
-implements Appendable, CharSequence {
+implements Appendable, CharSequence, ChunkableNewest<String, CharArraySequence> {
 	
-	int minimumRebuild = 0;
+	protected static class EvictingStringChunker
+	implements ChunkerString<CharArraySequence> {
+
+		protected String key;
+		protected EvictingStringBuilder sb;
+		protected int get_offset = -1;
+		protected int offset = 0;
+		
+		protected EvictingStringChunker(String key, EvictingStringBuilder sb) {
+			this.key = key;
+			this.sb = sb;
+		}
+		
+		@Override
+		public String getKey() {
+			return this.key;
+		}
+
+		@Override
+		public CharArraySequence getNewest() {
+			CharArraySequence seq = this.sb.subSequence(this.offset);
+			this.get_offset = this.offset + seq.length();
+			return seq;
+		}
+
+		@Override
+		public void setNewest() throws IllegalStateException {
+			if(this.get_offset == -1)
+				throw new IllegalStateException("call getNewest() first!");
+			this.offset = this.get_offset;
+		}
+
+		@Override
+		public CharArraySequence getAndSetNewest() {
+			CharArraySequence seq = this.sb.subSequence(this.offset);
+			this.offset += seq.length();
+			this.get_offset = this.offset;
+			return seq;
+		}
+		
+	}
+
+	protected Map<String, EvictingStringChunker> chunks;
+	protected int minimumRebuild = 0;
 	
 	public EvictingStringBuilder(int size) {
 		this(size, rebuildSize(size));
@@ -99,9 +151,7 @@ implements Appendable, CharSequence {
 		this.count = count;
 	}
 	
-	//for overriding
-	protected void loweredOffsetBy(int by) {}
-	
+
 	public int offset() {
 		return 0;
 	}
@@ -315,7 +365,7 @@ implements Appendable, CharSequence {
 	}
 	
 	public EvictingStringBuilder print(byte[] csq, int start, int len) {
-		Api.checkBounds(csq, start, len);
+		Nice.checkBounds(csq, start, len);
 		return this.print(NiceStringUtils.toCharSequence(csq, start, len));
 	}
 	
@@ -324,7 +374,7 @@ implements Appendable, CharSequence {
 	}
 	
 	public EvictingStringBuilder print(ByteSequence bsq, int start, int len) {
-		Api.checkBounds(bsq, start, len);
+		Nice.checkBounds(bsq, start, len);
 		return this.print(NiceStringUtils.toCharSequence(bsq.array(), bsq.offset()+start, len));
 	}
 	
@@ -333,7 +383,7 @@ implements Appendable, CharSequence {
 	}
 	
 	public EvictingStringBuilder print(char[] csq, int start, int len) {
-		Api.checkBounds(csq, start, len);
+		Nice.checkBounds(csq, start, len);
 		start = repairStart(start, len);
 		len = repairLength(len);
 		ensureCapacity(len);
@@ -346,7 +396,7 @@ implements Appendable, CharSequence {
 	}
 	
 	public EvictingStringBuilder print(CharSequence csq, int start, int len) {
-		Api.checkBounds(csq, start, len);
+		Nice.checkBounds(csq, start, len);
 		if(csq instanceof CharArraySequence) {
 			CharArraySequence cas = (CharArraySequence) csq;
 			return print(cas.array(), cas.offset()+start, len);
@@ -387,7 +437,7 @@ implements Appendable, CharSequence {
 	}
 	
 	public EvictingStringBuilder println(char[] csq, int start, int len) {
-		Api.checkBounds(csq, start, len);
+		Nice.checkBounds(csq, start, len);
 		len++;
 		start = repairStart(start, len);
 		len = repairLength(len);
@@ -403,7 +453,7 @@ implements Appendable, CharSequence {
 	}
 	
 	public EvictingStringBuilder println(CharSequence csq, int start, int len) {
-		Api.checkBounds(csq, start, len);
+		Nice.checkBounds(csq, start, len);
 		if(csq instanceof CharArraySequence) {
 			CharArraySequence cas = (CharArraySequence) csq;
 			return println(cas.array(), cas.offset()+start, len);
@@ -423,7 +473,7 @@ implements Appendable, CharSequence {
 	}
 	
 	public EvictingStringBuilder println(byte[] csq, int start, int len) {
-		Api.checkBounds(csq, start, len);
+		Nice.checkBounds(csq, start, len);
 		return this.println(NiceStringUtils.toCharSequence(csq, start, len));
 	}
 	
@@ -432,10 +482,95 @@ implements Appendable, CharSequence {
 	}
 	
 	public EvictingStringBuilder println(ByteSequence bsq, int start, int len) {
-		Api.checkBounds(bsq, start, len);
+		Nice.checkBounds(bsq, start, len);
 		return this.println(NiceStringUtils.toCharSequence(bsq.array(), bsq.offset()+start, len));
 	}
 
+	
+	public void loweredOffsetBy(int by) {
+		Iterator<Entry<String, EvictingStringChunker>> it = 
+				this.getChunkersRemovable().iterator();
+		while(it.hasNext()) {
+			EvictingStringChunker ch = it.next().getValue();
+			if(ch.get_offset != -1) {
+				if(by >= ch.offset) {
+					ch.offset = 0;
+					ch.get_offset = (by >= ch.get_offset) ? 0 : (ch.get_offset-by);
+				} else {
+					ch.get_offset -= by;
+					ch.offset -= by;
+				}
+			}
+		}
+	}
+
+	@Override
+	public CharArraySequence getNewest(String key) 
+			throws NoSuchElementException {
+		return this.getChunker(key).getNewest();
+	}
+
+	@Override
+	public CharArraySequence getAndSetNewest(String key)
+			throws NoSuchElementException {
+		EvictingStringChunker ch = this.getChunker(key);
+		CharArraySequence ret = ch.getNewest();
+		ch.setNewest();
+		return ret;
+	}
+
+	@Override
+	public ChunkerString<CharArraySequence> createChunker() {
+		Map<String, EvictingStringChunker> map = 
+				this.getOrCreateChunkers();
+		String id = Gen.get().genStringIDFor(map);
+		EvictingStringChunker ch = new EvictingStringChunker(id, this);
+		map.put(id, ch);
+		return ch;
+	}
+
+	@Override
+	public EvictingStringChunker getChunker(String key)
+			throws NoSuchElementException {
+		EvictingStringChunker ch = null;
+		if(this.chunks != null && (ch = this.chunks.get(key)) != null) {
+			return ch;
+		}
+		throw new NoSuchElementException(key);
+	}
+	
+	protected Map<String, EvictingStringChunker> getOrCreateChunkers() {
+		if(this.chunks == null) this.chunks = Nice.createMap();
+		return this.chunks;
+	}
+
+	@Override
+	public int getChunkersSize() {
+		return (this.chunks == null) ? 0 : this.chunks.size();
+	}
+
+	@Override
+	public boolean isChunkersEmpty() {
+		return (this.chunks == null) ? true : this.chunks.isEmpty();
+	}
+
+	@Override
+	public void clearChunkers() {
+		if(this.chunks != null) this.chunks.clear();
+		this.chunks = null;
+	}
+
+	@Override
+	public Map<String, EvictingStringChunker> getChunkersReadOnly() {
+		if(this.chunks == null) return Collections.emptyMap();
+		return Collections.unmodifiableMap(this.chunks);
+	}
+
+	@Override
+	public Set<Entry<String, EvictingStringChunker>> getChunkersRemovable() {
+		if(this.chunks == null) return Collections.emptySet();
+		return this.chunks.entrySet();
+	}
 	
 	//test
 	public static void main(String...strings) {
@@ -446,7 +581,7 @@ implements Appendable, CharSequence {
 		ecb.print("he23232323llohellohellohellohellohellohellohellohello");
 		ecb.println("hellohellohellohellohellohellohellohellohello");
 		ecb.println("hello one m8zhello one m8zhello one m8zhello one m8zhello one m8z");
-		String rand = NiceStringUtils.genString(250);
+		String rand = Gen.get().genString(250);
 		ecb.println(rand);
 		System.out.println(ecb.substringLast(250).length() + " // " + ecb.substringLast(250).equals(rand));
 		//ecb.println("hellohellohellohellohellohellohellohellohello");
@@ -461,12 +596,13 @@ implements Appendable, CharSequence {
 	}
 	
 	/**
-	 * If size > 80, returns 20 or more
+	 * If size >= 100, returns 20% from original size
+	 * if size >  80, returns (size-80) 1%-24% from original size
 	 * otherwise 0 (not designed for small buffers)
 	 */
 	protected static int rebuildSize(int size) {
-		return ((size > 100) ? (int)(size*0.20) :(
-				(size > 80) ? 20 : 0));
+		return ((size >= 100) ? (int)(size*0.20) :(
+				(size > 80) ? (size-80) : 0));
 	}
 
 	@Override

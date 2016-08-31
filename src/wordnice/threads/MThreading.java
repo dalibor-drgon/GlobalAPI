@@ -24,8 +24,8 @@
 
 package wordnice.threads;
 
-import wordnice.api.Api;
-import wordnice.api.Api.VHandler;
+import wordnice.api.Nice;
+import wordnice.api.Nice.VHandler;
 
 public class MThreading {
 	
@@ -91,7 +91,7 @@ public class MThreading {
 	
 	public void setCount(int count) {
 		if(count < 1) {
-			throw Api.illegal("Illegal thread count: " + count);
+			throw Nice.illegal("Illegal thread count: " + count);
 		}
 		this.count = count;
 	}

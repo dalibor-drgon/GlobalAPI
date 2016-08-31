@@ -28,18 +28,18 @@ import java.util.Map;
 
 import javax.script.SimpleBindings;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 
 public class NiceBindings extends SimpleBindings {
 
 	protected Map<String,Object> __map;
 	
 	public NiceBindings() {
-		this(Api.<String,Object>createMap());
+		this(Nice.<String,Object>createMap());
 	}
 	
 	public NiceBindings(int size) {
-		this(Api.<String,Object>createMap(size));
+		this(Nice.<String,Object>createMap(size));
 	}
 	
 	public NiceBindings(Map<String,Object> map) {

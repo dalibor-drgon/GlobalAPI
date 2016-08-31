@@ -24,7 +24,7 @@
 
 package wordnice.utils;
 
-import wordnice.api.Api;
+import wordnice.api.Nice;
 
 public class CharArraySequence implements CharSequence {
 	
@@ -49,7 +49,7 @@ public class CharArraySequence implements CharSequence {
 	
 	public CharArraySequence(char[] ch, int off, int len) {
 		if(ch == null) ch = EMPTY_ARR;
-		Api.checkBounds(ch, off, len);
+		Nice.checkBounds(ch, off, len);
 		this.value = ch;
 		this.off = off;
 		this.count = len;

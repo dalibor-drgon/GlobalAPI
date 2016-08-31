@@ -35,8 +35,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import wordnice.api.Api;
-import wordnice.api.Api.CannotDoIt;
+import wordnice.api.Nice;
+import wordnice.api.Nice.CannotDoIt;
 
 public class InstanceMan {
 	
@@ -184,7 +184,7 @@ public class InstanceMan {
 			}
 			c = c.getSuperclass();
 		}
-		throw Api.cannotDoIt();
+		throw Nice.cannotDoIt();
 	}
 	
 	
@@ -391,7 +391,7 @@ public class InstanceMan {
 	}
 	
 	public static void tst() {
-		throw Api.cannotDoIt();
+		throw Nice.cannotDoIt();
 	}
 	
 	public static void main(String...strings) {
