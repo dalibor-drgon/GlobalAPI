@@ -22,49 +22,46 @@
  * THE SOFTWARE.
  ******************************************************************************/
 
-package wordnice.optimizer;
+package wordnice.optimizer.builtin;
 
 import java.lang.instrument.ClassDefinition;
 import java.util.Collection;
 
 import javassist.ClassPool;
+import javassist.CtClass;
+import wordnice.optimizer.Optimizable;
+import wordnice.optimizer.Optimizer;
+import wordnice.utils.JavaHooker;
 
-public interface Optimizable {
-	
-	public static interface OptimizedChecker {
-		/**
-		 * @return true when optimizable with given name was ran
-		 * 		false when not found
-		 */
-		boolean has(String name);
+public class OptimizeHooker
+implements Optimizable {
+
+	@Override
+	public String getName() {
+		return "wordnice.JavaHooker";
 	}
 	
-	/**
-	 * Name if this optimizable
-	 * Ideally in format: [library name or author].[optimized class name]
-	 * eg. wordnice.Character
-	 */
-	String getName();
+	@Override
+	public boolean canOptimize(OptimizedChecker optimized) {
+		return true; //no depency
+	}
+	
+	@Override
+	public void beforeOptimize() {
+		JavaHooker.class.getName();
+	}
 
-	/**
-	 * Check depencies and return true if we can continue
-	 */
-	boolean canOptimize(OptimizedChecker optimized);
+	@Override
+	public void optimize(ClassPool cp, Collection<ClassDefinition> output) 
+			throws Throwable {
+		CtClass charclz = cp.get(JavaHooker.class.getName());
+		charclz.getDeclaredMethod("string", new CtClass[] {
+				cp.get("char[]")
+		}).setBody("return java.lang.JavaLangHooker.string($1);");
+		output.add(Optimizer.createDefinition(charclz));
+	}
 	
-	/**
-	 * Before optimizing
-	 * called before canOptimize
-	 */
-	public void beforeOptimize();
-	
-	/**
-	 * Optimize what is needed.
-	 */
-	void optimize(ClassPool cp, Collection<ClassDefinition> output) throws Throwable;
-	
-	/**
-	 * Called when all pending optimizations were done!
-	 */
-	void afterOptimize(ClassPool cp);
-	
+	@Override
+	public void afterOptimize(ClassPool cp) {}
+
 }

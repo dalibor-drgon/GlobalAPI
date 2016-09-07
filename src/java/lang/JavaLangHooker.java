@@ -26,14 +26,8 @@ package java.lang;
 
 public class JavaLangHooker {
 	
-	public static String createStringFromArray(char[] arr) {
-		return new String(arr, false);
-	}
-
-	public static void main(String...bl) {
-		char[] data = "Example data!".toCharArray();
-		String s = new String(data, true);
-		System.out.println("s");
+	public static String string(char[] arr) {
+		return new String(arr, true);
 	}
 	
 }

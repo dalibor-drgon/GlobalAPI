@@ -115,7 +115,7 @@ implements AutoCloseable {
         return cnt;
     }
 
-    public int read(byte b[], int off, int len)
+    public int read(byte[] b, int off, int len)
         throws IOException {
         getBufIfOpen(); // Check for closed stream
         if ((off | len | (off + len) | (b.length - (off + len))) < 0) {
@@ -194,4 +194,13 @@ implements AutoCloseable {
         if(input != null)
             input.close();
     }
+    
+    public static void main(String... strs) {
+    	long l = Nice.generator().nextLong();
+    	System.out.println(l + " " + Long.toHexString(l));
+    	long lft = Long.rotateLeft(l, 24);
+    	long bck = Long.rotateRight(lft, 24);
+    	System.out.println(lft + " " + Long.toHexString(lft));
+    	System.out.println(bck + " " + Long.toHexString(bck));
+    } 
 }

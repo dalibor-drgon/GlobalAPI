@@ -25,6 +25,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -81,7 +82,7 @@ public class JavaAgent {
 	public static void agentmain(String args, Instrumentation in) {
 		if(in != null) {
 			LOG.info("[DEBUG] eu.wordnice.javaagent.JavaAgent: AgentMain called! "
-					+ "(note that agent was loaded later dynamically by itself)"
+					+ "(agent was loaded later dynamically by itself)"
 					+ "\n\t- Arguments: " + args
 					+ "\n\t- Instrumentation: " + in);
 			setInstrumentation(in);
@@ -106,18 +107,18 @@ public class JavaAgent {
 		AccessController.doPrivileged(new PrivilegedAction<Object>() {
 			public Object run() {
 				String note = "Optionaly, to avoid this message and other possible "
-						+ "issues in future, launch minecraft server with "
-						+ "[-javaagent:plugins/OptimizedJava.jar] argument for Java VM.";
+						+ "issues in future, launch application with javaagent "
+						+ "argument [-javaagent:InternalJavaAgent.jar] for Java VM.";
 				if(wordnice.utils.JavaUtils.isWindows()) {
-					String msg = "Occured one of possible errors for Windows.\n"
+					String msg = "Occured one of typical errors for Windows.\n"
 							+ "You need installed JDK. Download one and "
 							+ "install if didn't have already. "
 							+ "Then just copy <JDK>\\jre\\bin\\attach.dll file "
 							+ "to <JRE>\\bin\\attach.dll\n"
-							+ "If you got JDK 1.8.0_60, then it will be "
+							+ "If you got JDK 1.8.0_60, then it might be "
 							+ "copying C:\\Program Files\\Java\\jdk1.8.0_60\\jre\\bin\\attach.dll "
 							+ "to C:\\Program Files\\Java\\jre1.8.0_60\\bin\\attach.dll\n"
-							+ "Restart your server, please.";
+							+ "When you are done, restart this application.";
 					File to = null;
 					File from = null;
 					try {						
@@ -216,7 +217,7 @@ public class JavaAgent {
 		file.deleteOnExit();
 
 		ZipOutputStream zout = new ZipOutputStream(new FileOutputStream(file));
-		zout.putNextEntry(new ZipEntry("META-INF/MANIFEST.MF"));
+		zout.putNextEntry(new ZipEntry(JarFile.MANIFEST_NAME));
 		zout.write(("Agent-Class: " + JavaAgent.class.getName() + "\r\n"
 				+ "Can-Redefine-Classes: true\r\n" 
 				+ "Can-Retransform-Classes: " + Boolean.toString(!isIBM) + "\r\n"

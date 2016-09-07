@@ -33,14 +33,61 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class TimeoutThread<X> {
+import wordnice.api.Nice;
 
-	public Callable<X> callable = null;
-	public long timeout = 100L;
-	private boolean cancelled = false;
-	private boolean ran = false;
+public class TimeoutThread<X> {
 	
-	public void exc(Throwable t, boolean fatal) {}
+	public static class Result<X> {
+		protected boolean started = false;
+		protected boolean timedOut = false;
+		protected Throwable exception = null;
+		protected X result = null;
+		
+		public Result() {}
+
+		public boolean hasStarted() {
+			return started;
+		}
+
+		public Result<X> setStarted(boolean started) {
+			this.started = started;
+			return this;
+		}
+
+		public boolean hasTimedOut() {
+			return timedOut;
+		}
+
+		public Result<X> setTimedOut(boolean timedOut) {
+			this.timedOut = timedOut;
+			return this;
+		}
+
+		public Throwable getException() {
+			return exception;
+		}
+
+		public Result<X> setException(Throwable exception) {
+			this.exception = exception;
+			return this;
+		}
+		
+		public X getResult() {
+			return result;
+		}
+
+		public Result<X> setResult(X result) {
+			this.result = result;
+			return this;
+		}
+		
+		public boolean isExitOK() {
+			return this.started && !this.timedOut && this.exception == null;
+		}
+	}
+
+	protected Callable<X> callable = null;
+	protected long timeout = 100L;
 
 	public TimeoutThread(Runnable runit, X ret, long timeout) {
 		this(new Runa<X>(runit, ret), timeout);
@@ -49,44 +96,26 @@ public class TimeoutThread<X> {
 	public TimeoutThread(Callable<X> runit, long timeout) {
 		this.callable = runit;
 		if(timeout < 1L) {
-			timeout = 10L;
+			throw new IllegalArgumentException("Timeout ("+timeout+") < 1");
 		}
 		this.timeout = timeout;
 	}
 	
 	public X run() throws Exception {
-		ExecutorService executor = Executors.newSingleThreadExecutor();
-		Future<X> future = executor.submit(this.callable);
-		executor.shutdown();
-		try {
-			return future.get(this.timeout, TimeUnit.MILLISECONDS);
-		} catch(TimeoutException e) {
-			future.cancel(true);
-			throw e;
-		} catch(ExecutionException e) {
-			Throwable t = e.getCause();
-			if (t instanceof Error) {
-				throw (Error) t;
-			} else if (t instanceof Exception) {
-				throw (Exception) e;
-			} else {
-				throw new IllegalStateException(t);
-			}
-		}
+		return run(this.callable, this.timeout);
 	}
-
-	public boolean wasRan() {
-		return this.ran;
+	
+	public void runSafe(Result<X> out) {
+		runSafe(out, this.callable, this.timeout);
 	}
-
-	public boolean wasCancelled() {
-		return this.cancelled;
+	
+	public Result<X> runSafe() {
+		return runSafe(this.callable, this.timeout);
 	}
 	
 	
 	/*** STATIC ***/
-	
-	public static <Y> Y run(Callable<Y> callable, long timeout) throws Exception {
+	public static <Y> Y run(Callable<Y> callable, long timeout) throws Exception  {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		Future<Y> future = executor.submit(callable);
 		executor.shutdown();
@@ -104,6 +133,25 @@ public class TimeoutThread<X> {
 			} else {
 				throw new IllegalStateException(t);
 			}
+		}
+	}
+	
+	public static <Y> Result<Y> runSafe(Callable<Y> callable, long timeout) {
+		Result<Y> out = new Result<Y>();
+		runSafe(out, callable, timeout);
+		return out;
+	}
+	
+	public static <Y> void runSafe(Result<Y> out, Callable<Y> callable, long timeout) {
+		try {
+			out.setStarted(true);
+			out.setTimedOut(false);
+			out.setResult(run(callable, timeout));
+		} catch(Throwable t) {
+			out.setException(t);
+			Nice.checkError(t);
+			if(t instanceof TimeoutException)
+				out.setTimedOut(true);
 		}
 	}
 

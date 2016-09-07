@@ -56,7 +56,7 @@ public class NiceStringUtils {
 	 */
 	public static String multireplace(String input, int off, int slen, 
 			Object[] find, Object[] repl, int roff, int rlen) {
-		StringBuilder sb = Nice.sb();
+		StringBuilder sb = Nice.createStringBuilder();
 		int i = off;
 		int end = off+slen;
 		rlen += roff; //rlen became rend
@@ -97,7 +97,7 @@ public class NiceStringUtils {
 	 */
 	public static String multireplace(String input, int off, int slen, 
 			Object[] pair, int roff, int rlen) {
-		StringBuilder sb = Nice.sb();
+		StringBuilder sb = Nice.createStringBuilder();
 		int i = off;
 		int end = off+slen;
 		rlen += roff-1; //rlen became rend

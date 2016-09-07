@@ -25,12 +25,13 @@
 package wordnice.api.sponge;
 
 import java.util.Set;
+import java.util.logging.Logger;
 
-import wordnice.api.InitGlobalAPI;
-import wordnice.utils.UnsafeAPI;
+import wordnice.api.InitNiceAPI;
+import wordnice.utils.JavaUtils;
 
 @org.spongepowered.api.plugin.Plugin(id="MainAPI", name="MainAPI", version="3.0.0")
-public class MainApi {
+public class NiceSpongePlugin {
 	
 	@com.google.inject.Inject
 	private org.slf4j.Logger log;
@@ -38,26 +39,12 @@ public class MainApi {
 	@org.spongepowered.api.event.Subscribe
     public void onServerStart(org.spongepowered.api.event.state.ServerStartedEvent event) {
 		try {
-			Set<String> clzs = UnsafeAPI.getClasses(UnsafeAPI.getClassesLocation(org.spongepowered.api.Server.class));
+			Set<String> clzs = JavaUtils.getClasses(JavaUtils.getClassesLocation(org.spongepowered.api.Server.class));
 			this.log.info("Sponge classes: " + clzs.size());
-			this.log.info("Sponge packages: " + UnsafeAPI.filterPackagesString(clzs, (String) null).size());
+			this.log.info("Sponge packages: " + JavaUtils.filterPackagesString(clzs, (String) null).size());
 		} catch(Throwable t) {}
 		
-		final InitGlobalAPI.MiniLogger oolog = new InitGlobalAPI.MiniLogger() {
-			
-			@Override
-			public void severe(String str) {
-				MainApi.this.log.error(str);
-			}
-			
-			@Override
-			public void info(String str) {
-				MainApi.this.log.info(str);
-			}
-		};
-		
-		InitGlobalAPI.initFirst(oolog);
-		InitGlobalAPI.initInMainThread(oolog);
+		InitNiceAPI.initAll(Logger.getLogger("NiceAPI"));
 		
 		this.log.info("MainAPI by wordnice for Sponge was enabled!");
 	}

@@ -523,7 +523,7 @@ implements Appendable, CharSequence, ChunkableNewest<String, CharArraySequence> 
 	public ChunkerString<CharArraySequence> createChunker() {
 		Map<String, EvictingStringChunker> map = 
 				this.getOrCreateChunkers();
-		String id = Gen.get().genStringIDFor(map);
+		String id = Nice.generator().generateIDFor(map);
 		EvictingStringChunker ch = new EvictingStringChunker(id, this);
 		map.put(id, ch);
 		return ch;
@@ -581,7 +581,7 @@ implements Appendable, CharSequence, ChunkableNewest<String, CharArraySequence> 
 		ecb.print("he23232323llohellohellohellohellohellohellohellohello");
 		ecb.println("hellohellohellohellohellohellohellohellohello");
 		ecb.println("hello one m8zhello one m8zhello one m8zhello one m8zhello one m8z");
-		String rand = Gen.get().genString(250);
+		String rand = Nice.generator().nextString(250);
 		ecb.println(rand);
 		System.out.println(ecb.substringLast(250).length() + " // " + ecb.substringLast(250).equals(rand));
 		//ecb.println("hellohellohellohellohellohellohellohellohello");

@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
 import java.util.Set;
-import java.util.Spliterator;
 
 import wordnice.api.Nice;
 
@@ -299,9 +298,9 @@ public class ImmSkipArray<X> implements List<X>, Set<X>, RandomAccess {
 		return false;
 	}
 
-	@Override
+	/*@Override
 	public Spliterator<X> spliterator() {
 		return List.super.spliterator();
-	}
+	}*/
 	
 }

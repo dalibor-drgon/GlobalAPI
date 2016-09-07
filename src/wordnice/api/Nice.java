@@ -27,7 +27,6 @@ package wordnice.api;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,6 +46,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.script.ScriptEngine;
@@ -54,14 +54,17 @@ import javax.script.ScriptEngineManager;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.googlecode.concurrentlinkedhashmap.ConcurrentHashMapV8;
-import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.THashSet;
 import hirondelle.date4j.DateTime;
 import wordnice.coll.MapWorker;
 import wordnice.coll.MapWorkerImpl;
+import wordnice.generator.GenInputStream;
+import wordnice.generator.Generator;
+import wordnice.generator.builtin.XoRo;
+import wordnice.streams.ArrayOutputStream;
+import wordnice.streams.ArrayOutputStreamInt;
+import wordnice.streams.ArrayOutputStreamSimple;
 import wordnice.streams.BufferedInput;
 import wordnice.streams.BufferedOutput;
 import wordnice.utils.NiceConverter;
@@ -86,17 +89,6 @@ public class Nice {
 	public static void checkUnsafeError(Throwable t) {
 		if(t instanceof VirtualMachineError 
 				|| t instanceof ThreadDeath) throw (Error)t;
-	}
-	
-	/**
-	 * @param data Sequence to create String from
-	 * @return String instance, which can contains 
-	 * 		pointer to original array or just copy
-	 * 
-	 * @note Optimized later by JavaAssist
-	 */
-	public static String string(final char[] array) {
-		return String.copyValueOf(array);
 	}
 	
 	static TimeZone timezone = TimeZone.getDefault();
@@ -133,14 +125,26 @@ public class Nice {
 		throw new RuntimeException("No Javascript engine found!");
 	}
 	
+	protected static Generator generator;
+	
+	public static Generator generator() {
+		if(generator == null) generator = new XoRo();
+		return generator;
+	}
+	
+	public static GenInputStream generatorStream() {
+		return generator().getStream();
+	}
+	
 	public static final String LINE_SEPARATOR = System.getProperty("line.separator");
 	public static final byte[] LINE_SEPARATOR_BYTES = LINE_SEPARATOR.getBytes();
 	
 	public static final Charset UTF8 = Charset.forName("UTF-8");
-	public static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
+	public static final int maxArrayLength = Integer.MAX_VALUE - 8;
 	
 	public static int bufferSize = 8*1024;
-	public static int BUILDER_SIZE = 128;
+	public static int builderSize = 128;
+	public static byte[] loopBuffer = new byte[bufferSize];
 	
 	public static BufferedInputStream input(File f) throws FileNotFoundException {
 		return new BufferedInput(new FileInputStream(f), Nice.bufferSize);
@@ -160,27 +164,35 @@ public class Nice {
 		return new BufferedOutput(new FileOutputStream(f), buffer);
 	}
 	
-	public static ByteArrayOutputStream baos() {
-		return new ByteArrayOutputStream(Nice.bufferSize); //maybe later custom
+	public static StringBuilder createStringBuilder() {
+		return new StringBuilder(Nice.builderSize);
 	}
 	
-	public static StringBuilder sb() {
-		return new StringBuilder(Nice.BUILDER_SIZE);
-	}
-	
-	public static StringBuilder sb(int cap) {
+	public static StringBuilder createStringBuilder(int cap) {
 		return new StringBuilder(cap);
 	}
 	
-	public static ByteArrayOutputStream baos(int cap) {
-		return new ByteArrayOutputStream(cap);
+	public static ArrayOutputStream createArrayOutput() {
+		return new ArrayOutputStreamInt(Nice.bufferSize);
 	}
 	
-	public static ByteArrayInputStream bais(byte[] buff, int off, int len) {
+	public static ArrayOutputStream createArrayOutput(int cap) {
+		return new ArrayOutputStreamInt(cap);
+	}
+
+	public static ArrayOutputStream createArrayOutputSmall() {
+		return new ArrayOutputStreamSimple(Nice.bufferSize);
+	}
+	
+	public static ArrayOutputStream createArrayOutputSmall(int cap) {
+		return new ArrayOutputStreamSimple(cap);
+	}
+	
+	public static ByteArrayInputStream createArrayInput(byte[] buff, int off, int len) {
 		return new ByteArrayInputStream(buff, off, len);
 	}
 	
-	public static ByteArrayInputStream bais(byte[] buff) {
+	public static ByteArrayInputStream createArrayInput(byte[] buff) {
 		return new ByteArrayInputStream(buff);
 	}
 	
@@ -221,7 +233,7 @@ public class Nice {
 	}
 	
 	public static void checkLength(long len) {
-		if(len > MAX_ARRAY_LENGTH || len < 0) {
+		if(len > maxArrayLength || len < 0) {
 			throw new UnsupportedOperationException(
 					"Tried to allocate array with " + len + " objects, aborting!");//mask
 		}
@@ -497,42 +509,46 @@ public class Nice {
 
 		@Override
 		public <K, V> ConcurrentMap<K, V> createMap() {
-			return new ConcurrentHashMapV8<K, V>();
+			//return new ConcurrentHashMapV8<K, V>();
+			return new ConcurrentHashMap<K,V>();
 		}
 
 		@Override
 		public <K, V> ConcurrentMap<K, V> createMap(int cap) {
-			return new ConcurrentHashMapV8<K, V>(cap);
+			//return new ConcurrentHashMapV8<K, V>(cap);
+			return new ConcurrentHashMap<K,V>(cap);
 		}
 
 		@Override
 		public <K, V> ConcurrentMap<K, V> createMap(Map<K, V> in) {
-			return new ConcurrentHashMapV8<K, V>(in);
+			//return new ConcurrentHashMapV8<K, V>(in);
+			return new ConcurrentHashMap<K,V>(in);
 		}
 		
 	};
 	
-	protected static ConcurrentMapFactory concurrentLinkedMapFactory = new ConcurrentMapFactory() {
+	/*protected static ConcurrentMapFactory concurrentLinkedMapFactory = new ConcurrentMapFactory() {
 
 		@Override
 		public <K, V> ConcurrentMap<K, V> createMap() {
-			return new ConcurrentLinkedHashMap.Builder<K, V>().build();
+			//return new ConcurrentLinkedHashMap.Builder<K, V>().build();
+			return Collections.
 		}
 
 		@Override
 		public <K, V> ConcurrentMap<K, V> createMap(int cap) {
-			return new ConcurrentLinkedHashMap.Builder<K, V>().initialCapacity(cap).build();
+			//return new ConcurrentLinkedHashMap.Builder<K, V>().initialCapacity(cap).build();
 		}
 
 		@Override
 		public <K, V> ConcurrentMap<K, V> createMap(Map<K, V> in) {
-			ConcurrentMap<K, V> ret = new ConcurrentLinkedHashMap.Builder<K, V>()
+			/*ConcurrentMap<K, V> ret = new ConcurrentLinkedHashMap.Builder<K, V>()
 					.initialCapacity(in.size()).build();
 			ret.putAll(in);
-			return ret;
+			return ret;* /
 		}
 		
-	};
+	};*/
 	
 	/**
 	 * @return Map factory
@@ -601,18 +617,18 @@ public class Nice {
 	/**
 	 * @return Concurrent Linked Map factory
 	 */
-	public static ConcurrentMapFactory getConcurrentLinkedMapFactory() {
+	/*public static ConcurrentMapFactory getConcurrentLinkedMapFactory() {
 		return concurrentLinkedMapFactory;
-	}
+	}*/
 	
 	/**
 	 * @return Old concurrentMap factory
 	 */
-	public static ConcurrentMapFactory setConcurrentLinkedMapFactory(ConcurrentMapFactory nev) {
+	/*public static ConcurrentMapFactory setConcurrentLinkedMapFactory(ConcurrentMapFactory nev) {
 		ConcurrentMapFactory old = concurrentLinkedMapFactory;
 		concurrentLinkedMapFactory = nev;
 		return old;
-	}
+	}*/
 	
 	/**
 	 * @return Set factory
@@ -755,23 +771,23 @@ public class Nice {
 	/**
 	 * @return New ConcurrentLinked map
 	 */
-	public static <K, V> Map<K, V> createConcurrentLinkedMap() {
+	/*public static <K, V> Map<K, V> createConcurrentLinkedMap() {
 		return getConcurrentLinkedMapFactory().createMap();
-	}
+	}*/
 	
 	/**
 	 * @return New ConcurrentLinked Map ideally allocated with given size
 	 */
-	public static <K, V> Map<K, V> createConcurrentLinkedMap(int cap) {
+	/*public static <K, V> Map<K, V> createConcurrentLinkedMap(int cap) {
 		return getConcurrentLinkedMapFactory().createMap(cap);
-	}
+	}*/
 	
 	/**
 	 * @return New ConcurrentLinked Map with elements from given map
 	 */
-	public static <K, V> Map<K, V> createConcurrentLinkedMap(Map<K, V> map) {
+	/*public static <K, V> Map<K, V> createConcurrentLinkedMap(Map<K, V> map) {
 		return getConcurrentLinkedMapFactory().createMap(map);
-	}
+	}*/
 	
 	
 	/**

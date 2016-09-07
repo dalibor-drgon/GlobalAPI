@@ -35,24 +35,88 @@ import java.util.zip.ZipFile;
 
 import org.apache.commons.io.IOUtils;
 
-public interface BootstrapFile {
+import wordnice.api.Nice.BHandler;
 
-	String getName();
-	void writeTo(OutputStream out, byte[] buffer) throws IOException;
+public class Bootstrap {
+	
+	public static interface EntryFile {
+		String getName();
+		String getUniqueName();
+		void writeTo(OutputStream out, byte[] buffer) throws IOException;
+	}
+	
+	public static Handler createPrefixedHandler(String prefix, BHandler<String> handler) {
+		return new PrefixedHandler(prefix, handler);
+	}
+	
+	public static Handler createPrefixedHandler(String prefix) {
+		return new PrefixedHandler(prefix, null);
+	}
+	
+	public static Handler createBooleanHandler(BHandler<String> hand) {
+		return new PrefixedHandler(null, hand);
+	}
+	
+	public static Handler createAllHandler() {
+		return new PrefixedHandler(null, null);
+	}
+	
+	public static interface Handler {
+		/**
+		 * @param name Name of file to add
+		 * @return Special name if given entry can be added, null otherwise
+		 */
+		String canBootstrap(String name);
+	}
+	
+	static class PrefixedHandler
+	implements Handler {
+
+		protected String prefix;
+		protected BHandler<String> handler;
+		
+		public PrefixedHandler(String prefix) {
+			this(prefix, null);
+		}
+		
+		public PrefixedHandler(BHandler<String> handler) {
+			this(null, handler);
+		}
+		
+		public PrefixedHandler(String prefix, BHandler<String> handler) {
+			if(prefix == null || prefix.isEmpty()) prefix = null;
+			this.prefix = prefix;
+			this.handler = handler;
+		}
+		
+		@Override
+		public String canBootstrap(String name) {
+			if(this.handler != null && !handler.handle(name)) return null;
+			return (this.prefix == null) ? name : prefix+name;
+		}
+		
+	}
 	
 	static abstract class Stream 
-	implements BootstrapFile, Closeable, AutoCloseable {
+	implements Bootstrap.EntryFile, Closeable, AutoCloseable {
 
 		protected String name;
+		protected String unique;
 		protected InputStream stream;
 		
-		protected Stream(String name) {
+		protected Stream(String name, String unique) {
 			this.name = name;
+			this.unique = (unique == null) ? name : unique;
 		}
 		
 		@Override
 		public String getName() {
 			return this.name;
+		}
+		
+		@Override
+		public String getUniqueName() {
+			return this.unique;
 		}
 
 		@Override
@@ -72,8 +136,8 @@ public interface BootstrapFile {
 
 		protected File file;
 		
-		public FileStream(String name, File file) {
-			super(name);
+		public FileStream(String name, String unique, File file) {
+			super(name, unique);
 			this.file = file;
 		}
 		
@@ -96,8 +160,8 @@ public interface BootstrapFile {
 
 		protected URL url;
 		
-		public URLStream(String name, URL url) {
-			super(name);
+		public URLStream(String name, String unique, URL url) {
+			super(name, unique);
 			this.url = url;
 		}
 		
@@ -121,15 +185,15 @@ public interface BootstrapFile {
 		protected File file;
 		protected String entry;
 		
-		public ZIPStream(String name, File file, String entry) {
-			super(name);
+		public ZIPStream(String name, String unique, File file, String entry) {
+			super(name, unique);
 			this.file = file;
 			this.entry = entry;
 		}
 		
 		@Override
 		public void writeTo(OutputStream out, byte[] buffer) throws IOException {
-			try(ZipFile zf = new ZipFile(file);
+			try(ZipFile zf = new ZipFile(this.file);
 				InputStream in = zf.getInputStream(zf.getEntry(entry))) {
 				IOUtils.copyLarge(in, out, buffer);
 			} finally {

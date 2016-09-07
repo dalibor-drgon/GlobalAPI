@@ -22,49 +22,39 @@
  * THE SOFTWARE.
  ******************************************************************************/
 
-package wordnice.optimizer;
+package wordnice.generator;
 
-import java.lang.instrument.ClassDefinition;
-import java.util.Collection;
-
-import javassist.ClassPool;
-
-public interface Optimizable {
+public class UniGenInputStream
+extends GenInputStream {
 	
-	public static interface OptimizedChecker {
-		/**
-		 * @return true when optimizable with given name was ran
-		 * 		false when not found
-		 */
-		boolean has(String name);
+	protected volatile Seed markSeed = null;
+	
+	public UniGenInputStream(Generator gen) {
+		super(gen);
+		this.markSeed = this.generator.getSeed();
 	}
-	
-	/**
-	 * Name if this optimizable
-	 * Ideally in format: [library name or author].[optimized class name]
-	 * eg. wordnice.Character
-	 */
-	String getName();
 
-	/**
-	 * Check depencies and return true if we can continue
-	 */
-	boolean canOptimize(OptimizedChecker optimized);
-	
-	/**
-	 * Before optimizing
-	 * called before canOptimize
-	 */
-	public void beforeOptimize();
-	
-	/**
-	 * Optimize what is needed.
-	 */
-	void optimize(ClassPool cp, Collection<ClassDefinition> output) throws Throwable;
-	
-	/**
-	 * Called when all pending optimizations were done!
-	 */
-	void afterOptimize(ClassPool cp);
-	
+	@Override
+	public void mark() {
+		super.reset();
+		this.markSeed = this.generator.getSeed();
+	}
+
+	@Override
+	public void reset() {
+		super.reset();
+		this.generator.setSeed(this.markSeed);
+	}
+
+	@Override
+	public Seed getMarkSeed() {
+		return this.markSeed;
+	}
+
+	@Override
+	public void setMarkSeed(Seed markSeed) {
+		if(markSeed == null) throw new IllegalArgumentException("Seed == null");
+		this.markSeed = markSeed;
+	}
+
 }

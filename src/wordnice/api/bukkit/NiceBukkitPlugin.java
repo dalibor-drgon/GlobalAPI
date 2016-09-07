@@ -30,8 +30,8 @@ import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 
-import wordnice.api.InitGlobalAPI;
-import wordnice.utils.UnsafeAPI;
+import wordnice.api.InitNiceAPI;
+import wordnice.utils.JavaUtils;
 
 public class NiceBukkitPlugin 
 extends org.bukkit.plugin.java.JavaPlugin {
@@ -44,9 +44,9 @@ extends org.bukkit.plugin.java.JavaPlugin {
 		final Logger lg = this.getLogger();
 		
 		try {
-			Set<String> clzs = UnsafeAPI.getClasses(UnsafeAPI.getClassesLocation(org.bukkit.Bukkit.class));
+			Set<String> clzs = JavaUtils.getClasses(JavaUtils.getClassesLocation(org.bukkit.Bukkit.class));
 			lg.info("Bukkit classes: " + clzs.size());
-			lg.info("Bukkit packages: " + UnsafeAPI.filterPackagesString(clzs, (String) null).size());
+			lg.info("Bukkit packages: " + JavaUtils.filterPackagesString(clzs, (String) null).size());
 		} catch(Throwable t) {}
 				
 		String cpkg = org.bukkit.Bukkit.getServer().getClass().getPackage().getName();
@@ -56,27 +56,14 @@ extends org.bukkit.plugin.java.JavaPlugin {
 		lg.info("Online worlds: " + Bukkit.getWorlds());
 		lg.info("Online plugins: " + Arrays.toString(Bukkit.getPluginManager().getPlugins()));
 		
-		final InitGlobalAPI.MiniLogger oolog = new InitGlobalAPI.MiniLogger() {
-			
-			@Override
-			public void severe(String str) {
-				lg.severe(str);
-			}
-			
-			@Override
-			public void info(String str) {
-				lg.info(str);
-			}
-		};
+		InitNiceAPI.initAll(lg);
 		
-		InitGlobalAPI.initFirst(oolog);
-		
-		org.bukkit.Bukkit.getScheduler().runTask(this, new Runnable() {
+		/*org.bukkit.Bukkit.getScheduler().runTask(this, new Runnable() {
 			@Override
 			public void run() {
-				InitGlobalAPI.initInMainThread(oolog);
+				InitNiceAPI.initInMainThread(oolog);
 			}
-		});
+		});*/
 		
 		lg.info("MainAPI by wordnice for Bukkit was enabled! "
 				+ "(waiting for server core to check instrumentation)");

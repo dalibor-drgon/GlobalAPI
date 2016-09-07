@@ -74,13 +74,49 @@ public class OUtils {
 		out.write((int) ((v >> 48) & 0xFF));
 		out.write((int) ((v >> 56) & 0xFF));
 	}
-
+	
 	public static void writeFloat(OutputStream out, float v) throws IOException {
 		writeInt(out, Float.floatToIntBits(v));
 	}
 	
 	public static void writeDouble(OutputStream out, double v) throws IOException {
 		writeLong(out, Double.doubleToLongBits(v));
+	}
+	
+	public static void writeLong(byte[] bytes, int off, long v) {
+		bytes[off++] = (byte) ((v >>  0) & 0xFF);
+		bytes[off++] = (byte) ((v >>  8) & 0xFF);
+		bytes[off++] = (byte) ((v >> 16) & 0xFF);
+		bytes[off++] = (byte) ((v >> 24) & 0xFF);
+		bytes[off++] = (byte) ((v >> 32) & 0xFF);
+		bytes[off++] = (byte) ((v >> 40) & 0xFF);
+		bytes[off++] = (byte) ((v >> 48) & 0xFF);
+		bytes[off++] = (byte) ((v >> 56) & 0xFF);
+	}
+	
+	public static void writeInt(byte[] bytes, int off, int v) {
+		bytes[off++] = (byte) ((v >>  0) & 0xFF);
+		bytes[off++] = (byte) ((v >>  8) & 0xFF);
+		bytes[off++] = (byte) ((v >> 16) & 0xFF);
+		bytes[off++] = (byte) ((v >> 24) & 0xFF);
+	}
+	
+	public static void writeShort(byte[] bytes, int off, short v) {
+		bytes[off++] = (byte) ((v >>  0) & 0xFF);
+		bytes[off++] = (byte) ((v >>  8) & 0xFF);
+	}
+	
+	public static void writeChar(byte[] bytes, int off, char v) {
+		bytes[off++] = (byte) ((v >>  0) & 0xFF);
+		bytes[off++] = (byte) ((v >>  8) & 0xFF);
+	}
+
+	public static void writeFloat(byte[] bytes, int off, float v) {
+		writeInt(bytes, off, Float.floatToIntBits(v));
+	}
+	
+	public static void writeDouble(byte[] bytes, int off, double v) {
+		writeLong(bytes, off, Double.doubleToLongBits(v));
 	}
 	
 	public static void serializeBytes(OutputStream out, byte[] bytes) throws IOException {

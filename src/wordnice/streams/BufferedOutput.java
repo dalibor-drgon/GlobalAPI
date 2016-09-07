@@ -178,5 +178,4 @@ implements AutoCloseable {
 	protected static int getMinWrite(int size) {
 		return (size > 100) ? (int) (size*0.90) : size;
 	}
-    
 }

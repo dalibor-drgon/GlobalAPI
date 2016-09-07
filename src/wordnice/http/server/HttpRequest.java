@@ -651,7 +651,7 @@ public class HttpRequest implements Closeable {
 	
 	public static void parsePostSimple(final RequestData id, InputStream in) throws IOException {
 		final long clen = Nice.getAs(id.getHead("content-length"), long.class, -1L);
-		if(clen < 0 || clen > Nice.MAX_ARRAY_LENGTH) {
+		if(clen < 0 || clen > Nice.maxArrayLength) {
 			throw new HttpFormatException("Content length undefined, wrong or too big ("+clen+")");
 		}
 		final Map<String,Post> posts = id.getOrCreatePost();

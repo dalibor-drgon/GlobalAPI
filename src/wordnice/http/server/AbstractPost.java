@@ -139,7 +139,7 @@ public abstract class AbstractPost implements Post {
 			this.isFile = isFile;
 			this.maxsizeForMemory = maxsize;
 			if(!isFile) {
-				baos = Nice.baos();
+				baos = Nice.createArrayOutput();
 			}
 		}
 		

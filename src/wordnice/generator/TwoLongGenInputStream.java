@@ -22,40 +22,54 @@
  * THE SOFTWARE.
  ******************************************************************************/
 
-package wordnice.optimizer.builtin;
+package wordnice.generator;
 
-import java.lang.instrument.ClassDefinition;
-import java.util.Collection;
+import wordnice.generator.Generator.TwoLongGenerator;
 
-import javassist.ClassPool;
-import javassist.CtClass;
-import wordnice.optimizer.Optimizable;
-import wordnice.optimizer.Optimizer;
+public class TwoLongGenInputStream
+extends GenInputStream {
+	
+	long s0, s1;
 
-public class OptimizeCharacter
-implements Optimizable {
-
-	@Override
-	public String getName() {
-		return "wordnice.Character";
+	public TwoLongGenInputStream(TwoLongGenerator gen) {
+		super(gen);
 	}
 	
-	@Override
-	public boolean canOptimize(OptimizedChecker optimized) {
-		return true; //no depency
+	protected TwoLongGenerator get() {
+		return (TwoLongGenerator) this.generator;
 	}
 
 	@Override
-	public void optimize(ClassPool cp, Collection<ClassDefinition> output) 
-			throws Throwable {
-		CtClass charclz = cp.get("java.lang.Character");
-		charclz.getDeclaredMethod("toLowerCase", new CtClass[] {
-				CtClass.charType
-		}).insertBefore("java.lang.System.out.println(\"ToLowerCase: \"+$1);");
-		output.add(Optimizer.createDefinition(charclz));
+	public void mark() {
+		TwoLongGenerator x = get();
+		this.s0 = x.getState0();
+		this.s1 = x.getState1();
+	}
+
+	@Override
+	public Seed getMarkSeed() {
+		return new AbstractSeed.TwoLongSeed(s0, s1);
+	}
+
+	@Override
+	public void setMarkSeed(Seed markSeed) {
+		this.setMarkedSeed(s0, s1);
 	}
 	
-	@Override
-	public void afterOptimize(ClassPool cp) {}
-
+	public void setMarkedSeed(long s0, long s1) {
+		if(s0 == 0 && s1 == 0) {
+			s1 = 1L;
+		}
+		this.s0 = s0;
+		this.s1 = s1;
+	}
+	
+	public long getState0() {
+		return this.s0;
+	}
+	
+	public long getState1() {
+		return this.s1;
+	}
+	
 }

@@ -32,12 +32,11 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.RandomAccess;
 import java.util.Set;
-import java.util.Spliterator;
 
 import javax.annotation.concurrent.Immutable;
 
 import wordnice.api.Nice;
-import wordnice.utils.UnsafeAPI;
+import wordnice.utils.JavaUtils;
 
 @Immutable
 public class ImmArray<T> 
@@ -140,7 +139,7 @@ implements List<T>, Set<T>, RandomAccess {
 		} else if(ar.length < this.size) {
 			ar = (U[]) Array.newInstance(ar.getClass().getComponentType(), this.size);
 		}
-		UnsafeAPI.memcpy(ar, this.arr, this.size);
+		JavaUtils.memcpy(ar, this.arr, this.size);
 		return ar;
 	}
 
@@ -296,9 +295,9 @@ implements List<T>, Set<T>, RandomAccess {
 		return new ImmArray<Object>(vals);
 	}
 	
-	@Override
+	/*@Override
 	public Spliterator<T> spliterator() {
 		return List.super.spliterator();
-	}
+	}*/
 	
 }

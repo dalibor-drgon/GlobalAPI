@@ -22,49 +22,24 @@
  * THE SOFTWARE.
  ******************************************************************************/
 
-package wordnice.optimizer;
+package wordnice.utils;
 
-import java.lang.instrument.ClassDefinition;
-import java.util.Collection;
+/**
+ * JavaHooker
+ * Ussualy on application startup, those functions are optimized
+ * (InitNiceAPI.initOptimizations() call)
+ * If optimizations fails, they are working without any hooking
+ */
+public class JavaHooker {
 
-import javassist.ClassPool;
-
-public interface Optimizable {
-	
-	public static interface OptimizedChecker {
-		/**
-		 * @return true when optimizable with given name was ran
-		 * 		false when not found
-		 */
-		boolean has(String name);
+	/**
+	 * @param data Array to create String from
+	 * @return String instance, which can contains 
+	 * 		pointer to original array (or copy)
+	 */
+	public static String string(char[] array) {
+		return String.copyValueOf(array);
 	}
-	
-	/**
-	 * Name if this optimizable
-	 * Ideally in format: [library name or author].[optimized class name]
-	 * eg. wordnice.Character
-	 */
-	String getName();
 
-	/**
-	 * Check depencies and return true if we can continue
-	 */
-	boolean canOptimize(OptimizedChecker optimized);
-	
-	/**
-	 * Before optimizing
-	 * called before canOptimize
-	 */
-	public void beforeOptimize();
-	
-	/**
-	 * Optimize what is needed.
-	 */
-	void optimize(ClassPool cp, Collection<ClassDefinition> output) throws Throwable;
-	
-	/**
-	 * Called when all pending optimizations were done!
-	 */
-	void afterOptimize(ClassPool cp);
 	
 }

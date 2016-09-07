@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="eu/wordnice/sql/CopyOfSimpleResSet.java|eu/wordnice/sql/wnsql/CopyOfWNDB.java|eu/wordnice/api/ClassEnumerator.java|eu/wordnice/api/RegexFinder.java|eu/wordnice/sql/wndb/CopyOfWNDB.java|eu/wordnice/sql/wndb/CopyOfWNDB1.java|eu/wordnice/sql/wndb/CopyOfWNDB2.java" kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.7.0_79"/>
 	<classpathentry kind="lib" path="E:/Java/workspace/GlobalApi/libs/PlaceholderAPI.jar"/>
 	<classpathentry kind="lib" path="E:/Java/workspace/GlobalApi/libs/slf4j.jar"/>
 	<classpathentry kind="lib" path="E:/Java/workspace/GlobalApi/libs/spigot-1.8.8.jar"/>

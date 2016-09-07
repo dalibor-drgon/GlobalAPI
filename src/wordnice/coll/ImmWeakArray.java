@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.RandomAccess;
 import java.util.Set;
-import java.util.Spliterator;
 
 import javax.annotation.concurrent.Immutable;
 
@@ -160,9 +159,9 @@ implements List<T>, Set<T>, RandomAccess {
 		return indexOf(o) != -1;
 	}
 	
-	@Override
+	/*@Override
 	public Spliterator<T> spliterator() {
 		return List.super.spliterator();
-	}
+	}*/
 	
 }
