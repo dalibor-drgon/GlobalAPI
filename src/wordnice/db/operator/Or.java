@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import wordnice.api.Nice;
-import wordnice.api.Nice.DataEntry;
+import wordnice.api.Nice.MutableEntry;
 import wordnice.db.results.ResSet;
 import wordnice.db.sql.SQL;
 
@@ -42,7 +42,7 @@ public class Or implements AndOr {
 	}
 
 	@Override
-	public DataEntry<String, List<Object>> toSQL(SQL sql) {
+	public MutableEntry<String, List<Object>> toSQL(SQL sql) {
 		StringBuilder sb = new StringBuilder();
 		List<Object> vals = new ArrayList<Object>();
 		
@@ -72,7 +72,7 @@ public class Or implements AndOr {
 			}
 		}
 		
-		return new DataEntry<String, List<Object>>(sb.toString(), vals);
+		return new MutableEntry<String, List<Object>>(sb.toString(), vals);
 	}
 
 	@Override

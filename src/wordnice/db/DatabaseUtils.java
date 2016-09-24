@@ -49,8 +49,8 @@ import wordnice.db.sql.SQL;
 import wordnice.db.sql.SQLite;
 import wordnice.streams.IUtils;
 import wordnice.streams.OUtils;
-import wordnice.utils.FilesAPI;
 
+@Deprecated
 public class DatabaseUtils {
 
 	/**
@@ -136,7 +136,7 @@ public class DatabaseUtils {
 			if(table == null) {
 				throw Nice.illegal("SQLite table is null!");
 			}
-			SQLDatabase db = new SQLDatabase(new SQLite(FilesAPI.getRealPath(root, file.toString())), table.toString(), cols);
+			SQLDatabase db = new SQLDatabase(new SQLite(new File(root, file.toString())), table.toString(), cols);
 			db.sql.connect();
 			return db;
 		} else if(type.equals("mysql")) {

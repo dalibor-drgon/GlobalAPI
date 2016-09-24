@@ -102,20 +102,20 @@ public class Sockets {
 		
 		public Config(Map<String,Object> props)
 					throws IllegalArgumentException {
-			String host = Nice.getAs(props.get("Host"), String.class);
+			String host = Nice.cast(props.get("Host"), String.class);
 			if(host == null || host.isEmpty()) {
 				host = null;
 			}
-			int port = Nice.getAs(props.get("Port"), int.class);
+			int port = Nice.cast(props.get("Port"), int.class);
 			if(port < 1) {
 				throw Nice.illegal("Unknown port (Port) " + port);
 			}
-			this.pending = Nice.getAs(props.get("Pendings"), int.class, -1);
-			boolean ssl = Nice.getAs(props.get("SSL"), boolean.class);
+			this.pending = Nice.cast(props.get("Pendings"), int.class, -1);
+			boolean ssl = Nice.cast(props.get("SSL"), boolean.class);
 			if(ssl) {
-				String keyPass = Nice.getAs(props.get("KeyPass"), String.class);
-				String storePass = Nice.getAs(props.get("StorePass"), String.class);
-				String keyFile = Nice.getAs(props.get("KeyStoreFile"), String.class);
+				String keyPass = Nice.cast(props.get("KeyPass"), String.class);
+				String storePass = Nice.cast(props.get("StorePass"), String.class);
+				String keyFile = Nice.cast(props.get("KeyStoreFile"), String.class);
 				if(keyPass == null) {
 					throw Nice.illegal("Unknown key password (KeyPass)");
 				}

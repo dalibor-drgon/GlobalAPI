@@ -40,60 +40,7 @@ import java.nio.file.Paths;
 
 public class FilesAPI {
 
-/*** Files ***/
-	
-	public static String getRealPath(String file) {
-		if(file == null) {
-			return null;
-		}
-		File fl = new File(file);
-		try {
-			return fl.getCanonicalPath();
-		} catch(Throwable t) {}
-		return fl.getAbsolutePath();
-	}
-	
-	public static String getRealPath(File file) {
-		if(file == null) {
-			return null;
-		}
-		try {
-			return file.getCanonicalPath();
-		} catch(Throwable t) {}
-		return file.getAbsolutePath();
-	}
-	
-	public static String getRealPath(File root, String file) {
-		if(file == null) {
-			return null;
-		}
-		File fl = (root == null) ? new File(file) : new File(root, file);
-		try {
-			return fl.getCanonicalPath();
-		} catch(Throwable t) {}
-		return fl.getAbsolutePath();
-	}
-	
-	public static String getRealPath(File root, File file) {
-		if(file == null) {
-			return null;
-		}
-		if(root == null) {
-			try {
-				return file.getCanonicalPath();
-			} catch(Throwable t) {}
-			return file.getAbsolutePath();
-		}
-		try {
-			file = new File(root, file.getCanonicalPath());
-		} catch(Throwable t) {
-			file = new File(root, file.getAbsolutePath());
-		}
-		try {
-			return file.getCanonicalPath();
-		} catch(Throwable t) {}
-		return file.getAbsolutePath();
-	}
+	/*** Files ***/
 	
 	
 	public static String getExtension(String file) {
@@ -127,7 +74,7 @@ public class FilesAPI {
 		if(f == null) {
 			return null;
 		}
-		return getFreeName(getRealPath(f));
+		return getFreeName(f.getAbsoluteFile());
 	}
 	
 	public static File getFreeName(String old) {

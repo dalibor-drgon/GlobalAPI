@@ -27,21 +27,24 @@ package wordnice.generator;
 import wordnice.generator.Generator.TwoLongGenerator;
 
 public class TwoLongGenInputStream
-extends GenInputStream {
+extends AbstractGenInputStream {
 	
-	long s0, s1;
+	protected TwoLongGenerator generator;
+	protected long s0, s1;
 
 	public TwoLongGenInputStream(TwoLongGenerator gen) {
 		super(gen);
+		this.generator = gen;
 	}
 	
-	protected TwoLongGenerator get() {
+	@Override
+	public TwoLongGenerator getGenerator() {
 		return (TwoLongGenerator) this.generator;
 	}
 
 	@Override
 	public void mark() {
-		TwoLongGenerator x = get();
+		TwoLongGenerator x = getGenerator();
 		this.s0 = x.getState0();
 		this.s1 = x.getState1();
 	}

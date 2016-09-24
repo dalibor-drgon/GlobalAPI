@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.Map;
 
 import wordnice.api.Nice;
-import wordnice.coll.MapWorker;
 import wordnice.http.HttpFormatException;
 import wordnice.http.server.HttpRequest.Settings;
 
@@ -39,7 +38,7 @@ public class RequestData {
 	protected String path;
 	protected String httpVersion;
 	
-	protected MapWorker get;
+	protected Map<String,Object> get;
 	protected Map<String,String> heads;
 	protected Map<String,Post> post;
 	
@@ -51,13 +50,6 @@ public class RequestData {
 	
 	public RequestData() {}
 	
-	public Settings getSettings() {
-		if(settings == null) {
-			return HttpRequest.settingsDefault;
-		}
-		return settings;
-	}
-	
 	public boolean supportsGZIP() {
 		String enc = this.getHead("accept-encoding");
 		return enc != null && (enc.contains("gzip,") || enc.endsWith("gzip"));
@@ -68,7 +60,14 @@ public class RequestData {
 		return enc != null && (enc.contains("deflate,") || enc.endsWith("deflate"));
 	}
 	
-	public Settings getSettingsIfHas() {
+	public Settings getSettings() {
+		if(settings == null) {
+			return HttpRequest.settingsDefault;
+		}
+		return settings;
+	}
+	
+	public Settings getSettingsOrNull() {
 		return this.settings;
 	}
 	
@@ -104,25 +103,22 @@ public class RequestData {
 		return this;
 	}
 
-	public MapWorker getOrCreateGet() {
-		if(get == null) {
-			get = Nice.createMapWorker();
-		}
+	public Map<String,Object> getOrCreateGet() {
+		if(get == null) get = Nice.createLinkedMap();
 		return get;
 	}
 	
-	public MapWorker getGet() {
+	public Map<String,Object> getGet() {
+		if(get == null) return Collections.emptyMap();
 		return get;
 	}
 	
 	public Object getGet(String key) {
-		if(get == null) {
-			return null;
-		}
+		if(get == null) return null;
 		return get.get(key);
 	}
 
-	public RequestData setGet(MapWorker get) {
+	public RequestData setGet(Map<String,Object> get) {
 		this.get = get;
 		return this;
 	}

@@ -55,6 +55,7 @@ import wordnice.db.sql.SQL;
  * 
  * @author wordnice
  */
+@SuppressWarnings("deprecation")
 public class SQLDatabase implements Closeable, AutoCloseable, Database {
 	
 	/**

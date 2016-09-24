@@ -30,7 +30,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 
-import wordnice.utils.NiceConverter;
+import wordnice.api.Nice;
 
 public class CollTranslator {
 	
@@ -164,12 +164,12 @@ public class CollTranslator {
 			}
 			if(skipRatherThanFail) {
 				try {
-					return NiceConverter.translatePrimitiveOrDie(value, valueClass);
+					return Nice.castOrThrow(value, valueClass);
 				} catch(CannotDoIt e) {
 					throw skipIt();
 				}
 			}
-			return NiceConverter.translatePrimitiveOrDie(value, valueClass);
+			return Nice.castOrThrow(value, valueClass);
 		}
 
 	}

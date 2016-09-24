@@ -25,25 +25,26 @@
 package wordnice.generator;
 
 public class UniGenInputStream
-extends GenInputStream {
+extends AbstractGenInputStream {
 	
+	protected Generator generator;
 	protected volatile Seed markSeed = null;
 	
 	public UniGenInputStream(Generator gen) {
 		super(gen);
-		this.markSeed = this.generator.getSeed();
+		this.markSeed = this.getGenerator().getSeed();
 	}
 
 	@Override
 	public void mark() {
 		super.reset();
-		this.markSeed = this.generator.getSeed();
+		this.markSeed = this.getGenerator().getSeed();
 	}
 
 	@Override
 	public void reset() {
 		super.reset();
-		this.generator.setSeed(this.markSeed);
+		this.getGenerator().setSeed(this.markSeed);
 	}
 
 	@Override
@@ -55,6 +56,11 @@ extends GenInputStream {
 	public void setMarkSeed(Seed markSeed) {
 		if(markSeed == null) throw new IllegalArgumentException("Seed == null");
 		this.markSeed = markSeed;
+	}
+
+	@Override
+	public Generator getGenerator() {
+		return this.generator;
 	}
 
 }

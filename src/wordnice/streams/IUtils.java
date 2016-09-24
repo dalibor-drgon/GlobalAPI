@@ -175,29 +175,37 @@ public class IUtils {
 				| (ch5 << 24) | (ch6 << 16) | (ch7 << 8) | (ch8 << 0));
 	}
 	
-	public static char readChar(byte[] bt, int off) throws IOException {
-		return (char) ((char) bt[off++] | (bt[off++] << 8));
-	}
-	
-	public static short readShort(byte[] bt, int off) throws IOException {
-		return (short) ((short) bt[off++] | (bt[off++] << 8));
-	}
-	
-	public static int readInt(byte[] bt, int off) throws IOException {
-		return ((int) bt[off++] | (bt[off++] << 8) | (bt[off++] << 16) | (bt[off++] << 24));
-	}
-	
-	public static long readLong(byte[] bt, int off) throws IOException {
-		return ((long) bt[off++] | (bt[off++] << 8) | (bt[off++] << 16) | (bt[off++] << 24)
-			| (bt[off++] << 32) | (bt[off++] << 40) | (bt[off++] << 48) | (bt[off++] << 56));
-	}
-	
 	public static float readFloat(InputStream in) throws IOException {
 		return Float.intBitsToFloat(readInt(in));
 	}
 	
 	public static double readDouble(InputStream in) throws IOException {
 		return Double.longBitsToDouble(readLong(in));
+	}
+	
+	public static char readChar(byte[] bt, int off) {
+		return (char) ((char) bt[off++] | (bt[off++] << 8));
+	}
+	
+	public static short readShort(byte[] bt, int off) {
+		return (short) ((short) bt[off++] | (bt[off++] << 8));
+	}
+	
+	public static int readInt(byte[] bt, int off) {
+		return ((int) bt[off++] | (bt[off++] << 8) | (bt[off++] << 16) | (bt[off++] << 24));
+	}
+	
+	public static long readLong(byte[] bt, int off) {
+		return ((long) bt[off++] | (bt[off++] << 8) | (bt[off++] << 16) | (bt[off++] << 24)
+			| (bt[off++] << 32) | (bt[off++] << 40) | (bt[off++] << 48) | (bt[off++] << 56));
+	}
+	
+	public static float readFloat(byte[] bt, int off) {
+		return Float.intBitsToFloat(readInt(bt, off));
+	}
+	
+	public static double readDouble(byte[] bt, int off) {
+		return Double.longBitsToDouble(readLong(bt, off));
 	}
 	
 	public static int tryToReadFully(InputStream in, byte[] b) throws IOException {
@@ -240,13 +248,13 @@ public class IUtils {
 	}
 	
 	public static ByteArrayOutputStream readFully(InputStream in) throws IOException {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream(Nice.bufferSize);
+		ByteArrayOutputStream baos = new ByteArrayOutputStream(Nice.BufferSize);
 		readFully(in, baos);
 		return baos;
 	}
 	
 	public static int readFully(InputStream in, OutputStream out) throws IOException {
-		byte[] buff = new byte[Nice.bufferSize];
+		byte[] buff = new byte[Nice.BufferSize];
 		int total = 0;
 		while(true) {
 			int readed = -1;
@@ -465,7 +473,7 @@ public class IUtils {
 	}
 	
 	public static void readFullyNowhere(InputStream in) throws IOException {
-		while(in.read(Nice.loopBuffer) > 0);
+		while(in.read(Nice.LoopBytesBuffer) > 0);
 	}
 	
 	public static void readUntil(InputStream in, OutputStream out, 

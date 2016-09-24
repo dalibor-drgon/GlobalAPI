@@ -27,15 +27,14 @@ package wordnice.api;
 import java.lang.instrument.Instrumentation;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import wordnice.api.Nice.BHandler;
 import wordnice.javaagent.JavaAgent;
 import wordnice.optimizer.Bootstrap;
-import wordnice.optimizer.Optimizable;
 import wordnice.optimizer.Optimizer;
-import wordnice.optimizer.builtin.OptimizeHooker;
 import wordnice.utils.JavaUtils;
 
 /**
@@ -48,6 +47,7 @@ public class InitNiceAPI {
 	
 	public static boolean all = false;
 	public static boolean allMain = false;
+	public static boolean optimizations = false;
 	
 	/**
 	 * Its best to call this when your application is starting
@@ -72,7 +72,7 @@ public class InitNiceAPI {
 		allMain = true;
 		log.info("Checking instrumentation...");
 		Instrumentation ins = JavaAgent.get();
-		log.info("Instrumentation: " + ins);
+		log.finest("Instrumentation: " + ins);
 	}
 	
 	/**
@@ -96,19 +96,25 @@ public class InitNiceAPI {
 	 * Call this after initInMainThread() in main thread
 	 * (except bukkit / sponge plugins)
 	 */
-	public static void initOptimizations(Logger log) {
+	public static void initOptimizations(final Logger log) {
+		if(optimizations) return;
 		try {
 			Collection<Bootstrap.EntryFile> bf = new ArrayList<Bootstrap.EntryFile>();
 			Optimizer.addBootstrap(bf, JavaUtils.getClassesLocation(Optimizer.class), 
-					Bootstrap.createPrefixedHandler("wordnice/",
-						new BHandler<String>() {
+					Bootstrap.createPrefixedHandler("(wordnice)",
+						new Predicate<String>() {
 					@Override
-					public boolean handle(String val) {
-						return val.startsWith("java") || val.startsWith("optimized");
+					public boolean test(String val) {
+						if(val.startsWith("java") || val.startsWith("optimized")) {
+							log.finest("Adding " + val + " to boostrap!");
+							return true;
+						}
+						return false;
 					}
 				})
 			);
 			Optimizer.forceBootstrap(bf);
+			optimizations = true;
 		} catch (Exception e) {
 			log.log(Level.SEVERE, 
 					"Error occured while adding needed files to bootstrap! "
@@ -116,9 +122,9 @@ public class InitNiceAPI {
 			return;
 		}
 		
-		Collection<Optimizable> opts = new ArrayList<Optimizable>();
+		/*Collection<Optimizable> opts = new ArrayList<Optimizable>();
 		opts.add(new OptimizeHooker());
-		Optimizer.forceOptimizations(opts);
+		Optimizer.forceOptimizations(opts);*/
 	}
 	
 	
@@ -142,8 +148,19 @@ public class InitNiceAPI {
 	}
 	
 	protected static void debugSQL(Logger log) {
-		InitNiceAPI.debugDriver(log, "org.sqlite.JDBC","SQLite");
+		InitNiceAPI.debugDriver(log, "org.sqlite.JDBC", "SQLite");
 		InitNiceAPI.debugDriver(log, "com.mysql.jdbc.Driver", "MySQL");
+	}
+
+	public static void main(String...strings) {
+		Logger lg = Nice.createLogger(InitNiceAPI.class);
+		lg.setLevel(Level.FINEST);
+		lg.setFilter(null);
+		Logger.getGlobal().setLevel(Level.FINEST);
+		Logger.getGlobal().setFilter(null);
+		InitNiceAPI.initAll(lg);
+		System.out.println(Consumer.class);
+		System.out.println(System.getProperties().clone().toString());
 	}
 	
 }

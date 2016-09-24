@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 import wordnice.api.Nice;
 import wordnice.codings.ASCII;
 import wordnice.db.results.ResSet;
-import wordnice.utils.NiceStringUtils;
+import wordnice.utils.NiceStrings;
 
 public class Where {
 	
@@ -202,9 +202,9 @@ public class Where {
 				return false;
 			}
 			if(sens) {
-				return NiceStringUtils.equals(ent, 0, b, 0, b.length());
+				return NiceStrings.equals(ent, 0, b, 0, b.length());
 			} else {
-				return NiceStringUtils.equalsIgnoreCase(ent, 0, b, 0, b.length());
+				return NiceStrings.equalsIgnoreCase(ent, 0, b, 0, b.length());
 			}
 		}
 		throw Nice.illegal("Unknown value type " + val.getClass().getName());
@@ -233,9 +233,9 @@ public class Where {
 				return false;
 			}
 			if(sens) {
-				return NiceStringUtils.equals(ent, ent.length() - b.length(), b, 0, b.length());
+				return NiceStrings.equals(ent, ent.length() - b.length(), b, 0, b.length());
 			} else {
-				return NiceStringUtils.equalsIgnoreCase(ent, ent.length() - b.length(), b, 0, b.length());
+				return NiceStrings.equalsIgnoreCase(ent, ent.length() - b.length(), b, 0, b.length());
 			}
 		}
 		throw Nice.illegal("Unknown value type " + val.getClass().getName());

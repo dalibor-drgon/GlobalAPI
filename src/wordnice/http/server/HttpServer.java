@@ -60,12 +60,12 @@ public class HttpServer {
 		/**
 		 * Handle exception which occured while handling request by you
 		 */
-		public void handleException(Exception ex, HttpRequest req);
+		public void handleException(HttpRequest req, Exception ex);
 		
 		/**
 		 * Handle exception which occured while decoding request by HIORequest
 		 */
-		public void handleDecoderException(Exception ex, HttpRequest req);
+		public void handleDecoderException(HttpRequest req, Exception ex);
 		
 	}
 
@@ -183,11 +183,11 @@ public class HttpServer {
 									try {
 										_handler.handleRequest(hio);
 									} catch(Exception ex) {
-										_handler.handleException(ex, hio);
+										_handler.handleException(hio, ex);
 									}
 								}
 							} catch(Exception t) {
-								_handler.handleDecoderException(t, hio);
+								_handler.handleDecoderException(hio, t);
 							}
 							try {
 								hio.close();
@@ -205,11 +205,11 @@ public class HttpServer {
 							try {
 								_handler.handleRequest(hio);
 							} catch(Exception ex) {
-								_handler.handleException(ex, hio);
+								_handler.handleException(hio, ex);
 							}
 						}
 					} catch(Exception t) {
-						_handler.handleDecoderException(t, hio);
+						_handler.handleDecoderException(hio, t);
 					}
 					try {
 						hio.close();

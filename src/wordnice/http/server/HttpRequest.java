@@ -35,6 +35,7 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BiConsumer;
 
 import wordnice.api.Nice;
 import wordnice.api.Nice.CannotDoIt;
@@ -42,15 +43,15 @@ import wordnice.api.Nice.Masked;
 import wordnice.api.Nice.Value;
 import wordnice.codings.ASCII;
 import wordnice.codings.URLCoder;
-import wordnice.coll.MapWorker;
+import wordnice.coll.AbstractMapWorker;
 import wordnice.http.HttpFormatException;
 import wordnice.http.client.HttpClient;
 import wordnice.http.server.HttpServer.Handler;
+import wordnice.seq.InternalSplitter;
+import wordnice.seq.ByteArraySequence;
+import wordnice.seq.ByteSequence;
 import wordnice.streams.IUtils;
 import wordnice.streams.OUtils;
-import wordnice.utils.ArgsDecoder;
-import wordnice.utils.ByteArraySequence;
-import wordnice.utils.ByteSequence;
 import wordnice.utils.Sockets;
 
 public class HttpRequest implements Closeable {
@@ -66,7 +67,7 @@ public class HttpRequest implements Closeable {
 		public boolean getParsePost() {return true;}
 		public boolean getParsePostMultipart() {return true;}
 		public int getMultipartMemoryLimit() {return 16*1024;}
-		public int getMultipartBufferSize() {return Nice.bufferSize;}
+		public int getMultipartBufferSize() {return Nice.BufferSize;}
 	};
 	
 	public static Settings getDefaultSettings() {
@@ -95,7 +96,10 @@ public class HttpRequest implements Closeable {
 		 */
 		public boolean doAfterHeads(HttpRequest req) throws IOException;
 		
-		public void cannotParseGet(RequestData in, String key, String value) throws CannotDoIt;
+		/**
+		 * Called when error occur while parsing JSONP-style get arguments
+		 */
+		public void cannotParseGet(HttpRequest req, String key, String value) throws CannotDoIt;
 		
 	}
 	
@@ -104,7 +108,7 @@ public class HttpRequest implements Closeable {
 		public boolean parsePost = true;
 		public boolean parsePostMultipart = true;
 		public int multipartMemoryLimit = 16*1024;
-		public int multipartBufferSize = Nice.bufferSize;
+		public int multipartBufferSize = Nice.BufferSize;
 		
 		public Settings() {}
 		
@@ -230,6 +234,23 @@ public class HttpRequest implements Closeable {
 		return this;
 	}
 	
+	public HttpRequest writeResponseOK() throws IOException {
+		return this.writeResponse(null, null);
+	}
+	
+	public HttpRequest writeResponseOK(CharSequence httpversion) throws IOException {
+		return this.writeResponse(null, httpversion);
+	}
+	
+	public HttpRequest writeResponse(CharSequence status) throws IOException {
+		return this.writeResponse(status, null);
+	}
+	
+	public HttpRequest writeResponse(CharSequence status, CharSequence httpversion) throws IOException {
+		writeResponse(status, httpversion, this.getResponse(), this.getOutputStream());
+		return this;
+	}
+	
 	public HttpRequest parseRequestUntilPost() throws IOException {
 		return this.parseRequestUntilPost(null);
 	}
@@ -278,7 +299,7 @@ public class HttpRequest implements Closeable {
 	 * 		otherwise returns this instance or throw exception
 	 */
 	public HttpRequest parseRequestFirstLine(final RequestHandler handler) throws IOException {
-		return parseRequestFirstLine(handler, this.getRequest(), this.getInputStream())
+		return parseRequestFirstLine(handler, this.getRequest(), this, this.getInputStream())
 				? this : null;
 	}
 	
@@ -439,7 +460,7 @@ public class HttpRequest implements Closeable {
 		//ALL OK! We ended where POST begin!
 	}
 	
-	public static boolean parseRequestFirstLine(final RequestHandler handler, final RequestData in, InputStream input) throws IOException {
+	public static boolean parseRequestFirstLine(final RequestHandler handler, final RequestData in, final HttpRequest req, InputStream input) throws IOException {
 		String path = IUtils.readLineStrict(input);
 		if(path == null || path.length() < 5) {
 			throw new HttpFormatException("Corrupted first line of HTTP request");
@@ -472,22 +493,22 @@ public class HttpRequest implements Closeable {
 		in.setSettings(set);
 		
 		if(zeroi > -1) {
-			final MapWorker inputGet = in.getOrCreateGet();
-			ArgsDecoder.handleMap(
-					new ArgsDecoder.MapHandler<String,String>() {
+			final Map<String,Object> inputGet = in.getOrCreateGet();
+			InternalSplitter.handleMap(
+					new BiConsumer<String,String>() {
 				
 						@Override
-						public void handle(String key, String val) throws Masked {
+						public void accept(String key, String val) throws Masked {
 							key = URLCoder.decode(key);
 							val = URLCoder.decode(val);
 							try {
-								inputGet.putArrayed(key, val);
+								AbstractMapWorker.putArrayed(inputGet, key, val, Nice.getLinkedMapFactory(), Nice.getListFactory());
 							} catch(CannotDoIt c) {
-								handler.cannotParseGet(in, key, val);
+								handler.cannotParseGet(req, key, val);
 							}
 						}
 				
-			}, originalPath, "=", "&", zeroi+1);
+			}, originalPath, "=", "&", zeroi+1, true);
 		}
 		return true;
 	}
@@ -526,23 +547,23 @@ public class HttpRequest implements Closeable {
 			parsePostSimple(id, in);
 			return;
 		}
-		final long clen = Nice.getAs(id.getHead("content-length"), long.class, -1L);
+		final long clen = Nice.cast(id.getHead("content-length"), long.class, -1L);
 		if(clen < 0) {
 			throw new HttpFormatException("Content length undefined or wrong ("+clen+")");
 		}
 		String type = ctype.substring(0, i);
 		id.setContentType(type);
 		try {
-			ArgsDecoder.handleMap(new ArgsDecoder.MapHandler<String,String>() {
+			InternalSplitter.handleMap(new BiConsumer<String,String>() {
 	
 					@Override
-					public void handle(String key, String val) throws Masked {
+					public void accept(String key, String val) throws Masked {
 						if(key != null && val != null) {
 							key = key.trim().toLowerCase();
 							val = val.trim();
 							if(key.equals("boundary")) {
 								try {
-								id.setBoundary(val);
+									id.setBoundary(val);
 								} catch(IOException ioe) {
 									throw Nice.mask(ioe);
 								}
@@ -554,7 +575,7 @@ public class HttpRequest implements Closeable {
 						}
 					}
 			
-			}, ctype, "=",";", i+1);
+			}, ctype, "=",";", i+1, true);
 		} catch(Masked masked) {
 			throw (IOException) masked.getCause();
 		}
@@ -596,10 +617,10 @@ public class HttpRequest implements Closeable {
 				String originalCdis = cdis;
 				cdis = cdis.substring(0, cdisSplit);
 				try {
-					ArgsDecoder.handleMap(new ArgsDecoder.MapHandler<String,String>() {
+					InternalSplitter.handleMap(new BiConsumer<String,String>() {
 						
 						@Override
-						public void handle(String key, String val) throws Masked {
+						public void accept(String key, String val) throws Masked {
 							if(key != null && val != null) {
 								key = key.trim().toLowerCase();
 								val = val.trim();
@@ -614,13 +635,13 @@ public class HttpRequest implements Closeable {
 							}
 						}
 				
-					}, originalCdis, "=",";", cdisSplit+1);
+					}, originalCdis, "=",";", cdisSplit+1, true);
 				} catch(Masked m) {
 					throw (IOException) m.getCause();
 				}
 			}
 			if(cdis.equals("form-data")) {
-				AbstractPost.MultipartPost postdata = new AbstractPost.MultipartPost((filename.getValue() != null), set.getMultipartMemoryLimit());;
+				AbstractPost.MultipartPost postdata = new AbstractPost.MultipartPost((filename.getValue() != null), set.getMultipartMemoryLimit());
 				postdata.setFileName(filename.getValue());
 				postdata.setContentType(head.get("content-type"));
 				postdata.setHeads(head);
@@ -650,23 +671,28 @@ public class HttpRequest implements Closeable {
 	}
 	
 	public static void parsePostSimple(final RequestData id, InputStream in) throws IOException {
-		final long clen = Nice.getAs(id.getHead("content-length"), long.class, -1L);
-		if(clen < 0 || clen > Nice.maxArrayLength) {
+		final long clen = Nice.cast(id.getHead("content-length"), long.class, -1L);
+		if(clen < 0 || clen > Nice.MaxArrayLength) {
 			throw new HttpFormatException("Content length undefined, wrong or too big ("+clen+")");
 		}
 		final Map<String,Post> posts = id.getOrCreatePost();
 		byte[] read = new byte[(int) clen];
 		int readed = IUtils.tryToReadFully(in, read);
-		ArgsDecoder.handleMap(new ArgsDecoder.MapHandler<ByteSequence,ByteSequence>() {
+		InternalSplitter.handleMap(new BiConsumer<ByteSequence,ByteSequence>() {
 
 					@Override
-					public void handle(ByteSequence key, ByteSequence val) {
+					public void accept(ByteSequence key, ByteSequence val) {
 						posts.put(key.toString(id.getCharset()),
 								(val == null) ? null : new AbstractPost.PostBytes(val.newArray()));
 					}
 		}, new ByteArraySequence(read, 0, readed), EQUALS, AND);
 	}
 	
+	public static void writeResponse(CharSequence status, 
+			CharSequence httpversion, ResponseData od, OutputStream out) throws IOException {
+		writeResponseLine(status, httpversion, out);
+		writeResponseHeads(od, out);
+	}
 	
 	public static void writeResponseHeads(ResponseData od, OutputStream out) throws IOException {
 		Map<String,List<String>> heads = od.getHeads();
@@ -696,7 +722,7 @@ public class HttpRequest implements Closeable {
 		out.write(HttpClient.CRLF);
 	}
 	
-	public static void main(String...strings) throws Exception {
+	public static void maine(String...strings) throws Exception {
 		HttpServer server = new HttpServer(new Sockets.Config("localhost", 25569));
 		server.setHandler(new Handler() {
 
@@ -707,7 +733,7 @@ public class HttpRequest implements Closeable {
 			}
 
 			@Override
-			public void cannotParseGet(RequestData in, String key, String value) throws CannotDoIt {
+			public void cannotParseGet(HttpRequest req, String key, String value) throws CannotDoIt {
 				System.out.println("<--- Cannot parse get " + key + " = " + value);
 			}
 
@@ -751,13 +777,13 @@ public class HttpRequest implements Closeable {
 			}
 
 			@Override
-			public void handleException(Exception ex, HttpRequest req) {
+			public void handleException(HttpRequest req, Exception ex) {
 				System.out.println("Handle exception:");
 				ex.printStackTrace();
 			}
 
 			@Override
-			public void handleDecoderException(Exception ex, HttpRequest req) {
+			public void handleDecoderException(HttpRequest req, Exception ex) {
 				System.out.println("Handle decoder exception:");
 				ex.printStackTrace();
 			}

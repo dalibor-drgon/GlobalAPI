@@ -31,17 +31,24 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
+import wordnice.api.Nice;
+
 public abstract class ArrayOutputStream
 extends ByteArrayOutputStream {
-	
-	public ArrayOutputStream(int size) {
-		super((size < 0 || size > 128) ? size : 128);
-	}
 
+	public ArrayOutputStream(int size) {
+		super(((size >= 0 && size < Nice.MinBuilderSize) ? Nice.MinBuilderSize : size));
+	}
+	
+	public ArrayOutputStream(int size, boolean ign) {
+		super(size);
+	}
+	
 	/**
-	 * Closing a <tt>ArrayOutputStream</tt> has no effect
-	 * @see java.io.ByteArrayOutputStream#close()
-	 */
+     * Closing a <tt>ArrayOutputStream</tt> has no effect. The methods
+     * can be called after the stream has been closed without
+     * generating an <tt>IOException</tt>.
+     */
 	@Override
 	public void close() {}
 	
@@ -53,56 +60,24 @@ extends ByteArrayOutputStream {
 	public void flush() {}
 
 	/**
-	 * @see java.io.ByteArrayOutputStream#reset()
+	 * Remove all data and set size to zero
+	 * @see ByteArrayOutputStream#reset()
 	 */
-	@Override
 	public abstract void reset();
 	
 	/**
-	 * Return true if this array supports more than 2GiB of data
-	 * Please note, some methods may throw OutOfMemoryError
-	 * to avoid integer truncation or when stream does not support
-	 * more than 2GiB of data
-	 * @return true if this array supports more than 2GiB of data
+	 * Returns number of bytes written to this stream
+	 * @return number of bytes written to this stream
 	 */
-	public boolean isLong() {
-		return false;
-	}
-	
-	/**
-	 * @see java.io.ByteArrayOutputStream#size()
-	 * @throws OutOfMemoryError if isLong() == true and sizeLong() > int
-	 */
-	@Override
 	public abstract int size();
-	
-	/**
-	 * Return allocated capacity
-	 * @return Allocated capacity
-	 * @throws OutOfMemoryError if isLong() == true and capacityLong() > int
-	 */
-	public abstract int capacity();
-	
-	/**
-	 * 
-	 * @see java.io.ByteArrayOutputStream#size()
-	 */
-	public long sizeLong() {
-		return this.size();
-	}
-	
-	/**
-	 * Return allocated capacity
-	 * @return Allocated capacity
-	 */
-	public long capacityLong() {
-		return this.capacity();
-	}
 
 	/**
-	 * @see wordnice.streams.ArrayOutputStream#toByteArray()
-	 */
-	@Override
+     * Gets the curent contents of this byte stream as a byte array.
+     * The result is independent of this stream.
+     *
+     * @return the current contents of this output stream, as a byte array
+     * @see java.io.ByteArrayOutputStream#toByteArray()
+     */
 	public abstract byte[] toByteArray();
 	
 	/**
@@ -111,6 +86,16 @@ extends ByteArrayOutputStream {
 	 */
 	public byte[] getBuffer() {
 		return null;
+	}
+	
+	/**
+	 * Return internal byte array if possible or create one
+	 * @return internal byte array if possible or create one
+	 */
+	public byte[] getOrCreateBuffer() {
+		byte[] bytes = getBuffer();
+		if(bytes != null) return bytes;
+		return toByteArray();
 	}
 	
 	/**
@@ -143,7 +128,6 @@ extends ByteArrayOutputStream {
     /**
 	 * @see wordnice.streams.ArrayOutputStream#toString(java.lang.String)
 	 */
-    @Override
     public String toString(String enc) throws UnsupportedEncodingException {
     	byte[] intn = getBuffer();
     	if(intn != null) return new String(intn, getBufferOffset(), size(), enc);
@@ -170,7 +154,6 @@ extends ByteArrayOutputStream {
 	 * 		Use toString(), toString(String) or toString(Charset) instead
 	 * @see java.io.ByteArrayOutputStream#toString(int)
 	 */
-    @Override
     @Deprecated
 	public String toString(int hibyte) {
     	byte[] intn = getBuffer();
@@ -178,38 +161,20 @@ extends ByteArrayOutputStream {
 		return new String(toByteArray(), hibyte);
 	}
 
-	@Override
-	public abstract void write(byte[] b, int off, int len);
-	
-	@Override
-	public void write(byte[] b) {
-		this.write(b, 0, b.length);
-	}
-
-	@Override
-	public abstract void write(int b);
-
-	/**
-	 * @see java.io.ByteArrayOutputStream#writeTo(java.io.OutputStream)
-	 */
-	@Override
+    /**
+     * Writes the entire contents of this byte stream to the
+     * specified output stream.
+     *
+     * @param out  the output stream to write to
+     * @throws IOException if an I/O error occurs, such as if the stream is closed
+     * @see java.io.ByteArrayOutputStream#writeTo(OutputStream)
+     */
 	public abstract void writeTo(OutputStream out) throws IOException;
 	
 	/**
 	 * Make sure this stream's free space is at least big as "space" argument
-	 * May do nothing on some streams
 	 */
 	public abstract void ensureSpace(int space);
-	
-	/**
-	 * Make sure this stream's free space is at least big as "space" argument
-	 * May do nothing on some streams
-	 */
-	public void ensureSpace(long space) {
-		if(space > Integer.MAX_VALUE)
-			throw new OutOfMemoryError(""+(this.capacityLong() + space));
-		this.ensureSpace((int) space);
-	}
 
 	/**
      * Writes the entire contents of the specified input stream to this
@@ -218,24 +183,9 @@ extends ByteArrayOutputStream {
      *
      * @param in the input stream to read from
      * @return total number of bytes read from the input stream
-     *         (and written to this stream).
-     *         Returns 0 if !isLong() && current size() == Integer.MAX_VALUE
-     *         Return maximum is Integer.MAX_VALUE
      * @throws IOException if an I/O error occurs while reading the input stream
      */
 	public abstract int write(InputStream in) throws IOException;
-	
-	/**
-	 * Write whole input stream, ussualy directly to internal buffers
-	 * without copying
-	 * 
-	 * @param in Input stream to read from
-	 * @return Bytes readed
-	 * @throws IOException when IO exception is thrown by input stream
-	 * @throws OutOfMemoryError if isLong() == false and size reached 2GiB
-	 */
-	public long writeLong(InputStream in) throws IOException {
-		return write(in);
-	}
+
 	
 }

@@ -54,13 +54,13 @@ import wordnice.db.operator.Limit;
 import wordnice.db.operator.Sort;
 import wordnice.db.serialize.BadResultException;
 import wordnice.db.serialize.SerializeException;
-import wordnice.db.serialize.SerializeUtils;
 import wordnice.db.wndb.WNDBDecoder;
 import wordnice.db.wndb.WNDBEncoder;
 import wordnice.db.wndb.WNDBDecoder.DecoderHandler;
 import wordnice.streams.IUtils;
 import wordnice.streams.OUtils;
 import wordnice.utils.FilesAPI;
+import wordnice.utils.SerializeUtils;
 
 public class ArraysResSet extends ObjectResSet implements ResSetDB, DecoderHandler {
 
@@ -699,7 +699,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB, DecoderHandl
 			} catch(Exception e) {
 				ren = FilesAPI.getFreeName(f);
 				System.err.println("Error occured while loading binary database ("
-						+ FilesAPI.getRealPath(f) + "). Database will be renamed and marked as corruped (" + ren.getName() + "):");
+						+ f.getAbsolutePath() + "). Database will be renamed and marked as corruped (" + ren.getName() + "):");
 				e.printStackTrace();
 			}
 			FilesAPI.moveFile(f, ren);
@@ -715,7 +715,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB, DecoderHandl
 				return rs;
 			} catch(Exception e) {
 				System.err.println("Error occured while loading WNDB database (" 
-						+ FilesAPI.getRealPath(f) + "):");
+						+ f.getAbsolutePath() + "):");
 				e.printStackTrace();
 			}
 			File ren = FilesAPI.getFreeName(f);
@@ -734,7 +734,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB, DecoderHandl
 				}
 			} catch(Exception e) {
 				System.err.println("Error occured while moving corrupted binary database (" 
-						+ FilesAPI.getRealPath(f) + ") to (" + ren.getName() 
+						+ f.getAbsolutePath() + ") to (" + ren.getName() 
 						+ "). Due this unexpected error, all saved data will lost!");
 				e.printStackTrace();
 				return new ArraysResSet(names, types);
@@ -746,7 +746,7 @@ public class ArraysResSet extends ObjectResSet implements ResSetDB, DecoderHandl
 			return rs;
 		} catch(Exception e) {
 			System.err.println("Error occured while creating binary database (" 
-					+ FilesAPI.getRealPath(f) 
+					+ f.getAbsolutePath()
 					+ "). Due this unexpected error, all saved data will lost!");
 			e.printStackTrace();
 		}

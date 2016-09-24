@@ -101,7 +101,7 @@ implements TwoLongGenerator {
 	}
 
 	@Override
-	public Generator createForSeed(Seed seed) {
+	public Generator cloneFor(Seed seed) {
 		return new XoRo(seed);
 	}
 	

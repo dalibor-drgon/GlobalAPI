@@ -35,8 +35,8 @@ import java.util.Map.Entry;
 
 import wordnice.api.Nice;
 import wordnice.codings.URLCoder;
+import wordnice.seq.ByteSequence;
 import wordnice.streams.OUtils;
-import wordnice.utils.ByteSequence;
 
 public class HttpClient {
 	

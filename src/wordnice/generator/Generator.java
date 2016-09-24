@@ -29,9 +29,10 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Map;
 
-import wordnice.utils.ByteSequence;
+import wordnice.seq.ByteSequence;
 
-public interface Generator {
+public interface Generator
+extends Cloneable {
 	
 	public static interface TwoLongGenerator
 	extends Generator {
@@ -61,11 +62,12 @@ public interface Generator {
 	boolean nextBoolean();
 	short nextShort();
 	char nextChar();
+	byte nextByte();
 	
 	GenInputStream getStream();
 	GenInputStream createStream();
 	Generator clone();
-	Generator createForSeed(Seed seed);
+	Generator cloneFor(Seed seed);
 	Seed getSeed();
 
 	void setSeed(Seed nev);
@@ -74,8 +76,9 @@ public interface Generator {
 	void skipBlocks(int loops);
 	void skipBlocks(long loops);
 
-	void genBytes(byte[] bytes);
-	void genBytes(byte[] bytes, int off, int len);
+	byte[] nextBytes(int count);
+	void nextBytes(byte[] bytes);
+	void nextBytes(byte[] bytes, int off, int len);
 
 	/**
 	 * @return def 32 (24/3*4 Base64 encoded)

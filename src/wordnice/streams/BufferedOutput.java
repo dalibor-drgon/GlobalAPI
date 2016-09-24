@@ -49,7 +49,7 @@ implements AutoCloseable {
 	protected int bufferLength;
 
     public BufferedOutput(OutputStream out) {
-        this(out, Nice.bufferSize, (int) (Nice.bufferSize*0.85));
+        this(out, Nice.BufferSize, (int) (Nice.BufferSize*0.85));
     }
 
     public BufferedOutput(OutputStream out, int size) {

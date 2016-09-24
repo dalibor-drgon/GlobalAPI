@@ -35,7 +35,7 @@ import wordnice.db.ColType;
 import wordnice.db.serialize.CollSerializer;
 import wordnice.db.serialize.SerializeException;
 import wordnice.db.wndb.WNDBEncoder;
-import wordnice.utils.NiceStringUtils;
+import wordnice.utils.NiceStrings;
 
 public class OUtils {
 	
@@ -302,7 +302,7 @@ public class OUtils {
 	}
 	public static void write(OutputStream out, char[] cbuf, int off, int len) throws IOException {
 		Nice.checkBounds(cbuf, off, len);
-		NiceStringUtils.toBytes(out,cbuf, off, len);
+		NiceStrings.toBytes(out,cbuf, off, len);
 	}
 	
 	public static void write(OutputStream out, Object obj) throws IOException {
@@ -329,11 +329,11 @@ public class OUtils {
 	
 	public static void write(OutputStream out, CharSequence str, int off, int len) throws IOException {
 		Nice.checkBounds(str, off, len);
-		NiceStringUtils.toBytes(out, str, off, len);
+		NiceStrings.toBytes(out, str, off, len);
 	}
 	
 	public static void writeln(OutputStream out) throws IOException {
-		out.write(Nice.LINE_SEPARATOR_BYTES);
+		out.write(Nice.LineSeparatorBytes);
 	}
 	
 	public static void writeln(OutputStream out, Object obj) throws IOException {

@@ -37,6 +37,7 @@ import wordnice.db.results.ResSet;
 import wordnice.db.results.ResSetDB;
 import wordnice.db.serialize.SerializeException;
 
+@Deprecated
 public interface Database {
 
 	/**

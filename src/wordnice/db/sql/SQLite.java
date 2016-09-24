@@ -26,12 +26,10 @@ package wordnice.db.sql;
 
 import java.io.File;
 
-import wordnice.utils.FilesAPI;
-
 public class SQLite extends DriverManagerSQL {
 	
 	public SQLite(File file) {
-		super("jdbc:sqlite:" + FilesAPI.getRealPath(file));
+		super("jdbc:sqlite:" + file.getAbsolutePath());
 	}
 	
 	public SQLite(String file) {

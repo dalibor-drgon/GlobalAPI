@@ -30,7 +30,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.UUID;
 
-import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
@@ -38,9 +37,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
-import wordnice.api.Nice;
 import wordnice.coll.ImmWeakArray;
-import wordnice.utils.NiceStringUtils;
+import wordnice.utils.NiceStrings;
 
 public class Craft {
 	
@@ -357,20 +355,45 @@ public class Craft {
 	 * Placeholders
 	 */
 
+	protected static Object[] _replaceColors = null;
+	
+	/**
+	 * 
+	 * @param input
+	 * @return
+	 */
+	public static String colorize(String input) {
+		if(input == null) return null;
+		if(_replaceColors == null) {
+			ChatColor[] colors = ChatColor.values();
+			_replaceColors = new Object[colors.length*4]; //&code:replace + {name}:replace
+			int i, arrayIndex = 0, l = colors.length;
+			for(i = 0; i < l; i++) {
+				ChatColor col = colors[i];
+				String colStr = col.toString();
+				_replaceColors[arrayIndex++] = "{"+col.name()+"}";
+				_replaceColors[arrayIndex++] = colStr;
+				_replaceColors[arrayIndex++] = "&"+col.getChar();
+				_replaceColors[arrayIndex++] = colStr;
+			}
+		}
+		return NiceStrings.multireplace(input, _replaceColors);
+	}
+	
 	
 	/**
 	 * Replace placeholders
-	 * 
-	 * @param sender Command sender to process (may be null)
-	 * @param nev String to process
-	 * @param place_api Call other available placeholder plugins
-	 * 
-	 * @return Formated string with processed placeholders
+	 * @param sender Command sender to process. 
+	 * 		If null, custom placeholders are ignored
+	 * @param nev String to process. If null, null is returned
+	 * @return Formated string with processed placeholders, 
+	 * 		or null if null was passed
 	 */
 	public static String placeholder(CommandSender sender, String nev) {
+		if(nev == null) return null;
 		//nev = ChatColor.translateAlternateColorCodes('&', nev);
 		if(Bukkit.getServer() != null)
-			nev = NiceStringUtils.multireplace(nev, new Object[] {
+			nev = NiceStrings.multireplace(nev, new Object[] {
 				"{n}",                      "\n",
 				"{server_ip}",              Bukkit.getIp(),
 				"{server_port}",            Bukkit.getPort(),
@@ -382,17 +405,11 @@ public class Craft {
 				"{server_date}",            new Date().toString(),
 		});
 		
-		ChatColor[] colors = ChatColor.values();
-		int i = 0;
-		for(; i < colors.length; i++) {
-			ChatColor cur = colors[i];
-			nev = StringUtils.replace(nev, ("{" + cur.name() + "}"), cur.toString());
-		}
+		nev = colorize(nev);
 		
-		int befend = 0;
-		//Designed to have max. one {server_date{...}} for performance, 
-		//but we can handle more
-		while(true) {
+		//int befend = 0;
+		//Designed to have max. one {server_date{...}} for performance, but definitely can handle more
+		/*while(true) {
 			int start = nev.indexOf("{server_date{", befend);
 			if(start == -1) {
 				break;
@@ -408,9 +425,9 @@ public class Craft {
 			String format = Nice.dateFormat(nev.substring(start+13, end));
 			nev = nev.substring(0, start) + format + nev.substring(end + 2, nev.length());
 			befend = start + format.length();
-		}
+		}*/
 		if(sender != null) {
-			nev = NiceStringUtils.multireplace(nev, new Object[] {
+			nev = NiceStrings.multireplace(nev, new Object[] {
 					"{player_name}",            sender.getName(),
 					"{player_op}",              sender.isOp(),
 			});
@@ -420,7 +437,7 @@ public class Craft {
 					nev = me.clip.placeholderapi.
 							PlaceholderAPI.setBracketPlaceholders(p, nev);
 				} catch(Throwable t) {
-					nev = NiceStringUtils.multireplace(nev, new Object[] {
+					nev = NiceStrings.multireplace(nev, new Object[] {
 							"{player_displayname}",     p.getDisplayName(),
 							"{player_health}",          p.getHealth(),
 							"{player_xp}",              p.getExp(),

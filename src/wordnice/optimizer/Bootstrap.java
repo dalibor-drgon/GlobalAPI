@@ -31,11 +31,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.function.Predicate;
 import java.util.zip.ZipFile;
 
 import org.apache.commons.io.IOUtils;
-
-import wordnice.api.Nice.BHandler;
 
 public class Bootstrap {
 	
@@ -45,7 +44,7 @@ public class Bootstrap {
 		void writeTo(OutputStream out, byte[] buffer) throws IOException;
 	}
 	
-	public static Handler createPrefixedHandler(String prefix, BHandler<String> handler) {
+	public static Handler createPrefixedHandler(String prefix, Predicate<String> handler) {
 		return new PrefixedHandler(prefix, handler);
 	}
 	
@@ -53,7 +52,7 @@ public class Bootstrap {
 		return new PrefixedHandler(prefix, null);
 	}
 	
-	public static Handler createBooleanHandler(BHandler<String> hand) {
+	public static Handler createBooleanHandler(Predicate<String> hand) {
 		return new PrefixedHandler(null, hand);
 	}
 	
@@ -73,17 +72,17 @@ public class Bootstrap {
 	implements Handler {
 
 		protected String prefix;
-		protected BHandler<String> handler;
+		protected Predicate<String> handler;
 		
 		public PrefixedHandler(String prefix) {
 			this(prefix, null);
 		}
 		
-		public PrefixedHandler(BHandler<String> handler) {
+		public PrefixedHandler(Predicate<String> handler) {
 			this(null, handler);
 		}
 		
-		public PrefixedHandler(String prefix, BHandler<String> handler) {
+		public PrefixedHandler(String prefix, Predicate<String> handler) {
 			if(prefix == null || prefix.isEmpty()) prefix = null;
 			this.prefix = prefix;
 			this.handler = handler;
@@ -91,7 +90,7 @@ public class Bootstrap {
 		
 		@Override
 		public String canBootstrap(String name) {
-			if(this.handler != null && !handler.handle(name)) return null;
+			if(this.handler != null && !handler.test(name)) return null;
 			return (this.prefix == null) ? name : prefix+name;
 		}
 		

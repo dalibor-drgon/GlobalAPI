@@ -37,6 +37,7 @@ import wordnice.db.DatabaseException;
 import wordnice.db.DatabaseUtils;
 import wordnice.db.serialize.CollSerializer;
 
+@SuppressWarnings("deprecation")
 public class ResultResSet implements ResSet {
 
 	public String[] keys;

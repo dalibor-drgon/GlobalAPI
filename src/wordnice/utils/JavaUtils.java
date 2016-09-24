@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -44,7 +45,6 @@ import org.apache.commons.io.IOUtils;
 import gnu.trove.set.hash.THashSet;
 import sun.misc.Unsafe;
 import wordnice.api.Nice;
-import wordnice.api.Nice.VHandler;
 import wordnice.javaagent.JavaAgent;
 import wordnice.streams.ArrayOutputStream;
 import wordnice.streams.IUtils;
@@ -370,7 +370,7 @@ public class JavaUtils {
 		}
 	}
 	
-	protected static void getClassesFolder(VHandler<String> handler, File fd, String pref) {
+	protected static void getClassesFolder(Consumer<String> handler, File fd, String pref) {
 		String[] ls = fd.list();
 		int i = 0;
 		for(; i < ls.length; i++) {
@@ -381,7 +381,7 @@ public class JavaUtils {
 			} else {
 				String clsn = pref + curstr;
 				if(clsn.endsWith(".class") && clsn.indexOf('$') == -1) {
-					handler.handle(clsn.substring(0, clsn.length() - 6).replace(File.separatorChar, '.'));
+					handler.accept(clsn.substring(0, clsn.length() - 6).replace(File.separatorChar, '.'));
 				}
 			}
 		}
@@ -413,7 +413,7 @@ public class JavaUtils {
 		getClassesZip(set, new ZipInputStream(Nice.input(fd)));
 	}
 	
-	public static void getClasses(VHandler<String> handler, File fd) throws Exception {
+	public static void getClasses(Consumer<String> handler, File fd) throws Exception {
 		if(fd.isDirectory()) {
 			getClassesFolder(handler, fd, "");
 			return;
@@ -441,13 +441,13 @@ public class JavaUtils {
 		zip.close();
 	}
 	
-	public static void getClassesZip(VHandler<String> handler, ZipInputStream zip) throws Exception {
+	public static void getClassesZip(Consumer<String> handler, ZipInputStream zip) throws Exception {
 		ZipEntry ent = null;
 		while((ent = zip.getNextEntry()) != null) {
 			if(!ent.isDirectory()) {
 				String clsn = ent.getName();
 				if(clsn.endsWith(".class") && clsn.indexOf('$') == -1) {
-					handler.handle(clsn.substring(0, clsn.length() - 6).replace(File.separatorChar, '.'));
+					handler.accept(clsn.substring(0, clsn.length() - 6).replace(File.separatorChar, '.'));
 				}
 			}
 			zip.closeEntry();

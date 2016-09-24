@@ -34,6 +34,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,13 +43,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimeZone;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -56,21 +59,86 @@ import org.apache.commons.lang3.StringUtils;
 
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.set.hash.THashSet;
-import hirondelle.date4j.DateTime;
 import wordnice.coll.MapWorker;
 import wordnice.coll.MapWorkerImpl;
 import wordnice.generator.GenInputStream;
 import wordnice.generator.Generator;
+import wordnice.generator.builtin.SecureGenerator;
 import wordnice.generator.builtin.XoRo;
+import wordnice.seq.ByteSequence;
 import wordnice.streams.ArrayOutputStream;
 import wordnice.streams.ArrayOutputStreamInt;
 import wordnice.streams.ArrayOutputStreamSimple;
 import wordnice.streams.BufferedInput;
 import wordnice.streams.BufferedOutput;
-import wordnice.utils.NiceConverter;
-import wordnice.utils.ByteSequence;
 
 public class Nice {
+	
+	/**
+	 * Create logger with given prefix
+	 * @param name Name and prefix of logger
+	 * @return Logger, parent of global logger with prefixed messaging
+	 * @throws IllegalArgumentException Name == null
+	 */
+	public static Logger createLogger(String name)
+			throws IllegalArgumentException {
+		if(name == null) throw new IllegalArgumentException("Name == null");
+		return new PrefixedLogger(name, name);
+	}
+	
+	/**
+	 * Create logger with given prefix
+	 * @param className Class name used for debugging purpose
+	 * @param name Prefix of logger
+	 * @return Logger, parent of global logger with prefixed messaging
+	 * @throws IllegalArgumentException Name == null or className == null
+	 */
+	public static Logger createLogger(String className, String name) {
+		if(name == null) throw new IllegalArgumentException("Name == null");
+		if(className == null) throw new IllegalArgumentException("ClassName == null");
+		return new PrefixedLogger(className, name);
+	}
+	
+	/**
+	 * Create logger with given prefix
+	 * @param clz Class where the logger is used
+	 * @param name Prefix of logger
+	 * @return Logger, parent of global logger with prefixed messaging
+	 * @throws IllegalArgumentException Name == null or class == null
+	 */
+	public static Logger createLogger(Class<?> clz, String name) {
+		if(clz == null) throw new IllegalArgumentException("Class == null");
+		if(name == null) throw new IllegalArgumentException("Name == null");
+		return new PrefixedLogger(clz.getName(), name);
+	}
+	
+	/**
+	 * Create logger for given class with prefix of class name
+	 * @param clz Class where the logger is used
+	 * @return Logger, parent of global logger with prefixed messaging
+	 * @throws IllegalArgumentException class == null
+	 */
+	public static Logger createLogger(Class<?> clz) {
+		if(clz == null) throw new IllegalArgumentException("Class == null");
+		return new PrefixedLogger(clz.getName(), clz.getSimpleName());
+	}
+	
+	protected static class PrefixedLogger extends Logger {
+	  protected String prefix;
+	  
+	  protected PrefixedLogger(String className, String prefix) {
+	    super(className, null);
+	    this.prefix = ("[" + prefix + "] ");
+	    setParent(Logger.getGlobal());
+	    setLevel(Level.ALL);
+	  }
+	  
+	  @Override
+	  public void log(LogRecord logRecord) {
+	    logRecord.setMessage(this.prefix.concat(logRecord.getMessage()));
+	    super.log(logRecord);
+	  }
+	}
 	
 	/**
 	 * Check given throwable if is java machine error 
@@ -91,32 +159,6 @@ public class Nice {
 				|| t instanceof ThreadDeath) throw (Error)t;
 	}
 	
-	static TimeZone timezone = TimeZone.getDefault();
-	static Locale locale = Locale.getDefault();
-	
-	public static DateTime date() {
-		return DateTime.now(timezone);
-	}
-	
-	public static DateTime date(long milis) {
-		return DateTime.forInstant(milis, timezone);
-	}
-	
-	public static String dateFormat(String format) {
-		if(format == null || format.isEmpty()) return "";
-		return DateTime.now(timezone).format(format, locale);
-	}
-	
-	public static String dateFormat(String format, long milis) {
-		if(format == null || format.isEmpty()) return "";
-		return DateTime.forInstant(milis, timezone).format(format, locale);
-	}
-	
-	protected static String dateFormat(String format, DateTime dt) {
-		if(format == null || format.isEmpty()) return "";
-		return dt.format(format, locale);
-	}
-	
 	public static ScriptEngine createJavascript() {
 		try {
 			ScriptEngine engine = new ScriptEngineManager().getEngineByName("JavaScript");
@@ -126,32 +168,51 @@ public class Nice {
 	}
 	
 	protected static Generator generator;
+	protected static Generator secureGenerator;
 	
 	public static Generator generator() {
 		if(generator == null) generator = new XoRo();
 		return generator;
 	}
 	
+	public static Generator secureGenerator() {
+		if(secureGenerator == null) secureGenerator = new SecureGenerator();
+		return secureGenerator;
+	}
+	
 	public static GenInputStream generatorStream() {
 		return generator().getStream();
 	}
 	
-	public static final String LINE_SEPARATOR = System.getProperty("line.separator");
-	public static final byte[] LINE_SEPARATOR_BYTES = LINE_SEPARATOR.getBytes();
+	public static GenInputStream secureGeneratorStream() {
+		return secureGenerator().getStream();
+	}
+	
+	public static final String LineSeparator = System.getProperty("line.separator");
+	public static final byte[] LineSeparatorBytes = LineSeparator.getBytes();
 	
 	public static final Charset UTF8 = Charset.forName("UTF-8");
-	public static final int maxArrayLength = Integer.MAX_VALUE - 8;
 	
-	public static int bufferSize = 8*1024;
-	public static int builderSize = 128;
-	public static byte[] loopBuffer = new byte[bufferSize];
+	/**
+     * The maximum size of array to allocate.
+     * Some VMs reserve some header words in an array.
+     * Attempts to allocate larger arrays may result in
+     * OutOfMemoryError: Requested array size exceeds VM limit
+     */
+	public static final int MaxArrayLength = Integer.MAX_VALUE - 8;
+	
+	public static int BufferSize = 8*1024;
+	public static int builderSize = 512;
+	public static int MinBuilderSize = 128;
+	public static byte[] LoopBytesBuffer = new byte[BufferSize];
+	public static char[] LoopCharsBuffer = new char[BufferSize];
 	
 	public static BufferedInputStream input(File f) throws FileNotFoundException {
-		return new BufferedInput(new FileInputStream(f), Nice.bufferSize);
+		return new BufferedInput(new FileInputStream(f), Nice.BufferSize);
 	}
 	
 	public static BufferedOutputStream output(File f) throws FileNotFoundException {
-		return new BufferedOutput(new FileOutputStream(f), Nice.bufferSize);
+		return new BufferedOutput(new FileOutputStream(f), Nice.BufferSize);
 	}
 	
 	public static BufferedInputStream input(File f, int buffer) 
@@ -173,7 +234,7 @@ public class Nice {
 	}
 	
 	public static ArrayOutputStream createArrayOutput() {
-		return new ArrayOutputStreamInt(Nice.bufferSize);
+		return new ArrayOutputStreamInt(Nice.BufferSize);
 	}
 	
 	public static ArrayOutputStream createArrayOutput(int cap) {
@@ -181,7 +242,7 @@ public class Nice {
 	}
 
 	public static ArrayOutputStream createArrayOutputSmall() {
-		return new ArrayOutputStreamSimple(Nice.bufferSize);
+		return new ArrayOutputStreamSimple(Nice.BufferSize);
 	}
 	
 	public static ArrayOutputStream createArrayOutputSmall(int cap) {
@@ -200,14 +261,14 @@ public class Nice {
 		if(in instanceof BufferedInputStream) {
 			return ((BufferedInputStream) in);
 		}
-		return new BufferedInput(in, Nice.bufferSize);
+		return new BufferedInput(in, Nice.BufferSize);
 	}
 	
 	public static BufferedOutputStream buffered(OutputStream in) {
 		if(in instanceof BufferedOutputStream) {
 			return ((BufferedOutputStream) in);
 		}
-		return new BufferedOutput(in, Nice.bufferSize);
+		return new BufferedOutput(in, Nice.BufferSize);
 	}
 	
 	public static BufferedInputStream buffered(InputStream in, int cap) {
@@ -233,7 +294,7 @@ public class Nice {
 	}
 	
 	public static void checkLength(long len) {
-		if(len > maxArrayLength || len < 0) {
+		if(len > MaxArrayLength || len < 0) {
 			throw new UnsupportedOperationException(
 					"Tried to allocate array with " + len + " objects, aborting!");//mask
 		}
@@ -315,14 +376,6 @@ public class Nice {
         if(offset+length > obj.length()) 
         	throw new ArrayIndexOutOfBoundsException("Offset+Length ("
         			+(offset+length)+") > Array length ("+obj.length()+")");
-	}
-	
-	public static <X> X getAs(Object value, Class<X> clz) {
-		return NiceConverter.translatePrimitive(value, clz);
-	}
-	
-	public static <X> X getAs(Object value, Class<X> clz, X def) {
-		return NiceConverter.translatePrimitive(value, clz, def);
 	}
 	
 	public static class Debug {
@@ -1127,14 +1180,6 @@ public class Nice {
 		}
 	}
 	
-	public static interface VHandler<X> {
-		void handle(X val);
-	}
-	
-	public static interface BHandler<X> {
-		boolean handle(X val);
-	}
-	
 	public static class Value<V> {
 		
 		protected V value;
@@ -1157,14 +1202,15 @@ public class Nice {
 		
 	}
 	
-	public static class DataEntry<K,V> implements Map.Entry<K,V> {
+	public static class MutableEntry<K,V> 
+	implements Map.Entry<K,V>, Cloneable {
 		
 		protected K key;
 		protected V value;
 		
-		public DataEntry() {}
+		public MutableEntry() {}
 		
-		public DataEntry(K key, V val) {
+		public MutableEntry(K key, V val) {
 			this.key = key;
 			this.value = val;
 		}
@@ -1192,10 +1238,15 @@ public class Nice {
 			return old;
 		}
 		
+		@Override
+		public MutableEntry<K,V> clone() {
+			return new MutableEntry<K,V>(key, value);
+		}
+		
 	}
 
 	public static interface DataEntryHandler<K, V> {
-		public boolean handle(DataEntry<K,V> entry);
+		public boolean handle(MutableEntry<K,V> entry);
 	}
 	
 	/**
@@ -1268,6 +1319,328 @@ public class Nice {
 			in = StringUtils.replace(in, ""+arr[i++], ""+arr[i++]);
 		}
 		return in;
+	}
+
+	/**
+	 * Translate between String / Number / primitive
+	 * 
+	 * @return non-null value if can be translated (eg. "1234" -> Float -> 1234.0f).
+	 * 		null or zero if cannot be translated (eg. "hello" -> Int -> ???)
+	 */
+	@SuppressWarnings("unchecked")
+	public static <X> X cast(Object obj, Class<X> clz) {
+		return (X) castRaw(obj, clz);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <X> X cast(Object obj, Class<X> clz, X def) {
+		return (X) castOrDefaultObject(obj, clz, def);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <X> X castOrThrow(Object obj, Class<X> clz) throws CannotDoIt {
+		return (X) translatePrimitiveOrDieRaw(obj, clz);
+	}
+
+	public static Object castOrDefaultObject(Object obj, Class<?> c, Object def) {
+		if(obj == null) {
+			return def;
+		}
+		if(c.isInstance(obj)) { //Compatible for other classes than primitives
+			return obj;
+		}
+		if(obj instanceof CharSequence) {
+			obj = obj.toString();
+		} else if(obj instanceof byte[]) {
+			obj = new String((byte[]) obj);
+		} else if(obj instanceof char[]) {
+			obj = new String((char[]) obj);
+		}
+		if(!(obj instanceof String) && !(obj instanceof Number) && !(obj.getClass().isPrimitive())) {
+			return def;
+		}
+		if(String.class.isAssignableFrom(c)) {
+			return obj;
+		} else if(!Number.class.isAssignableFrom(c) && !(c.isPrimitive())) {
+			return def;
+		}
+		if(obj instanceof Number) {
+			Number num = (Number) obj;
+			if(Boolean.class.isAssignableFrom(c) || boolean.class.isAssignableFrom(c)) {
+				return num.intValue() != 0;
+			}
+			if(Byte.class.isAssignableFrom(c) || byte.class.isAssignableFrom(c)) {
+				return num.byteValue();
+			}
+			if(Short.class.isAssignableFrom(c) || short.class.isAssignableFrom(c)) {
+				return num.shortValue();
+			}
+			if(Integer.class.isAssignableFrom(c) || int.class.isAssignableFrom(c)) {
+				return num.intValue();
+			}
+			if(Long.class.isAssignableFrom(c) || long.class.isAssignableFrom(c)) {
+				return num.longValue();
+			}
+			if(Float.class.isAssignableFrom(c) || float.class.isAssignableFrom(c)) {
+				return num.floatValue();
+			}
+			if(Double.class.isAssignableFrom(c) || double.class.isAssignableFrom(c)) {
+				return num.doubleValue();
+			}
+			if(BigDecimal.class.isAssignableFrom(c)) {
+				return BigDecimal.valueOf(num.doubleValue());
+			}
+			if(BigInteger.class.isAssignableFrom(c)) {
+				return BigInteger.valueOf(num.longValue());
+			}
+			return def;
+		}
+		String str = obj.toString();
+		
+		try {
+			if(Boolean.class.isAssignableFrom(c) || boolean.class.isAssignableFrom(c)) {
+				return Boolean.parseBoolean(str);
+			}
+			if(Byte.class.isAssignableFrom(c) || byte.class.isAssignableFrom(c)) {
+				return Byte.parseByte(str);
+			}
+			if(Short.class.isAssignableFrom(c) || short.class.isAssignableFrom(c)) {
+				return Short.parseShort(str);
+			}
+			if(Integer.class.isAssignableFrom(c) || int.class.isAssignableFrom(c)) {
+				return Integer.parseInt(str);
+			}
+			if(Long.class.isAssignableFrom(c) || long.class.isAssignableFrom(c)) {
+				return Long.parseLong(str);
+			}
+			if(Float.class.isAssignableFrom(c) || float.class.isAssignableFrom(c)) {
+				return Float.parseFloat(str);
+			}
+			if(Double.class.isAssignableFrom(c) || double.class.isAssignableFrom(c)) {
+				return Double.parseDouble(str);
+			}
+			if(BigDecimal.class.isAssignableFrom(c)) {
+				return new BigDecimal(str);
+			}
+			if(BigInteger.class.isAssignableFrom(c)) {
+				return new BigInteger(str);
+			}
+		} catch(NumberFormatException e) {}
+		return def;
+	}
+
+	public static <X> Object castRaw(Object obj, Class<X> c) {
+		if(obj == null) {
+			return castNull(c);
+		}
+		if(c.isInstance(obj)) { //Compatible for other classes than primitives
+			return obj;
+		}
+		if(obj instanceof CharSequence) {
+			obj = obj.toString();
+		} else if(obj instanceof byte[]) {
+			obj = new String((byte[]) obj);
+		} else if(obj instanceof char[]) {
+			obj = new String((char[]) obj);
+		}
+		if(!(obj instanceof String) && !(obj instanceof Number) && !(obj.getClass().isPrimitive())) {
+			return castNull(c);
+		}
+		if(String.class.isAssignableFrom(c)) {
+			return obj;
+		} else if(!Number.class.isAssignableFrom(c) && !(c.isPrimitive())) {
+			return null;
+		}
+		if(obj instanceof Number) {
+			Number num = (Number) obj;
+			if(Boolean.class.isAssignableFrom(c) || boolean.class.isAssignableFrom(c)) {
+				return num.intValue() != 0;
+			}
+			if(Byte.class.isAssignableFrom(c) || byte.class.isAssignableFrom(c)) {
+				return num.byteValue();
+			}
+			if(Short.class.isAssignableFrom(c) || short.class.isAssignableFrom(c)) {
+				return num.shortValue();
+			}
+			if(Integer.class.isAssignableFrom(c) || int.class.isAssignableFrom(c)) {
+				return num.intValue();
+			}
+			if(Long.class.isAssignableFrom(c) || long.class.isAssignableFrom(c)) {
+				return num.longValue();
+			}
+			if(Float.class.isAssignableFrom(c) || float.class.isAssignableFrom(c)) {
+				return num.floatValue();
+			}
+			if(Double.class.isAssignableFrom(c) || double.class.isAssignableFrom(c)) {
+				return num.doubleValue();
+			}
+			if(BigDecimal.class.isAssignableFrom(c)) {
+				return BigDecimal.valueOf(num.doubleValue());
+			}
+			if(BigInteger.class.isAssignableFrom(c)) {
+				return BigInteger.valueOf(num.longValue());
+			}
+			return null;
+		}
+		String str = obj.toString();
+		
+		try {
+			if(Boolean.class.isAssignableFrom(c) || boolean.class.isAssignableFrom(c)) {
+				return Boolean.parseBoolean(str);
+			}
+			if(Byte.class.isAssignableFrom(c) || byte.class.isAssignableFrom(c)) {
+				return Byte.parseByte(str);
+			}
+			if(Short.class.isAssignableFrom(c) || short.class.isAssignableFrom(c)) {
+				return Short.parseShort(str);
+			}
+			if(Integer.class.isAssignableFrom(c) || int.class.isAssignableFrom(c)) {
+				return Integer.parseInt(str);
+			}
+			if(Long.class.isAssignableFrom(c) || long.class.isAssignableFrom(c)) {
+				return Long.parseLong(str);
+			}
+			if(Float.class.isAssignableFrom(c) || float.class.isAssignableFrom(c)) {
+				return Float.parseFloat(str);
+			}
+			if(Double.class.isAssignableFrom(c) || double.class.isAssignableFrom(c)) {
+				return Double.parseDouble(str);
+			}
+			if(BigDecimal.class.isAssignableFrom(c)) {
+				return new BigDecimal(str);
+			}
+			if(BigInteger.class.isAssignableFrom(c)) {
+				return new BigInteger(str);
+			}
+		} catch(NumberFormatException e) {
+			return castNull(c);
+		}
+		return null;
+	}
+
+	static <X> Object translatePrimitiveOrDieRaw(Object obj, Class<X> c) throws CannotDoIt {
+		if(obj == null) {
+			throw cannotDoIt();
+		}
+		if(c.isInstance(obj)) { //Compatible for other classes than primitives
+			return obj;
+		}
+		if(obj instanceof CharSequence) {
+			obj = obj.toString();
+		} else if(obj instanceof byte[]) {
+			obj = new String((byte[]) obj);
+		} else if(obj instanceof char[]) {
+			obj = new String((char[]) obj);
+		}
+		if(!(obj instanceof String) && !(obj instanceof Number) && !(obj.getClass().isPrimitive())) {
+			throw cannotDoIt();
+		}
+		if(String.class.isAssignableFrom(c)) {
+			return obj;
+		} else if(!Number.class.isAssignableFrom(c) && !(c.isPrimitive())) {
+			throw cannotDoIt();
+		}
+		if(obj instanceof Number) {
+			Number num = (Number) obj;
+			if(Boolean.class.isAssignableFrom(c) || boolean.class.isAssignableFrom(c)) {
+				return num.intValue() != 0;
+			}
+			if(Byte.class.isAssignableFrom(c) || byte.class.isAssignableFrom(c)) {
+				return num.byteValue();
+			}
+			if(Short.class.isAssignableFrom(c) || short.class.isAssignableFrom(c)) {
+				return num.shortValue();
+			}
+			if(Integer.class.isAssignableFrom(c) || int.class.isAssignableFrom(c)) {
+				return num.intValue();
+			}
+			if(Long.class.isAssignableFrom(c) || long.class.isAssignableFrom(c)) {
+				return num.longValue();
+			}
+			if(Float.class.isAssignableFrom(c) || float.class.isAssignableFrom(c)) {
+				return num.floatValue();
+			}
+			if(Double.class.isAssignableFrom(c) || double.class.isAssignableFrom(c)) {
+				return num.doubleValue();
+			}
+			if(BigDecimal.class.isAssignableFrom(c)) {
+				return BigDecimal.valueOf(num.doubleValue());
+			}
+			if(BigInteger.class.isAssignableFrom(c)) {
+				return BigInteger.valueOf(num.longValue());
+			}
+			throw cannotDoIt();
+		}
+		String str = obj.toString();
+		
+		try {
+			if(Boolean.class.isAssignableFrom(c) || boolean.class.isAssignableFrom(c)) {
+				return Boolean.parseBoolean(str);
+			}
+			if(Byte.class.isAssignableFrom(c) || byte.class.isAssignableFrom(c)) {
+				return Byte.parseByte(str);
+			}
+			if(Short.class.isAssignableFrom(c) || short.class.isAssignableFrom(c)) {
+				return Short.parseShort(str);
+			}
+			if(Integer.class.isAssignableFrom(c) || int.class.isAssignableFrom(c)) {
+				return Integer.parseInt(str);
+			}
+			if(Long.class.isAssignableFrom(c) || long.class.isAssignableFrom(c)) {
+				return Long.parseLong(str);
+			}
+			if(Float.class.isAssignableFrom(c) || float.class.isAssignableFrom(c)) {
+				return Float.parseFloat(str);
+			}
+			if(Double.class.isAssignableFrom(c) || double.class.isAssignableFrom(c)) {
+				return Double.parseDouble(str);
+			}
+			if(BigDecimal.class.isAssignableFrom(c)) {
+				return new BigDecimal(str);
+			}
+			if(BigInteger.class.isAssignableFrom(c)) {
+				return new BigInteger(str);
+			}
+		} catch(NumberFormatException e) {}
+		throw cannotDoIt();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <X> X castNull(Class<X> c) {
+		if(Boolean.class.isAssignableFrom(c) || boolean.class.isAssignableFrom(c)) {
+			return (X) Boolean.FALSE;
+		}
+		if(c.isPrimitive()) {
+			return (X) ((Object) 0);
+		}
+		if(Integer.class.isAssignableFrom(c) || int.class.isAssignableFrom(c)) {
+			return (X) ((Integer) (int)0);
+		}
+		if(Byte.class.isAssignableFrom(c) || byte.class.isAssignableFrom(c)) {
+			return (X) ((Byte) (byte)0);
+		}
+		if(Short.class.isAssignableFrom(c) || short.class.isAssignableFrom(c)) {
+			return (X) ((Short) (short)0);
+		}
+		if(Character.class.isAssignableFrom(c) || char.class.isAssignableFrom(c)) {
+			return (X) ((Character) (char)0);
+		}
+		if(Long.class.isAssignableFrom(c) || long.class.isAssignableFrom(c)) {
+			return (X) ((Long) (long)0);
+		}
+		if(Float.class.isAssignableFrom(c) || float.class.isAssignableFrom(c)) {
+			return (X) ((Float) (float)0);
+		}
+		if(Double.class.isAssignableFrom(c) || double.class.isAssignableFrom(c)) {
+			return (X) ((Double) (double)0);
+		}
+		if(BigDecimal.class.isAssignableFrom(c)) {
+			return (X) BigDecimal.ZERO;
+		}
+		if(BigInteger.class.isAssignableFrom(c)) {
+			return (X) BigInteger.ZERO;
+		}
+		return null;
 	}
 	
 }

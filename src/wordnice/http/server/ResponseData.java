@@ -121,11 +121,11 @@ public class ResponseData {
 		return this.setHead("Connection", "close");
 	}
 	
-	public ResponseData setACAO() {
-		return this.setACAO(null, "*", 1000);
+	public ResponseData allowCORS() {
+		return this.allowCORS(null, "*", 1000);
 	}
 	
-	public ResponseData setACAO(CharSequence method, CharSequence origins, int maxage) {
+	public ResponseData allowCORS(CharSequence method, CharSequence origins, int maxage) {
 		if(method == null) method = "POST, GET, OPTIONS";
 		if(origins == null) origins = "*";
 		this.setHead("Access-Control-Allow-Origin", origins);

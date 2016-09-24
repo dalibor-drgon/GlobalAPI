@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -69,7 +70,7 @@ public class Optimizer {
 	
 	protected static Timer timer = new Timer();
 	protected static TimerTask currentTask = null;
-	protected static Logger log = Logger.getLogger("WordniceOptimizer");
+	protected static Logger log = Nice.createLogger(Optimizer.class, "WordniceOptimizer");
 	
 	protected static int waitTime = 5000; //5sec
 	
@@ -133,7 +134,7 @@ public class Optimizer {
 		getPendingOptimizations().clear();
 	}
 	
-	@SuppressWarnings("deprecation")
+	//@SuppressWarnings("deprecation")
 	protected static synchronized void optimize(Collection<Optimizable> opts) {
 		final Collection<String> outOpts = getOptimized();
 		if(isOptimizableEmpty(opts)) {
@@ -143,16 +144,25 @@ public class Optimizer {
 		log.info("Preparing to optimizations...");
 		
 		Unsafe unf = JavaUtils.getUnsafe();
+		System.out.println("-1");
+		System.out.println("-1"+unf);
 		Instrumentation ins = JavaUtils.getInstrumentation();
-		
+		System.out.println("-2");
+		System.out.println("-2"+ins);
 		Thread[] threads = JavaUtils.getThreads();
-		boolean[] unlock = new boolean[threads.length];
+		System.out.println("-3");
+		System.out.println("-3 " + Arrays.toString(threads));
+		//boolean[] unlock = new boolean[threads.length];
+		System.out.println("-4");
 		
-		log.info("Suspending threads...");
+		/*log.info("Suspending threads...");
+		System.out.println(Thread.currentThread() + " ==" + Thread.currentThread().getThreadGroup());
 		for(int i = 0, n = threads.length; i < n; i++) {
 			Thread t = threads[i];
+			System.out.println(t + " ==" + t.getThreadGroup());
 			if(!Thread.currentThread().equals(t) 
 					&& !t.getThreadGroup().getName().equals("system")) {
+				System.out.println("-- suspending...");
 				try {
 					t.suspend();
 					unlock[i] = true;
@@ -160,7 +170,7 @@ public class Optimizer {
 					Nice.checkUnsafeError(ign);
 				}
 			}
-		}
+		}*/
 		
 		log.info("Doing optimalizations...");
 		Iterator<Optimizable> it = opts.iterator();
@@ -240,7 +250,7 @@ public class Optimizer {
 			}
 		}
 		
-		log.info("Resuming threads!");
+		/*log.info("Resuming threads!");
 		for(int i = 0, n = threads.length; i < n; i++) {
 			if(unlock[i]) {
 				try {
@@ -249,7 +259,7 @@ public class Optimizer {
 					Nice.checkUnsafeError(ign);
 				}
 			}
-		}
+		}*/
 				
 		log.info("Optimalization process done! "
 				+ ((status) ? "Success!"
@@ -265,7 +275,7 @@ public class Optimizer {
 		JarOutputStream jar = new JarOutputStream(new FileOutputStream(temp));
 		
 		List<String> lst = Nice.createList();
-		byte[] buff = new byte[Nice.bufferSize];
+		byte[] buff = new byte[Nice.BufferSize];
 		boolean hadManifest = false;
 		Iterator<Bootstrap.EntryFile> it = boot.iterator();
 		while(it.hasNext()) {
@@ -434,13 +444,14 @@ public class Optimizer {
 	protected static synchronized void delayTimer() {
 		if(currentTask != null) {
 			currentTask.cancel();
-			timer.purge();
 		}
+		timer.purge();
 		currentTask = new TimerTask() {
 			@Override
 			public void run() {
 				bootstrap();
 				optimize();
+				currentTask = null;
 			}};
 		timer.schedule(currentTask, waitTime);
 	}

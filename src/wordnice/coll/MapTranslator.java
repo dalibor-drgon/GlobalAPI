@@ -31,10 +31,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import wordnice.api.Nice;
 import wordnice.coll.CollTranslator.CollEntryChecker;
 import wordnice.coll.CollTranslator.CollEntryConverter;
 import wordnice.coll.CollTranslator.CollProperties;
-import wordnice.utils.NiceConverter;
 
 public class MapTranslator {
 
@@ -212,12 +212,12 @@ public class MapTranslator {
 			}
 			if(skipRatherThanFail) {
 				try {
-					return NiceConverter.translatePrimitiveOrDie(key, keyClass);
+					return Nice.castOrThrow(key, keyClass);
 				} catch(CannotDoIt e) {
 					throw skipIt();
 				}
 			}
-			return NiceConverter.translatePrimitiveOrDie(key, keyClass);
+			return Nice.castOrThrow(key, keyClass);
 		}
 
 	}

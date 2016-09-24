@@ -38,7 +38,7 @@ import wordnice.db.operator.Sort;
 import wordnice.db.results.ResSet;
 import wordnice.db.results.ResSetDB;
 import wordnice.db.serialize.SerializeException;
-import wordnice.db.serialize.SerializeUtils;
+import wordnice.utils.SerializeUtils;
 
 /**
  * This class allows you to easily create database of any available
@@ -46,6 +46,7 @@ import wordnice.db.serialize.SerializeUtils;
  * 
  * @author wordnice
  */
+@SuppressWarnings("deprecation")
 public class ResSetDatabase implements Closeable, AutoCloseable, Database {
 	
 	/**

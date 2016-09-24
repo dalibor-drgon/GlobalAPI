@@ -35,11 +35,10 @@ public class ArrayOutputStreamSimple
 extends ArrayOutputStream {
 
 	/**
-     * Creates a new byte array output stream, with a buffer capacity of
-     * 128 bytes
+     * Creates a new byte array output stream, with a default  buffer capacity
      */
     public ArrayOutputStreamSimple() {
-        super(0); //zero = default
+        super(Nice.builderSize); //zero = default
     }
 
     /**
@@ -64,30 +63,42 @@ extends ArrayOutputStream {
      * {@code (long) Integer.MAX_VALUE + (minCapacity - Integer.MAX_VALUE)}.
      */
     protected void ensureCapacity(int minCapacity) {
-    	if (minCapacity < 0) // overflow
-            throw new OutOfMemoryError(""+minCapacity);
         // overflow-conscious code
-    	if (minCapacity - buf.length > 0)
+        if (minCapacity - buf.length > 0)
             grow(minCapacity);
     }
+
+    /**
+     * The maximum size of array to allocate.
+     * Some VMs reserve some header words in an array.
+     * Attempts to allocate larger arrays may result in
+     * OutOfMemoryError: Requested array size exceeds VM limit
+     */
+    protected static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
     /**
      * Increases the capacity to ensure that it can hold at least the
      * number of elements specified by the minimum capacity argument.
      *
-     * @param minCapacity the desired minimum capacity. Should be positive
+     * @param minCapacity the desired minimum capacity
      */
-    private void grow(int minCapacity) {
-    	int factorSize = minCapacity + (buf.length >> 1);
-    	int doubleSize = buf.length << 1;
-    	int newBufferSize;
-    	if(doubleSize > Nice.maxArrayLength || doubleSize < 0
-    			|| factorSize > Nice.maxArrayLength || factorSize < 0) {
-    		newBufferSize = Math.max(Nice.maxArrayLength, minCapacity);
-    	} else {
-    		newBufferSize = Math.max(doubleSize, factorSize);
-    	}
-    	buf = Arrays.copyOf(buf, newBufferSize);
+    protected void grow(int minCapacity) {
+        // overflow-conscious code
+        int oldCapacity = buf.length;
+        int newCapacity = oldCapacity << 1;
+        if (newCapacity - minCapacity < 0)
+            newCapacity = minCapacity;
+        if (newCapacity - MAX_ARRAY_SIZE > 0)
+            newCapacity = hugeCapacity(minCapacity);
+        buf = Arrays.copyOf(buf, newCapacity);
+    }
+
+    protected static int hugeCapacity(int minCapacity) {
+        if (minCapacity < 0) // overflow
+            throw new OutOfMemoryError();
+        return (minCapacity > MAX_ARRAY_SIZE) ?
+            Integer.MAX_VALUE :
+            MAX_ARRAY_SIZE;
     }
 
     /**
@@ -139,7 +150,6 @@ extends ArrayOutputStream {
         return count;
     }
 
-	@Override
 	public int capacity() {
 		return this.buf.length;
 	}
@@ -156,9 +166,11 @@ extends ArrayOutputStream {
 	
 	@Override
 	public void ensureSpace(int space) {
-		long nevcap = this.sizeLong() + (long)space;
-		if(nevcap <= Integer.MAX_VALUE) {
-			this.ensureCapacity((int) nevcap);
+		if(space < 0) throw new IllegalArgumentException("Negative space: " + space);
+		if(space == 0) return;
+		int nevcap = this.size() + space;
+		if(nevcap > this.capacity()) {
+			this.ensureCapacity(nevcap);
 		}
 	}
 
@@ -170,10 +182,10 @@ extends ArrayOutputStream {
 			count += rd;
 			total += rd;
 			if(count == this.buf.length) {
-				int nevspace = Math.min(Integer.MAX_VALUE-this.size(), Nice.bufferSize);
-				if(nevspace == 0) {
-					throw new OutOfMemoryError();
-				}
+				int nevspace = Nice.MaxArrayLength-this.size();
+				if(nevspace <= 0) nevspace = Integer.MAX_VALUE-this.size();
+				nevspace = Math.min(nevspace, Nice.BufferSize);
+				if(nevspace <= 0) throw new OutOfMemoryError();
 				this.ensureSpace(nevspace);
 			}
 		}

@@ -27,7 +27,8 @@ package java.lang;
 public class JavaLangHooker {
 	
 	public static String string(char[] arr) {
-		return new String(arr, true);
+		//return new String(arr, true);
+		return new String(arr); //todo
 	}
 	
 }

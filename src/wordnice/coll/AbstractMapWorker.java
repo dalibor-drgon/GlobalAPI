@@ -32,12 +32,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 
 import wordnice.api.Nice;
 import wordnice.api.Nice.BadFormat;
 import wordnice.api.Nice.CannotDoIt;
 import wordnice.api.Nice.CollFactory;
-import wordnice.api.Nice.DataEntry;
+import wordnice.api.Nice.MutableEntry;
+import wordnice.api.Nice.ListFactory;
 import wordnice.api.Nice.MapFactory;
 import wordnice.api.Nice.Value;
 import wordnice.codings.ASCII;
@@ -45,9 +47,7 @@ import wordnice.coll.CollTranslator.CollEntryChecker;
 import wordnice.coll.CollTranslator.CollEntryConverter;
 import wordnice.coll.MapTranslator.MapEntryChecker;
 import wordnice.coll.MapTranslator.MapEntryConverter;
-import wordnice.utils.ArgsDecoder;
-import wordnice.utils.NiceConverter;
-import wordnice.utils.ArgsDecoder.CollHandler;
+import wordnice.seq.InternalSplitter;
 
 public abstract class AbstractMapWorker 
 implements MapWorker {
@@ -104,13 +104,13 @@ implements MapWorker {
 	 */
 	@Override
 	public <X> X getCur(String key, Class<X> clz) {
-		return NiceConverter.translatePrimitive(getCur(key), clz);
+		return Nice.cast(getCur(key), clz);
 	}
 	
 	/**
 	 * @return /true/ when found and fill /res/ parameter, /false/ when failed
 	 */
-	protected boolean findPath(String path, DataEntry<Map<String,Object>, String> res) {
+	protected boolean findPath(String path, MutableEntry<Map<String,Object>, String> res) {
 		return findPath(this.getMap(), path, res, false, this.getMapFactory());
 	}
 	
@@ -135,7 +135,7 @@ implements MapWorker {
 	 */
 	@Override
 	public boolean containsKey(String path) {
-		DataEntry<Map<String,Object>, String> data = new DataEntry<>();
+		MutableEntry<Map<String,Object>, String> data = new MutableEntry<>();
 		if(!findPath(path, data)) {
 			return false;
 		}
@@ -147,7 +147,7 @@ implements MapWorker {
 	 */
 	@Override
 	public Object get(String path) {
-		DataEntry<Map<String,Object>, String> data = new DataEntry<>();
+		MutableEntry<Map<String,Object>, String> data = new MutableEntry<>();
 		if(!findPath(path, data)) {
 			return null;
 		}
@@ -248,7 +248,7 @@ implements MapWorker {
 	 */
 	@Override
 	public <X> X get(String name, Class<X> clz) {
-		return NiceConverter.translatePrimitive(this.get(name), clz);
+		return Nice.cast(this.get(name), clz);
 	}
 
 
@@ -370,7 +370,7 @@ implements MapWorker {
 		if(factory == null) {
 			factory = Nice.getListFactory();
 		}
-		DataEntry<Map<String,Object>, String> data = new DataEntry<>();
+		MutableEntry<Map<String,Object>, String> data = new MutableEntry<>();
 		Object mapValue = null;
 		if(findPath(this.getMap(), path, data, true, this.getMapFactory())) {
 			mapValue = data.getKey().get(data.getValue());
@@ -387,7 +387,7 @@ implements MapWorker {
 	
 	@Override
 	public Object put(String path, Object val) {
-		DataEntry<Map<String,Object>, String> data = new DataEntry<>();
+		MutableEntry<Map<String,Object>, String> data = new MutableEntry<>();
 		findPath(this.getMap(), path, data, true, this.getMapFactory());
 		return data.getKey().put(data.getValue(), val);
 	}
@@ -408,35 +408,9 @@ implements MapWorker {
 	 * (non-Javadoc)
 	 * @see eu.wordnice.api.utils.MapWorker#putArrayed(java.lang.String, java.lang.Object)
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public Object putArrayed(String path, Object val) {
-		DataEntry<Object, String> data = new DataEntry<>();
-		findPathArray(this.getMap(), path, data, true, this.getMapFactory(), this.getListFactory());
-		Object colmap = data.getKey();
-		path = data.getValue();
-		if(colmap instanceof List) {
-			List<Object> list = (List<Object>) colmap;
-			if(path.isEmpty()) {
-				list.add(val);
-			} else {
-				int index = Integer.parseInt(path);
-				if(index >= this.size()) {
-					list.add(val); //failsafe
-				} else {
-					list.set(index, val);
-				}
-			}
-		} else { //Map
-			Map<String,Object> map = (Map<String,Object>) colmap;
-			if(path.isEmpty()) {
-				MapTranslator.add(map, val, 0);
-				return null;
-			} else {
-				map.put(path, val);
-			}
-		}
-		return null;
+		return putArrayed(this.getMap(), path, val, this.getMapFactory(), this.getListFactory());
 	}
 
 	/*
@@ -483,7 +457,7 @@ implements MapWorker {
 	 */
 	@Override
 	public Object remove(String path) {
-		DataEntry<Map<String,Object>, String> data = new DataEntry<>();
+		MutableEntry<Map<String,Object>, String> data = new MutableEntry<>();
 		if(!findPath(path, data)) {
 			return false;
 		}
@@ -513,6 +487,39 @@ implements MapWorker {
 		getMap(path).putAll(m);
 	}
 	
+	
+	public static Object putArrayed(Map<String,Object> map, String path, Object val) {
+		return putArrayed(map, path, val, Nice.getMapFactory(), Nice.getListFactory());
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static Object putArrayed(Map<String,Object> map, String path, Object val, MapFactory mapF, ListFactory listF) {
+		MutableEntry<Object, String> data = new MutableEntry<>();
+		findPathArray(map, path, data, true, mapF, listF);
+		Object colmap = data.getKey();
+		path = data.getValue();
+		if(colmap instanceof List) {
+			List<Object> list = (List<Object>) colmap;
+			if(path.isEmpty()) {
+				list.add(val);
+			} else {
+				int index = Integer.parseInt(path);
+				if(index < 0 || index >= list.size()) {
+					list.add(val); //failsafe
+				} else {
+					return list.set(index, val);
+				}
+			}
+		} else { //Map
+			Map<String,Object> nevmap = (Map<String,Object>) colmap;
+			if(path.isEmpty()) {
+				MapTranslator.add(nevmap, val, 0);
+			} else {
+				return nevmap.put(path, val);
+			}
+		}
+		return null;
+	}
 
 	@SuppressWarnings("unchecked")
 	protected static Object getOrCreateCollOrMap(
@@ -620,7 +627,7 @@ implements MapWorker {
 	 * 			Returns false when entry was not found / or was created
 	 */
 	protected static boolean findPathArray(Map<String,Object> map, String path, 
-			final DataEntry<Object, String> res, final boolean create,
+			final MutableEntry<Object, String> res, final boolean create,
 			final MapFactory mapFactory, final CollFactory collFactory) throws BadFormat {
 		res.setKey(map); //Key can be only Map or List!!!
 		if(path == null) {
@@ -641,11 +648,11 @@ implements MapWorker {
 		}
 		final Value<Boolean> ret = new Value<>(true);
 		try {
-			ArgsDecoder.handleCollInside(new CollHandler<String>() {
+			InternalSplitter.handleCollInside(new Consumer<String>() {
 
 				@SuppressWarnings("unchecked")
 				@Override
-				public void handle(String nev) {
+				public void accept(String nev) {
 					String old = res.getValue();
 					//TL;DD
 					
@@ -688,7 +695,7 @@ implements MapWorker {
 	 * 			Returns false when entry was not found / or was created
 	 */
 	protected static boolean findPath(Map<String,Object> map, String path, 
-			final DataEntry<Map<String,Object>, String> res, final boolean create,
+			final MutableEntry<Map<String,Object>, String> res, final boolean create,
 			final MapFactory mapFactory) {
 		res.setKey(map);
 		if(path == null) {
@@ -702,11 +709,11 @@ implements MapWorker {
 		}
 		final Value<Boolean> ret = new Value<>(true);
 		try {
-			ArgsDecoder.handleColl(new CollHandler<String>() {
+			InternalSplitter.handleColl(new Consumer<String>() {
 	
 				@SuppressWarnings("unchecked")
 				@Override
-				public void handle(String nev) {
+				public void accept(String nev) {
 					String old = res.getValue();
 					Map<String,Object> map = res.getKey();
 					if(old != null) {
@@ -735,7 +742,7 @@ implements MapWorker {
 					
 				}
 				
-			}, path, ".");
+			}, path, ".", 0);
 		} catch(CannotDoIt c) {
 			return false; /* Can fail only when "create = false" */
 		}

@@ -30,8 +30,8 @@ import java.util.Collection;
 import java.util.Map;
 
 import wordnice.codings.Base64;
+import wordnice.seq.ByteSequence;
 import wordnice.streams.OUtils;
-import wordnice.utils.ByteSequence;
 import wordnice.utils.JavaHooker;
 
 public abstract class AbstractGenerator 
@@ -61,7 +61,7 @@ implements Generator {
 	public abstract Generator clone();
 
 	@Override
-	public abstract Generator createForSeed(Seed seed);
+	public abstract Generator cloneFor(Seed seed);
 
 	@Override
 	public abstract Seed getSeed();
@@ -90,7 +90,7 @@ implements Generator {
 
 	@Override
 	public long nextLong(long bound) {
-		if (bound <= 0) return -nextLong(-bound);
+		if (bound < 0) return -nextLong(-bound);
         else if(bound == 0) return 0;
         long threshold = (0x7fffffffffffffffL - bound + 1) % bound;
         for (; ; ) {
@@ -127,7 +127,7 @@ implements Generator {
         else if(bound == 0) return 0;
         int threshold = (0x7fffffff - bound + 1) % bound;
         for (; ; ) {
-            int bits = (int) (nextLong() & 0x7fffffff);
+            int bits = (int) (nextInt() & 0x7fffffff);
             if (bits >= threshold)
                 return bits % bound;
         }
@@ -141,7 +141,7 @@ implements Generator {
 
 	@Override
 	public float nextFloat() {
-		return (float) ((nextLong() & FLOAT_MASK) * NORM_24);
+		return (float) ((nextInt() & FLOAT_MASK) * NORM_24);
 	}
 
 	@Override
@@ -151,17 +151,22 @@ implements Generator {
 
 	@Override
 	public boolean nextBoolean() {
-		return (nextLong() & 1) != 0;
+		return (nextInt() & 1) != 0;
 	}
 
 	@Override
 	public short nextShort() {
-		return (short) nextLong();
+		return (short) nextInt();
 	}
 
 	@Override
 	public char nextChar() {
-		return (char) nextLong();
+		return (char) nextInt();
+	}
+	
+	@Override
+	public byte nextByte() {
+		return (byte) nextInt();
 	}
 
 	@Override
@@ -214,18 +219,30 @@ implements Generator {
 	}
 	
 	/* (non-Javadoc)
+	 * @see wordnice.generator.Generator#nextBytes(int)
+	 */
+	@Override
+	public byte[] nextBytes(int len) {
+		if(len < 0) throw new IllegalArgumentException("Length < 0");
+		if(len == 0) return new byte[0];
+		byte[] bts = new byte[len];
+		this.nextBytes(bts);
+		return bts;
+	}
+	
+	/* (non-Javadoc)
 	 * @see wordnice.utils.Generator#genBytes(byte[])
 	 */
 	@Override
-	public void genBytes(byte[] bytes) {
-		genBytes(bytes, 0, bytes.length);
+	public void nextBytes(byte[] bytes) {
+		nextBytes(bytes, 0, bytes.length);
 	}
 	
 	/* (non-Javadoc)
 	 * @see wordnice.utils.Generator#genBytes(byte[], int, int)
 	 */
 	@Override
-	public void genBytes(byte[] bytes, int off, int len) {
+	public void nextBytes(byte[] bytes, int off, int len) {
 		if(len == 0) return;
 		if(len <= 8) nextBytesUnderEight(bytes, off, len);
 		int end = off + len - 8;

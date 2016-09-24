@@ -33,8 +33,8 @@ import java.net.URLEncoder;
 
 import wordnice.api.Nice;
 import wordnice.api.Nice.BadArg;
-import wordnice.utils.ByteSequence;
-import wordnice.utils.NiceStringUtils;
+import wordnice.seq.ByteSequence;
+import wordnice.utils.NiceStrings;
 
 public class URLCoder {
 	
@@ -233,7 +233,7 @@ public class URLCoder {
 			return "";
 		}
 		try (ByteArrayOutputStream baos = new ByteArrayOutputStream(len)) {
-			decodeStream(baos, NiceStringUtils.toByteSequence(ch, off, len));
+			decodeStream(baos, NiceStrings.toByteSequence(ch, off, len));
 			return baos.toString();
 		} catch(IOException e) {
 			e.printStackTrace();
@@ -254,7 +254,7 @@ public class URLCoder {
 			return new byte[0];
 		}
 		try (ByteArrayOutputStream baos = new ByteArrayOutputStream(len)) {
-			decodeStream(baos, NiceStringUtils.toByteSequence(ch, off, len));
+			decodeStream(baos, NiceStrings.toByteSequence(ch, off, len));
 			return baos.toByteArray();
 		} catch(IOException e) {
 			e.printStackTrace();

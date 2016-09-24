@@ -24,7 +24,8 @@
 
 package wordnice.codings;
 
-public class InvalidSyntaxException extends Exception {
+public class InvalidSyntaxException 
+extends IllegalArgumentException {
 	
 	private static final long serialVersionUID = 1L;
 	
@@ -49,6 +50,18 @@ public class InvalidSyntaxException extends Exception {
 		super("Invalid syntax between indexes " + i1 + " - " + i2);
 		this.i1 = i1;
 		this.i2 = i2;
+	}
+	
+	public int getStart() {
+		return this.i1;
+	}
+	
+	public int getEnd() {
+		return this.i2;
+	}
+	
+	public int getLength() {
+		return this.i2 - this.i1;
 	}
 	
 }
