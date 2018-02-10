@@ -26,15 +26,9 @@ package wordnice.streams;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
 
 import wordnice.api.Nice;
-import wordnice.db.ColType;
-import wordnice.db.serialize.CollSerializer;
-import wordnice.db.serialize.SerializeException;
-import wordnice.db.wndb.WNDBEncoder;
+
 import wordnice.utils.NiceStrings;
 
 public class OUtils {
@@ -234,58 +228,6 @@ public class OUtils {
 				buff[i++] = (byte) (cur >> 8);
 			}
 			out.write(buff, 0, curChars);
-		}
-	}
-	
-	
-	public static void serializeColl(OutputStream out, Collection<?> set) throws SerializeException, IOException {
-		if(set == null) {
-			writeInt(out, -1);
-			return;
-		}
-		serializeColl(out, set.iterator(), set.size());
-	}
-	
-	public static void serializeColl(OutputStream out, Iterator<?> it, int size) throws SerializeException, IOException {
-		CollSerializer.collToStream(out, it, size);
-	}
-	
-	public static void serializeMap(OutputStream out, Map<? extends Object, ? extends Object> map) throws SerializeException, IOException {
-		if(map == null) {
-			writeInt(out, -1);
-			return;
-		}
-		CollSerializer.mapToStream(out, map);
-	}
-	
-	public static void serializeCollArray(OutputStream out, Object[] arr) throws SerializeException, IOException {
-		if(arr == null) {
-			writeInt(out, -1);
-			return;
-		}
-		CollSerializer.arrayToStream(out, arr, 0, arr.length);
-	}
-	
-	public static void serializeCollArray(OutputStream out, Object[] arr, int off, int len) throws SerializeException, IOException {
-		if(arr == null || len < 0) {
-			writeInt(out, -1);
-			return;
-		}
-		CollSerializer.arrayToStream(out, arr, off, len);
-	}
-	
-	public static void serializeKnownObject(OutputStream out, Object obj) throws SerializeException, IOException {
-		serializeKnownObject(out, obj, -1, -1);
-	}
-	
-	public static void serializeKnownObject(OutputStream out, Object obj, int ri, int vi) throws SerializeException, IOException {
-		if(obj == null) {
-			writeByte(out, ColType.BYTES.b);
-			writeInt(out, -1);
-		} else {
-			ColType typ = ColType.getByObject(obj);
-			writeByte(out, typ.b);
-			WNDBEncoder.serializeKnownObject(out, obj, typ, ri, vi);
 		}
 	}
 	

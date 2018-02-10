@@ -24,11 +24,6 @@
 
 package wordnice.utils;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -38,26 +33,8 @@ import org.bukkit.configuration.ConfigurationSection;
 
 import wordnice.api.Nice;
 import wordnice.api.Nice.MapFactory;
-import wordnice.db.serialize.DataReader;
-import wordnice.db.serialize.DataWriter;
-import wordnice.db.serialize.SerializeException;
 
 public class SerializeUtils {
-	
-	public static void write(DataWriter dw, File file) throws SerializeException, IOException {
-		if(file.exists() == false) {
-			FilesAPI.createFile(file);
-		}
-		try(OutputStream os = Nice.output(file)) {
-			dw.write(os);
-		}
-	}
-	
-	public static void read(DataReader dr, File file) throws SerializeException, FileNotFoundException, IOException {
-		try(InputStream is = Nice.input(file)) {
-			dr.read(is);
-		}
-	}
 
 	public static int SerializeExceptionClauseDepth = 2;
 	public static int SerializeExceptionStackDepth = 10;

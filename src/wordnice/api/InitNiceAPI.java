@@ -25,17 +25,10 @@
 package wordnice.api;
 
 import java.lang.instrument.Instrumentation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import wordnice.javaagent.JavaAgent;
-import wordnice.optimizer.Bootstrap;
-import wordnice.optimizer.Optimizer;
-import wordnice.utils.JavaUtils;
 
 /**
  * Init needed for standalone applications
@@ -56,7 +49,7 @@ public class InitNiceAPI {
 	public static void initAll(Logger log) {
 		initFirst(log);
 		initInMainThread(log);
-		initOptimizations(log);
+		//initOptimizations(log);
 	}
 	
 	/**
@@ -96,23 +89,22 @@ public class InitNiceAPI {
 	 * Call this after initInMainThread() in main thread
 	 * (except bukkit / sponge plugins)
 	 */
-	public static void initOptimizations(final Logger log) {
+	/*public static void initOptimizations(final Logger log) {
 		if(optimizations) return;
 		try {
 			Collection<Bootstrap.EntryFile> bf = new ArrayList<Bootstrap.EntryFile>();
 			Optimizer.addBootstrap(bf, JavaUtils.getClassesLocation(Optimizer.class), 
-					Bootstrap.createPrefixedHandler("(wordnice)",
-						new Predicate<String>() {
-					@Override
-					public boolean test(String val) {
-						if(val.startsWith("java") || val.startsWith("optimized")) {
-							log.finest("Adding " + val + " to boostrap!");
-							return true;
-						}
-						return false;
+					new Bootstrap.Handler() {
+
+				@Override
+				public String canBootstrap(String name) {
+					if(name.startsWith("java") || name.startsWith("optimized")) {
+						log.finest("Adding " + name + " to boostrap!");
+						return "(wordnice)"+name;
 					}
-				})
-			);
+					return null;
+				}
+			});
 			Optimizer.forceBootstrap(bf);
 			optimizations = true;
 		} catch (Exception e) {
@@ -124,8 +116,8 @@ public class InitNiceAPI {
 		
 		/*Collection<Optimizable> opts = new ArrayList<Optimizable>();
 		opts.add(new OptimizeHooker());
-		Optimizer.forceOptimizations(opts);*/
-	}
+		Optimizer.forceOptimizations(opts);* /
+	}*/
 	
 	
 	
@@ -159,7 +151,7 @@ public class InitNiceAPI {
 		Logger.getGlobal().setLevel(Level.FINEST);
 		Logger.getGlobal().setFilter(null);
 		InitNiceAPI.initAll(lg);
-		System.out.println(Consumer.class);
+		System.out.println("java.util.function.Consumer");
 		System.out.println(System.getProperties().clone().toString());
 	}
 	

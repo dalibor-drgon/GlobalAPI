@@ -31,15 +31,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ReadOnlyBufferException;
-import java.util.Collection;
-import java.util.Map;
 
 import wordnice.api.Nice;
 import wordnice.api.Nice.Value;
 import wordnice.codings.ASCII;
-import wordnice.db.serialize.CollSerializer;
-import wordnice.db.serialize.SerializeException;
-import wordnice.db.wndb.WNDBDecoder;
 
 public class IUtils {
 	
@@ -118,7 +113,7 @@ public class IUtils {
 		if(ch < 0) {
 			throw new EOFException();
 		}
-		return ch;
+		return ch & 0xFF;
 	}
 	
 	public static short readShort(InputStream in) throws IOException {
@@ -184,20 +179,22 @@ public class IUtils {
 	}
 	
 	public static char readChar(byte[] bt, int off) {
-		return (char) ((char) bt[off++] | (bt[off++] << 8));
+		return (char) ((char) (bt[off++] & 0xFF) | (bt[off++] << 8));
 	}
 	
 	public static short readShort(byte[] bt, int off) {
-		return (short) ((short) bt[off++] | (bt[off++] << 8));
+		return (short) ((short) (bt[off++] & 0xFF) | ((bt[off++] & 0xFF) << 8));
 	}
 	
 	public static int readInt(byte[] bt, int off) {
-		return ((int) bt[off++] | (bt[off++] << 8) | (bt[off++] << 16) | (bt[off++] << 24));
+		return ((int) (bt[off++] & 0xFF) | ((bt[off++] & 0xFF) << 8) | ((bt[off++] & 0xFF) << 16) | ((bt[off++] & 0xFF) << 24));
 	}
 	
 	public static long readLong(byte[] bt, int off) {
-		return ((long) bt[off++] | (bt[off++] << 8) | (bt[off++] << 16) | (bt[off++] << 24)
-			| (bt[off++] << 32) | (bt[off++] << 40) | (bt[off++] << 48) | (bt[off++] << 56));
+		return ((long) (bt[off++] & 0xFF) | ((long)(bt[off++] & 0xFF) << 8) 
+			| ((long)(bt[off++] & 0xFF) << 16) | ((long)(bt[off++] & 0xFF) << 24)
+			| ((long)(bt[off++] & 0xFF) << 32) | ((long)(bt[off++] & 0xFF) << 40) 
+			| ((long)(bt[off++] & 0xFF) << 48) | ((long)(bt[off++] & 0xFF) << 56));
 	}
 	
 	public static float readFloat(byte[] bt, int off) {
@@ -417,6 +414,7 @@ public class IUtils {
 				if(ch == '\n') {
 					break;
 				}
+				if(ch == -1) throw new EOFException("EOF after \\R");
 				throw new IOException("\\R not followed by \\N!");
 			}
 			out.write((byte) ch);
@@ -432,31 +430,6 @@ public class IUtils {
 	public static String readLineStrict(InputStream in) throws IOException {
 		ByteArrayOutputStream baos = Nice.createArrayOutput();
 		return readLineStrict(in, baos) ? baos.toString() : null;
-	}
-	
-	
-	public static <X> Collection<X> deserializeColl(InputStream in, Collection<X> col) throws SerializeException, IOException {
-		return CollSerializer.collFromStream(col, in);
-	}
-	
-	public static <X, Y> Map<X, Y> deserializeMap(InputStream in, Map<X, Y> map) throws SerializeException, IOException {
-		return CollSerializer.mapFromStream(map, in);
-	}
-	
-	public static <X> Collection<X> deserializeColl(InputStream in) throws SerializeException, IOException {
-		return deserializeColl(in, (Collection<X>) null);
-	}
-	
-	public static <X, Y> Map<X, Y> deserializeMap(InputStream in) throws SerializeException, IOException {
-		return deserializeMap(in, (Map<X, Y>) null);
-	}
-	
-	public static Object deserializeKnownObject(InputStream in) throws SerializeException, IOException {
-		return deserializeKnownObject(in, -1, -1);
-	}
-	
-	public static Object deserializeKnownObject(InputStream in, int ri, int vi) throws SerializeException, IOException {
-		return WNDBDecoder.deserializeKnownObject(in, readByte(in), ri, vi);
 	}
 
 	

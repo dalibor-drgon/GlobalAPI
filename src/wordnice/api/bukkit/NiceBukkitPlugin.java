@@ -49,9 +49,6 @@ extends org.bukkit.plugin.java.JavaPlugin {
 			lg.info("Bukkit packages: " + JavaUtils.filterPackagesString(clzs, (String) null).size());
 		} catch(Throwable t) {}
 				
-		String cpkg = org.bukkit.Bukkit.getServer().getClass().getPackage().getName();
-		Craft.NMS = cpkg.substring(cpkg.lastIndexOf('.') + 1);
-		lg.info("NMS version: " + Craft.NMS);
 		lg.info("Online players: " + Bukkit.getOnlinePlayers());
 		lg.info("Online worlds: " + Bukkit.getWorlds());
 		lg.info("Online plugins: " + Arrays.toString(Bukkit.getPluginManager().getPlugins()));
